@@ -155,6 +155,7 @@ model ConversationParticipant {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime     @default(now())
 
   @@unique([userId, conversationId])
 }

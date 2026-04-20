@@ -44,7 +44,43 @@ export async function getConversations() {
     orderBy: { updatedAt: 'desc' }
   })
   
-  return conversations
+  const formatted = await Promise.all(conversations.map(async conv => {
+    const me = conv.participants.find(p => p.userId === currentUserId)
+    const unreadCount = await prisma.message.count({
+      where: {
+        conversationId: conv.id,
+        senderId: { not: currentUserId },
+        createdAt: { gt: me?.lastReadAt || new Date(0) }
+      }
+    })
+    return { ...conv, unreadCount }
+  }))
+  
+  return formatted
+}
+
+export async function markAsRead(conversationId: string) {
+  const currentUserId = await getSessionUserId()
+  await prisma.conversationParticipant.update({
+    where: { userId_conversationId: { userId: currentUserId, conversationId } },
+    data: { lastReadAt: new Date() }
+  })
+}
+
+export async function createGroupConversation(name: string, userIds: string[]) {
+  const currentUserId = await getSessionUserId()
+  const allIds = Array.from(new Set([...userIds, currentUserId]))
+  
+  const newConv = await prisma.conversation.create({
+    data: {
+      isGroup: true,
+      name,
+      participants: {
+        create: allIds.map(id => ({ userId: id }))
+      }
+    }
+  })
+  return newConv.id
 }
 
 export async function startDirectConversation(targetUserId: string) {
