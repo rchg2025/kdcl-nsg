@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createEvidence, updateEvidence } from "@/actions/evidence"
+import { createEvidence, updateEvidence, uploadFileAction } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2 } from "lucide-react"
 
 type Evidence = {
@@ -55,18 +55,14 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
           const formData = new FormData()
           formData.append("file", file)
 
-          const uploadRes = await fetch("/api/upload", {
-            method: "POST",
-            body: formData
-          })
+          const { url, error } = await uploadFileAction(formData)
 
-          if (!uploadRes.ok) {
-            const err = await uploadRes.json().catch(() => ({ error: "Lỗi không xác định" }))
-            throw new Error(`Lỗi tải tệp ${file.name}: ${err.error || `HTTP ${uploadRes.status}`}`)
+          if (error) {
+            throw new Error(`Lỗi tải tệp ${file.name}: ${error}`)
           }
-
-          const { url } = await uploadRes.json()
-          uploadedUrls.push(url)
+          if (url) {
+             uploadedUrls.push(url)
+          }
         }
         
         finalFileUrl = uploadedUrls.join(", ")

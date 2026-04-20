@@ -5,6 +5,29 @@ import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createLog } from "@/actions/log"
+import { uploadFileToDrive } from "@/lib/drive"
+
+// Server Action for file upload (supports up to 10MB via bodySizeLimit config)
+export async function uploadFileAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return { error: "Chưa đăng nhập" }
+
+    const file = formData.get("file") as File
+    if (!file || !file.name) return { error: "Chưa cung cấp file" }
+
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+
+    const viewLink = await uploadFileToDrive(buffer, file.name, file.type || "application/octet-stream")
+    if (!viewLink) return { error: "Google Drive không trả về link xem" }
+
+    return { url: viewLink }
+  } catch (err: any) {
+    console.error("uploadFileAction error:", err)
+    return { error: err.message || "Lỗi không xác định khi tải tệp lên Google Drive" }
+  }
+}
 
 async function checkCollaborator() {
   const session = await getServerSession(authOptions)
