@@ -12,7 +12,9 @@ import {
   FileText,
   BarChart,
   CheckSquare,
-  List
+  List,
+  MessageSquare,
+  Clock
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -31,6 +33,8 @@ export const adminMenu: MenuItem[] = [
   { title: "Đánh giá KQ", href: "/investigator/evaluate", icon: CheckSquare },
   { title: "Quản lý thành viên", href: "/admin/users", icon: Users },
   { title: "Quản lý Danh mục", href: "/admin/categories", icon: List },
+  { title: "Nhật ký Hệ thống", href: "/admin/logs", icon: Clock },
+  { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
   { title: "Cài đặt hệ thống", href: "/admin/settings", icon: Settings },
 ]
 
@@ -38,17 +42,20 @@ export const supervisorMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/supervisor", icon: LayoutDashboard },
   { title: "Cập nhật tiêu chí", href: "/supervisor/criteria", icon: FileText },
   { title: "Duyệt minh chứng", href: "/supervisor/review", icon: FileCheck },
+  { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
 ]
 
 export const collaboratorMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/collaborator", icon: LayoutDashboard },
   { title: "Cập nhật minh chứng", href: "/collaborator/evidence", icon: FileText },
+  { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
 ]
 
 export const investigatorMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/investigator", icon: LayoutDashboard },
   { title: "Xem minh chứng", href: "/investigator/evidence", icon: FileText },
   { title: "Đánh giá chung", href: "/investigator/evaluate", icon: CheckSquare },
+  { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
 ]
 
 export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], role: string }) {

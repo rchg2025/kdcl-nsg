@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { createLog } from "@/actions/log"
 
 async function checkCollaborator() {
   const session = await getServerSession(authOptions)
@@ -24,6 +25,8 @@ export async function createEvidence(data: { criterionId: string; content: strin
     }
   })
   
+  await createLog("CREATE", "Minh chứng (Evidence)", `Đã báo cáo minh chứng ID: ${newEvidence.id} cho Tiêu chí ${data.criterionId}`)
+  
   revalidatePath("/collaborator/evidence")
   return newEvidence
 }
@@ -43,6 +46,8 @@ export async function updateEvidence(id: string, data: { content: string; fileUr
       status: "PENDING" // Reset status for re-review
     }
   })
+  
+  await createLog("UPDATE", "Minh chứng (Evidence)", `Cập nhật lại minh chứng ID: ${id}`)
   
   revalidatePath("/collaborator/evidence")
   return updatedEvidence

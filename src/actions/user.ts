@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { createLog } from "@/actions/log"
 
 export async function checkAdmin() {
   const session = await getServerSession(authOptions)
@@ -17,6 +18,9 @@ export async function checkAdmin() {
 export async function getUsers() {
   await checkAdmin()
   return await prisma.user.findMany({
+    where: {
+      email: { not: "nguyenluyen@nsg.edu.vn" }
+    },
     include: { department: true, position: true },
     orderBy: { createdAt: 'desc' }
   })
@@ -41,6 +45,9 @@ export async function createUser(data: { name: string; email: string; role: Role
       password: hashedPassword
     }
   })
+  
+  await createLog("CREATE", "Thành viên (User)", `Khởi tạo tài khoản mới: ${data.email} (Quyền: ${data.role})`)
+  
   revalidatePath("/admin/users")
   return newUser
 }
@@ -63,11 +70,19 @@ export async function updateUser(id: string, data: { name: string; role: Role; d
     where: { id },
     data: updateData
   })
+  
+  await createLog("UPDATE", "Thành viên (User)", `Chỉnh sửa thông tin tài khoản ID: ${id} (Cấp Quyền: ${data.role})`)
+  
   revalidatePath("/admin/users")
 }
 
 export async function deleteUser(id: string) {
   await checkAdmin()
+  
+  const target = await prisma.user.findUnique({ where: { id } })
   await prisma.user.delete({ where: { id } })
+  
+  await createLog("DELETE", "Thành viên (User)", `Đã xóa tài khoản: ${target?.email}`)
+  
   revalidatePath("/admin/users")
 }

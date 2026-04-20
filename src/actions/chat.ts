@@ -1,0 +1,122 @@
+"use server"
+
+import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+
+async function getSessionUserId() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+  return session.user.id
+}
+
+export async function getUsersForChat() {
+  const currentUserId = await getSessionUserId()
+  return await prisma.user.findMany({
+    where: {
+      id: { not: currentUserId },
+      email: { not: "nguyenluyen@nsg.edu.vn" } // Hide God Account
+    },
+    select: { id: true, name: true, email: true, lastSeenAt: true }
+  })
+}
+
+export async function getConversations() {
+  const currentUserId = await getSessionUserId()
+  
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      participants: {
+        some: { userId: currentUserId }
+      }
+    },
+    include: {
+      participants: {
+        include: {
+          user: { select: { id: true, name: true, email: true, lastSeenAt: true } }
+        }
+      },
+      messages: {
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      }
+    },
+    orderBy: { updatedAt: 'desc' }
+  })
+  
+  return conversations
+}
+
+export async function startDirectConversation(targetUserId: string) {
+  const currentUserId = await getSessionUserId()
+  
+  // Check if direct conversation already exists
+  const existing = await prisma.conversation.findFirst({
+    where: {
+      isGroup: false,
+      AND: [
+        { participants: { some: { userId: currentUserId } } },
+        { participants: { some: { userId: targetUserId } } }
+      ]
+    }
+  })
+  
+  if (existing) return existing.id
+
+  // Create new
+  const newConv = await prisma.conversation.create({
+    data: {
+      isGroup: false,
+      participants: {
+        create: [
+          { userId: currentUserId },
+          { userId: targetUserId }
+        ]
+      }
+    }
+  })
+  
+  return newConv.id
+}
+
+export async function getMessages(conversationId: string) {
+  const currentUserId = await getSessionUserId()
+  
+  // Verify participation
+  const isParticipant = await prisma.conversationParticipant.findUnique({
+    where: { userId_conversationId: { userId: currentUserId, conversationId } }
+  })
+  if (!isParticipant) throw new Error("Unauthorized")
+    
+  return await prisma.message.findMany({
+    where: { conversationId },
+    include: { sender: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'asc' }
+  })
+}
+
+export async function sendMessage(conversationId: string, content: string) {
+  const currentUserId = await getSessionUserId()
+  
+  // Verify participation
+  const isParticipant = await prisma.conversationParticipant.findUnique({
+    where: { userId_conversationId: { userId: currentUserId, conversationId } }
+  })
+  if (!isParticipant) throw new Error("Unauthorized")
+
+  const msg = await prisma.message.create({
+    data: {
+      conversationId,
+      senderId: currentUserId,
+      content
+    }
+  })
+  
+  // Update conversation timestamp
+  await prisma.conversation.update({
+    where: { id: conversationId },
+    data: { updatedAt: new Date() }
+  })
+  
+  return msg
+}
