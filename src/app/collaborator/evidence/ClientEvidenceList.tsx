@@ -248,7 +248,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                     value={fileUrl}
                     onChange={e => {
                       setFileUrl(e.target.value)
-                      if(e.target.value) setSelectedFile(null) // Clear file if pasting link
+                      if(e.target.value) setSelectedFiles([]) // Clear file if pasting link
                     }}
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
                     placeholder="https://drive.google.com/..."
