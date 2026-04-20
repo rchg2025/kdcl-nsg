@@ -41,26 +41,52 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
       let finalFileUrl = fileUrl
       
       if (selectedFiles.length > 0) {
-        const formData = new FormData()
-        selectedFiles.forEach(f => formData.append("file", f))
-        
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData
-        })
-        
-        if (!res.ok) {
-           let errData;
-           try {
-              errData = await res.json()
-           } catch {
-              throw new Error("Lỗi nộp File: Tổng dung lượng vượt quá 4.5MB (Giới hạn của Máy chủ Vercel). Hãy nén file hoặc dùng Link Drive thủ công!")
-           }
-           throw new Error(errData.error || "Lỗi khi tải file lên máy chủ")
+        const tokenRes = await fetch("/api/drive-token")
+        if (!tokenRes.ok) {
+           throw new Error("Không thể lấy phiên kết nối Drive. Vui lòng kiểm tra lại cấu hình Hệ thống.")
+        }
+        const { token, folderId } = await tokenRes.json()
+
+        const uploadedUrls = []
+
+        for (const file of selectedFiles) {
+          const metadata = {
+            name: file.name,
+            parents: [folderId]
+          }
+          const form = new FormData()
+          form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }))
+          form.append("file", file)
+
+          const uploadRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            },
+            body: form
+          })
+          
+          if (!uploadRes.ok) {
+            const errBody = await uploadRes.text()
+            console.error("Drive upload error", errBody)
+            throw new Error(`Lỗi tải tệp ${file.name} lên Google Drive trực tiếp. (Service Account Error)`)
+          }
+
+          const fileData = await uploadRes.json()
+          
+          await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions?supportsAllDrives=true`, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ role: "reader", type: "anyone" })
+          })
+
+          uploadedUrls.push(fileData.webViewLink)
         }
         
-        const data = await res.json()
-        finalFileUrl = data.url
+        finalFileUrl = uploadedUrls.join(", ")
       }
       
       if (editingId) {
@@ -225,12 +251,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                       multiple
                       onChange={e => {
                         const files = Array.from(e.target.files || [])
-                        const totalSize = files.reduce((acc, f) => acc + f.size, 0)
-                        if (totalSize > 4.5 * 1024 * 1024) {
-                            alert("Tổng dung lượng tải lên vượt quá 4.5MB (Giới hạn của Vercel Hosting). Vui lòng dán Link Drive thủ công bên dưới thay vì tải trực tiếp!")
-                            e.target.value = ""
-                            return
-                        }
+                        // Đã Bỏ chặn 4.5MB, file sẽ được tải thẳng từ Trình duyệt lên Google Drive!
                         setSelectedFiles(files)
                         setFileUrl("") // Clear URL if choosing file
                       }}

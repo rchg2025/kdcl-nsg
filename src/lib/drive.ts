@@ -50,6 +50,7 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mi
     },
     media: media,
     fields: "id, webViewLink",
+    supportsAllDrives: true
   })
 
   // Share file publicly
@@ -61,6 +62,7 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mi
         role: "reader",
         type: "anyone",
       },
+      supportsAllDrives: true
     })
   }
 

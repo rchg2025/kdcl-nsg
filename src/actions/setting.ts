@@ -60,7 +60,7 @@ export async function testDriveConfig(clientId: string, privateKey: string, fold
       scopes: ["https://www.googleapis.com/auth/drive"],
     })
     const drive = google.drive({ version: "v3", auth })
-    await drive.files.get({ fileId: folderId, fields: "id, name" })
+    await drive.files.get({ fileId: folderId, fields: "id, name", supportsAllDrives: true })
     return { success: true, message: "Kết nối Google Drive thành công! Thư mục hợp lệ." }
   } catch (err: any) {
     return { success: false, message: "Lỗi kết nối: " + err.message }
