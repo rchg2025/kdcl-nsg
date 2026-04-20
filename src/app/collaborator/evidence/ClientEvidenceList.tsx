@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { createEvidence } from "@/actions/evidence"
-import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react"
+import { createEvidence, updateEvidence } from "@/actions/evidence"
+import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2 } from "lucide-react"
 
 type Evidence = {
   id: string
@@ -26,6 +26,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const [evidences, setEvidences] = useState<Evidence[]>(initialEvidences)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   
   const [criterionId, setCriterionId] = useState(criteriaList[0]?.id || "")
   const [content, setContent] = useState("")
@@ -57,12 +58,34 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         finalFileUrl = data.url
       }
       
-      await createEvidence({ criterionId, content, fileUrl: finalFileUrl })
+      if (editingId) {
+        await updateEvidence(editingId, { content, fileUrl: finalFileUrl })
+      } else {
+        await createEvidence({ criterionId, content, fileUrl: finalFileUrl })
+      }
       window.location.reload()
     } catch (err: any) {
       alert(err.message || "Đã xảy ra lỗi khi Submit minh chứng")
       setLoading(false)
     }
+  }
+
+  const openEditModal = (ev: Evidence) => {
+    setEditingId(ev.id)
+    setCriterionId(ev.criterion.name) // Not editable, just display
+    setContent(ev.content || "")
+    setFileUrl(ev.fileUrl || "")
+    setSelectedFile(null)
+    setIsModalOpen(true)
+  }
+
+  const openCreateModal = () => {
+    setEditingId(null)
+    setCriterionId(criteriaList[0]?.id || "")
+    setContent("")
+    setFileUrl("")
+    setSelectedFile(null)
+    setIsModalOpen(true)
   }
 
   const StatusIcon = ({ status }: { status: string }) => {
@@ -91,7 +114,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
     <div>
       <div className="flex justify-end mb-6">
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreateModal}
           className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
         >
           <Plus size={18} />
@@ -127,9 +150,16 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                   )}
                 </div>
                 
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${statusColors[ev.status]}`}>
-                  <StatusIcon status={ev.status} />
-                  {statusLabels[ev.status] || ev.status}
+                <div className="flex flex-col items-end gap-2">
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${statusColors[ev.status]}`}>
+                    <StatusIcon status={ev.status} />
+                    {statusLabels[ev.status] || ev.status}
+                  </div>
+                  {["PENDING", "REJECTED"].includes(ev.status) && (
+                    <button onClick={() => openEditModal(ev)} className="flex items-center gap-1.5 text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors mt-2">
+                      <Edit2 size={14} /> Sửa báo cáo
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -141,14 +171,17 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold">Thêm Minh chứng mới</h3>
+              <h3 className="text-lg font-bold">{editingId ? 'Cập nhật Minh chứng' : 'Thêm Minh chứng mới'}</h3>
             </div>
             
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">Chọn Tiêu chí</label>
-                <select 
-                  value={criterionId}
+                {editingId ? (
+                   <input type="text" readOnly disabled value={criterionId} className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border rounded-xl text-slate-500" />
+                ) : (
+                  <select 
+                    value={criterionId}
                   onChange={e => setCriterionId(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
                   required

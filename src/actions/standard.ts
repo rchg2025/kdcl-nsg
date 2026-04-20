@@ -16,6 +16,9 @@ export async function getStandards() {
   await checkAdmin()
   return await prisma.standard.findMany({
     include: {
+      criteria: {
+        orderBy: { createdAt: 'asc' }
+      },
       _count: {
         select: { criteria: true }
       }

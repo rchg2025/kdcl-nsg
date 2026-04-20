@@ -28,6 +28,26 @@ export async function createEvidence(data: { criterionId: string; content: strin
   return newEvidence
 }
 
+export async function updateEvidence(id: string, data: { content: string; fileUrl?: string }) {
+  const userId = await checkCollaborator()
+  
+  // Verify ownership and status
+  const existing = await prisma.evidence.findUnique({ where: { id } })
+  if (!existing || existing.collaboratorId !== userId) throw new Error("Unauthorized")
+  if (["APPROVED", "REVIEWING"].includes(existing.status)) throw new Error("Mã trạng thái này không cho phép sửa")
+
+  const updatedEvidence = await prisma.evidence.update({
+    where: { id },
+    data: {
+      ...data,
+      status: "PENDING" // Reset status for re-review
+    }
+  })
+  
+  revalidatePath("/collaborator/evidence")
+  return updatedEvidence
+}
+
 export async function getCollaboratorEvidences() {
   const userId = await checkCollaborator()
   
