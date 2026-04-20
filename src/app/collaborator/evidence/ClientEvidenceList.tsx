@@ -1,0 +1,189 @@
+"use client"
+
+import { useState } from "react"
+import { createEvidence } from "@/actions/evidence"
+import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react"
+
+type Evidence = {
+  id: string
+  content: string | null
+  fileUrl: string | null
+  status: string
+  createdAt: Date
+  criterion: {
+    name: string
+    standard: { name: string; year: number }
+  }
+}
+
+type CriterionDropdown = {
+  id: string
+  name: string
+  standard: { name: string; year: number }
+}
+
+export default function ClientEvidenceList({ initialEvidences, criteriaList }: { initialEvidences: any[], criteriaList: CriterionDropdown[] }) {
+  const [evidences, setEvidences] = useState<Evidence[]>(initialEvidences)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  
+  const [criterionId, setCriterionId] = useState(criteriaList[0]?.id || "")
+  const [content, setContent] = useState("")
+  const [fileUrl, setFileUrl] = useState("")
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!criterionId) return alert("Vui lòng chọn tiêu chí!")
+    setLoading(true)
+    try {
+      const newEv = await createEvidence({ criterionId, content, fileUrl })
+      window.location.reload()
+    } catch (err) {
+      alert("Đã xảy ra lỗi khi Submit minh chứng")
+      setLoading(false)
+    }
+  }
+
+  const StatusIcon = ({ status }: { status: string }) => {
+    switch (status) {
+      case "APPROVED": return <CheckCircle2 size={16} className="text-emerald-500" />
+      case "REJECTED": return <AlertCircle size={16} className="text-red-500" />
+      default: return <Clock size={16} className="text-amber-500" />
+    }
+  }
+
+  const statusColors: Record<string, string> = {
+    APPROVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    REVIEWING: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+  }
+
+  const statusLabels: Record<string, string> = {
+    APPROVED: "Đã duyệt",
+    REJECTED: "Từ chối",
+    PENDING: "Chờ duyệt",
+    REVIEWING: "Đang xem xét"
+  }
+
+  return (
+    <div>
+      <div className="flex justify-end mb-6">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
+        >
+          <Plus size={18} />
+          Báo cáo Minh chứng
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {evidences.length === 0 ? (
+          <div className="glass p-12 rounded-2xl flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+              <FileText size={28} className="text-slate-400" />
+            </div>
+            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Chưa có Minh chứng</h3>
+            <p className="text-slate-500 text-sm mt-1 max-w-sm">Bạn chưa tải lên hay báo cáo minh chứng nào.</p>
+          </div>
+        ) : (
+          evidences.map((ev) => (
+            <div key={ev.id} className="glass rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{ev.criterion.standard.name} ({ev.criterion.standard.year})</span>
+                  </div>
+                  <h3 className="font-bold text-lg text-[var(--foreground)]">{ev.criterion.name}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                    {ev.content || "Không có nội dung mô tả"}
+                  </p>
+                  {ev.fileUrl && (
+                    <a href={ev.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-sm text-[var(--primary)] font-medium mt-3 hover:underline">
+                      <FileText size={16} /> Xem tệp đính kèm
+                    </a>
+                  )}
+                </div>
+                
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${statusColors[ev.status]}`}>
+                  <StatusIcon status={ev.status} />
+                  {statusLabels[ev.status] || ev.status}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold">Thêm Minh chứng mới</h3>
+            </div>
+            
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2">Chọn Tiêu chí</label>
+                <select 
+                  value={criterionId}
+                  onChange={e => setCriterionId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  required
+                >
+                  <option value="" disabled>-- Hãy chọn một tiêu chí --</option>
+                  {criteriaList.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.standard.year} - {c.standard.name}: {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Nội dung giải trình / báo cáo</label>
+                <textarea 
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] min-h-[100px]"
+                  placeholder="Nhập nội dung báo cáo minh chứng..."
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Liên kết tệp đính kèm (Tùy chọn)</label>
+                <input 
+                  type="url" 
+                  value={fileUrl}
+                  onChange={e => setFileUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                  placeholder="https://drive.google.com/..."
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="flex-1 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {loading && <Loader2 size={16} className="animate-spin" />}
+                  Nộp Minh chứng
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { createStandard, deleteStandard } from "@/actions/standard"
 import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
 
@@ -73,9 +74,10 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
           </div>
         ) : (
           standards.map((std) => (
-            <div key={std.id} className="glass rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors group">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
+            <div key={std.id} className="glass rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors group relative">
+              <Link href={`/admin/criteria/${std.id}`} className="absolute inset-0 z-0"></Link>
+              <div className="flex items-start justify-between relative z-10">
+                <div className="flex items-start gap-4 pointer-events-none">
                   <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-[var(--primary)] flex-shrink-0 mt-1">
                     <Folder size={24} />
                   </div>
