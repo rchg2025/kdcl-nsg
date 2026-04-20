@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { EvidenceStatus } from "@prisma/client"
+import { createLog } from "@/actions/log"
 
 async function checkSupervisor() {
   const session = await getServerSession(authOptions)
@@ -37,6 +38,8 @@ export async function updateEvidenceStatus(evidenceId: string, status: EvidenceS
     where: { id: evidenceId },
     data: { status }
   })
+  
+  await createLog("UPDATE", "Duyệt nội bộ (Supervisor)", `Đổi trạng thái minh chứng ID: ${evidenceId} sang: ${status}`)
   
   revalidatePath("/supervisor/review")
   revalidatePath("/collaborator/evidence")

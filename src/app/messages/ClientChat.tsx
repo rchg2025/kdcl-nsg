@@ -13,16 +13,19 @@ export default function ClientChat({ currentUserId, initialConversations, users 
   
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Poll for messages if active conversation
   useEffect(() => {
     let interval: any
     if (activeConv) {
       const fetchMessages = async () => {
         const msgs = await getMessages(activeConv)
-        setMessages(msgs)
+        setMessages(prev => {
+          // Prevent re-render and scroll jump if messages are exactly the same
+          if (JSON.stringify(prev) === JSON.stringify(msgs)) return prev
+          return msgs
+        })
       }
       fetchMessages()
-      interval = setInterval(fetchMessages, 3000)
+      interval = setInterval(fetchMessages, 4000)
     } else {
       setMessages([])
     }
@@ -33,7 +36,10 @@ export default function ClientChat({ currentUserId, initialConversations, users 
   useEffect(() => {
     const fetchConvs = async () => {
       const convs = await getConversations()
-      setConversations(convs)
+      setConversations(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(convs)) return prev
+        return convs
+      })
     }
     const interval = setInterval(fetchConvs, 10000)
     return () => clearInterval(interval)

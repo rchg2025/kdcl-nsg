@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { createLog } from "@/actions/log"
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions)
@@ -23,6 +24,7 @@ export async function getCriteria(standardId: string) {
 export async function createCriterion(data: { name: string; description?: string; standardId: string }) {
   await checkAdmin()
   const newCriterion = await prisma.criterion.create({ data })
+  await createLog("CREATE", "Tiêu chí (Criterion)", `Tạo tiêu chí mới: ${data.name}`)
   revalidatePath("/admin/criteria")
   return newCriterion
 }
@@ -33,12 +35,15 @@ export async function updateCriterion(id: string, data: { name: string; descript
     where: { id },
     data
   })
+  await createLog("UPDATE", "Tiêu chí (Criterion)", `Cập nhật tiêu chí: ${data.name}`)
   revalidatePath("/admin/criteria")
   return updatedCriterion
 }
 
 export async function deleteCriterion(id: string, standardId: string) {
   await checkAdmin()
+  const target = await prisma.criterion.findUnique({ where: { id } })
   await prisma.criterion.delete({ where: { id } })
+  await createLog("DELETE", "Tiêu chí (Criterion)", `Xóa tiêu chí: ${target?.name}`)
   revalidatePath(`/admin/criteria/${standardId}`)
 }

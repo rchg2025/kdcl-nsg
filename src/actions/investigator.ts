@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { createLog } from "@/actions/log"
 
 async function checkInvestigator() {
   const session = await getServerSession(authOptions)
@@ -38,6 +39,8 @@ export async function evaluateEvidence(data: { evidenceId: string; isApproved: b
       evaluatorId
     }
   })
+  
+  await createLog("APPROVE", "Đánh giá KQ (Evaluation)", `Đánh giá minh chứng ID: ${data.evidenceId}. Kết quả: ${data.isApproved ? 'Đạt' : 'Không đạt'}`)
   
   revalidatePath("/investigator/evaluate")
 }
