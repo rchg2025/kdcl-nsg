@@ -50,30 +50,38 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         const uploadedUrls = []
 
         for (const file of selectedFiles) {
-          const metadata = {
-            name: file.name,
-            parents: [folderId]
-          }
-          const form = new FormData()
-          form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }))
-          form.append("file", file)
-
-          const uploadRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink", {
+          // 1. Initialize Resumable Upload
+          const initRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
             },
-            body: form
+            body: JSON.stringify({
+              name: file.name,
+              parents: [folderId]
+            })
+          })
+          
+          if (!initRes.ok) throw new Error(`Lỗi cấu hình tải lên tệp ${file.name}`)
+          const uploadUrl = initRes.headers.get("Location")
+          if (!uploadUrl) throw new Error("Google Drive không phản hồi địa chỉ tải lên.")
+
+          // 2. Upload Bytes to the Location
+          const uploadRes = await fetch(uploadUrl, {
+            method: "PUT",
+            body: file
           })
           
           if (!uploadRes.ok) {
             const errBody = await uploadRes.text()
             console.error("Drive upload error", errBody)
-            throw new Error(`Lỗi tải tệp ${file.name} lên Google Drive trực tiếp. (Service Account Error)`)
+            throw new Error(`Lỗi tải dữ liệu tệp ${file.name} trực tiếp. (Service Account Error)`)
           }
 
           const fileData = await uploadRes.json()
           
+          // 3. Set Public Permissions & get webViewLink
           await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions?supportsAllDrives=true`, {
             method: "POST",
             headers: {
@@ -82,8 +90,15 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
             },
             body: JSON.stringify({ role: "reader", type: "anyone" })
           })
+          
+          // 4. Fetch the webViewLink (since resumable returns minimal info)
+          const infoRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}?fields=webViewLink&supportsAllDrives=true`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+          })
+          const infoData = await infoRes.json()
 
-          uploadedUrls.push(fileData.webViewLink)
+          uploadedUrls.push(infoData.webViewLink)
         }
         
         finalFileUrl = uploadedUrls.join(", ")
