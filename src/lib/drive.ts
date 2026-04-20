@@ -8,10 +8,17 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mi
   const folderSetting = await prisma.systemSetting.findUnique({ where: { key: "GDRIVE_FOLDER_ID" } })
 
   const clientId = emailSetting?.value
-  // Robust parsing: strip quotes if user dump raw JSON string and parse literal newlines
-  const privateKeyRaw = keySetting?.value || ""
-  const privateKey = privateKeyRaw.trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n')
   const folderId = folderSetting?.value
+  
+  // Robust parsing
+  let parsedKey = (keySetting?.value || "").trim()
+  if (parsedKey.startsWith('{') && parsedKey.endsWith('}')) {
+    try {
+      const json = JSON.parse(parsedKey)
+      if (json.private_key) parsedKey = json.private_key
+    } catch (e) {}
+  }
+  const privateKey = parsedKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\r/g, '')
 
   if (!clientId || !privateKey || !folderId) {
     throw new Error("Tài khoản Quản trị viên chưa điền Cấu hình Google Drive trong mục Cài đặt Hệ thống (Settings).")

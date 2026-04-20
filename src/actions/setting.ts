@@ -37,8 +37,20 @@ import nodemailer from "nodemailer"
 
 export async function testDriveConfig(clientId: string, privateKey: string, folderId: string) {
   try {
-    // Robust parsing: strip leading/trailing quotes if user dumped raw JSON value, and convert literal \n to newlines
-    const cleanKey = privateKey.trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n')
+    let parsedKey = privateKey.trim()
+
+    // 1. If user accidentally pasted the whole JSON file content, extract the private_key field automatically
+    if (parsedKey.startsWith('{') && parsedKey.endsWith('}')) {
+      try {
+        const json = JSON.parse(parsedKey)
+        if (json.private_key) parsedKey = json.private_key
+      } catch (e) {
+        // Not a valid JSON, continue normal parsing
+      }
+    }
+
+    // 2. Strip leading/trailing quotes if user dumped raw JSON value, and convert literal \n to newlines
+    const cleanKey = parsedKey.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\r/g, '')
     
     const auth = new google.auth.GoogleAuth({
       credentials: {
