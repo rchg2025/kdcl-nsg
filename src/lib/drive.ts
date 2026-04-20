@@ -8,7 +8,9 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mi
   const folderSetting = await prisma.systemSetting.findUnique({ where: { key: "GDRIVE_FOLDER_ID" } })
 
   const clientId = emailSetting?.value
-  const privateKey = keySetting?.value?.replace(/\\n/g, '\n')
+  // Robust parsing: strip quotes if user dump raw JSON string and parse literal newlines
+  const privateKeyRaw = keySetting?.value || ""
+  const privateKey = privateKeyRaw.trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n')
   const folderId = folderSetting?.value
 
   if (!clientId || !privateKey || !folderId) {

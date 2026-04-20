@@ -37,10 +37,13 @@ import nodemailer from "nodemailer"
 
 export async function testDriveConfig(clientId: string, privateKey: string, folderId: string) {
   try {
+    // Robust parsing: strip leading/trailing quotes if user dumped raw JSON value, and convert literal \n to newlines
+    const cleanKey = privateKey.trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n')
+    
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: clientId,
-        private_key: privateKey.replace(/\\n/g, '\n'),
+        private_key: cleanKey,
       },
       scopes: ["https://www.googleapis.com/auth/drive"],
     })

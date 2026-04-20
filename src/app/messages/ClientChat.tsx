@@ -18,8 +18,7 @@ export default function ClientChat({ currentUserId, initialConversations, users 
     if (activeConv) {
       const fetchMessages = async () => {
         const msgs = await getMessages(activeConv)
-        setMessages(prev => {
-          // Prevent re-render and scroll jump if messages are exactly the same
+        setMessages((prev: any[]) => {
           if (JSON.stringify(prev) === JSON.stringify(msgs)) return prev
           return msgs
         })
@@ -36,7 +35,7 @@ export default function ClientChat({ currentUserId, initialConversations, users 
   useEffect(() => {
     const fetchConvs = async () => {
       const convs = await getConversations()
-      setConversations(prev => {
+      setConversations((prev: any[]) => {
         if (JSON.stringify(prev) === JSON.stringify(convs)) return prev
         return convs
       })
