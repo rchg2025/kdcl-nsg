@@ -1,7 +1,9 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { getTotalUnreadCount } from "@/actions/chat"
 import { 
   LayoutDashboard, 
   Users, 
@@ -61,6 +63,19 @@ export const investigatorMenu: MenuItem[] = [
 
 export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], role: string }) {
   const pathname = usePathname()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const count = await getTotalUnreadCount()
+        setUnreadCount(count)
+      } catch (e) {}
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 8000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen text-slate-300">
@@ -83,14 +98,21 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
             <Link 
               key={item.href} 
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 isActive 
                   ? 'bg-[var(--primary)] text-white shadow-md shadow-indigo-500/20' 
                   : 'hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <Icon size={18} className={isActive ? "text-white" : "text-slate-400"} />
-              <span className="text-sm font-medium">{item.title}</span>
+              <div className="flex items-center gap-3">
+                <Icon size={18} className={isActive ? "text-white" : "text-slate-400"} />
+                <span className="text-sm font-medium">{item.title}</span>
+              </div>
+              {item.href === "/messages" && unreadCount > 0 && (
+                <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </div>
+              )}
             </Link>
           )
         })}

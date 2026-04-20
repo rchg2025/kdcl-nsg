@@ -156,3 +156,38 @@ export async function sendMessage(conversationId: string, content: string) {
   
   return msg
 }
+
+export async function getTotalUnreadCount() {
+  try {
+    const currentUserId = await getSessionUserId()
+    const conversations = await prisma.conversation.findMany({
+      where: {
+        participants: {
+          some: { userId: currentUserId }
+        }
+      },
+      include: {
+        participants: {
+          where: { userId: currentUserId }
+        }
+      }
+    })
+    
+    let total = 0
+    for (const conv of conversations) {
+      const me = conv.participants[0]
+      const count = await prisma.message.count({
+        where: {
+          conversationId: conv.id,
+          senderId: { not: currentUserId },
+          createdAt: { gt: me?.lastReadAt || new Date(0) }
+        }
+      })
+      total += count
+    }
+    return total
+  } catch (error) {
+    return 0 // fail gracefully for public/unauthorized routes
+  }
+}
+
