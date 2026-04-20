@@ -80,7 +80,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
     setCriterionId(ev.criterion.name) // Not editable, just display
     setContent(ev.content || "")
     setFileUrl(ev.fileUrl || "")
-    setSelectedFile(null)
+    setSelectedFiles([])
     setIsModalOpen(true)
   }
 
