@@ -7,8 +7,10 @@ export default async function MessagesPage() {
   const session = await getServerSession(authOptions)
   if (!session) return null
 
-  const conversations = await getConversations()
-  const users = await getUsersForChat()
+  const [conversations, users] = await Promise.all([
+    getConversations(),
+    getUsersForChat()
+  ])
 
   return (
     <div className="flex-1 overflow-hidden h-full">

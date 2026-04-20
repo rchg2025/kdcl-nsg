@@ -14,15 +14,21 @@ export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== "ADMIN") redirect("/login")
 
-  // Fetch real statistics
-  const userCount = await prisma.user.count()
-  const standardCount = await prisma.standard.count()
-  const criteriaCount = await prisma.criterion.count()
-  
-  const approvedEvidences = await prisma.evidence.count({ where: { status: "APPROVED" } })
-  const rejectedEvidences = await prisma.evidence.count({ where: { status: "REJECTED" } })
-  
-  const pendingEvidences = await prisma.evidence.count({ where: { status: { in: ["PENDING", "REVIEWING"] } } })
+  const [
+    userCount, 
+    standardCount, 
+    criteriaCount, 
+    approvedEvidences, 
+    rejectedEvidences, 
+    pendingEvidences
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.standard.count(),
+    prisma.criterion.count(),
+    prisma.evidence.count({ where: { status: "APPROVED" } }),
+    prisma.evidence.count({ where: { status: "REJECTED" } }),
+    prisma.evidence.count({ where: { status: { in: ["PENDING", "REVIEWING"] } } })
+  ])
 
   const stats = [
     { title: "Tổng số thành viên", value: userCount.toString(), icon: Users, color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-900/30" },

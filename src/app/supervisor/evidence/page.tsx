@@ -2,8 +2,10 @@ import { getCollaboratorEvidences, getAllCriteriaForDropdown } from "@/actions/e
 import ClientEvidenceList from "@/app/collaborator/evidence/ClientEvidenceList"
 
 export default async function SupervisorEvidencePage() {
-  const evidences = await getCollaboratorEvidences()
-  const criteriaList = await getAllCriteriaForDropdown()
+  const [evidences, criteriaList] = await Promise.all([
+    getCollaboratorEvidences(),
+    getAllCriteriaForDropdown()
+  ])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

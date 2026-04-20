@@ -8,15 +8,14 @@ import { ArrowLeft } from "lucide-react"
 export default async function CriteriaDetailPage({ params }: { params: { standardId: string } }) {
   const standardId = params.standardId
   
-  const standard = await prisma.standard.findUnique({
-    where: { id: standardId }
-  })
-  
+  const [standard, criteria] = await Promise.all([
+    prisma.standard.findUnique({ where: { id: standardId } }),
+    getCriteria(standardId)
+  ])
+
   if (!standard) {
     notFound()
   }
-
-  const criteria = await getCriteria(standardId)
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

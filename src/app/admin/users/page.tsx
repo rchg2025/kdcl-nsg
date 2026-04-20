@@ -3,9 +3,11 @@ import { getDepartments, getPositions } from "@/actions/category"
 import ClientUserList from "./ClientUserList"
 
 export default async function UsersPage() {
-  const users = await getUsers()
-  const departments = await getDepartments()
-  const positions = await getPositions()
+  const [users, departments, positions] = await Promise.all([
+    getUsers(),
+    getDepartments(),
+    getPositions()
+  ])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
