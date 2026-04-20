@@ -2,7 +2,7 @@ import { ReactNode } from "react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import Sidebar, { investigatorMenu } from "@/components/layout/Sidebar"
+import Sidebar, { investigatorMenu, adminMenu } from "@/components/layout/Sidebar"
 import Topbar from "@/components/layout/Topbar"
 
 export default async function InvestigatorLayout({ children }: { children: ReactNode }) {
@@ -23,10 +23,13 @@ export default async function InvestigatorLayout({ children }: { children: React
     redirect("/login")
   }
 
+  const menu = session.user.role === "ADMIN" ? adminMenu : investigatorMenu
+  const roleName = session.user.role === "ADMIN" ? "Quản trị viên" : "Điều tra viên"
+
   return (
     <div className="flex h-screen bg-[var(--background)]">
       <div className="hidden md:block">
-        <Sidebar menuItems={investigatorMenu} role="Điều tra viên" />
+        <Sidebar menuItems={menu} role={roleName} />
       </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <Topbar user={session.user} />

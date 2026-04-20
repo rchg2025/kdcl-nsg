@@ -2,7 +2,7 @@ import { ReactNode } from "react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import Sidebar, { supervisorMenu } from "@/components/layout/Sidebar"
+import Sidebar, { supervisorMenu, adminMenu } from "@/components/layout/Sidebar"
 import Topbar from "@/components/layout/Topbar"
 
 export default async function SupervisorLayout({ children }: { children: ReactNode }) {
@@ -23,10 +23,13 @@ export default async function SupervisorLayout({ children }: { children: ReactNo
     redirect("/login")
   }
 
+  const menu = session.user.role === "ADMIN" ? adminMenu : supervisorMenu
+  const roleName = session.user.role === "ADMIN" ? "Quản trị viên" : "Giám sát viên"
+
   return (
     <div className="flex h-screen bg-[var(--background)]">
       <div className="hidden md:block">
-        <Sidebar menuItems={supervisorMenu} role="Giám sát viên" />
+        <Sidebar menuItems={menu} role={roleName} />
       </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <Topbar user={session.user} />

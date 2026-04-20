@@ -11,7 +11,8 @@ import {
   LogOut, 
   FileText,
   BarChart,
-  CheckSquare
+  CheckSquare,
+  List
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -21,6 +22,7 @@ export type MenuItem = {
   icon: any
 }
 
+
 export const adminMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/admin", icon: LayoutDashboard },
   { title: "Tiêu chuẩn & Tiêu chí", href: "/admin/criteria", icon: FileText },
@@ -28,6 +30,7 @@ export const adminMenu: MenuItem[] = [
   { title: "Duyệt Minh chứng", href: "/supervisor/review", icon: FileCheck },
   { title: "Đánh giá KQ", href: "/investigator/evaluate", icon: CheckSquare },
   { title: "Quản lý thành viên", href: "/admin/users", icon: Users },
+  { title: "Quản lý Danh mục", href: "/admin/categories", icon: List },
   { title: "Cài đặt hệ thống", href: "/admin/settings", icon: Settings },
 ]
 
