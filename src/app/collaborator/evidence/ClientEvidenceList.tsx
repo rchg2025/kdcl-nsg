@@ -30,16 +30,37 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const [criterionId, setCriterionId] = useState(criteriaList[0]?.id || "")
   const [content, setContent] = useState("")
   const [fileUrl, setFileUrl] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!criterionId) return alert("Vui lòng chọn tiêu chí!")
     setLoading(true)
     try {
-      const newEv = await createEvidence({ criterionId, content, fileUrl })
+      let finalFileUrl = fileUrl
+      
+      if (selectedFile) {
+        const formData = new FormData()
+        formData.append("file", selectedFile)
+        
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        })
+        
+        if (!res.ok) {
+           const errData = await res.json()
+           throw new Error(errData.error || "Lỗi khi tải file lên máy chủ")
+        }
+        
+        const data = await res.json()
+        finalFileUrl = data.url
+      }
+      
+      await createEvidence({ criterionId, content, fileUrl: finalFileUrl })
       window.location.reload()
-    } catch (err) {
-      alert("Đã xảy ra lỗi khi Submit minh chứng")
+    } catch (err: any) {
+      alert(err.message || "Đã xảy ra lỗi khi Submit minh chứng")
       setLoading(false)
     }
   }
@@ -153,14 +174,36 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Liên kết tệp đính kèm (Tùy chọn)</label>
-                <input 
-                  type="url" 
-                  value={fileUrl}
-                  onChange={e => setFileUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  placeholder="https://drive.google.com/..."
-                />
+                <label className="block text-sm font-semibold mb-2">Đính kèm Tệp tin</label>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      onChange={e => {
+                        setSelectedFile(e.target.files?.[0] || null)
+                        setFileUrl("") // Clear URL if choosing file
+                      }}
+                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors"
+                      disabled={!!fileUrl}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
+                    <hr className="flex-1 border-slate-200 dark:border-slate-700" /> HOẶC DÁN LINK <hr className="flex-1 border-slate-200 dark:border-slate-700" />
+                  </div>
+                  
+                  <input 
+                    type="url" 
+                    value={fileUrl}
+                    onChange={e => {
+                      setFileUrl(e.target.value)
+                      if(e.target.value) setSelectedFile(null) // Clear file if pasting link
+                    }}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
+                    placeholder="https://drive.google.com/..."
+                    disabled={!!selectedFile}
+                  />
+                </div>
               </div>
               
               <div className="flex gap-3 pt-4">
