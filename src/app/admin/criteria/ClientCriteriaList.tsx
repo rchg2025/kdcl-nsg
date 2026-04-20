@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { createStandard, deleteStandard } from "@/actions/standard"
-import { createCriterion, deleteCriterion } from "@/actions/criterion"
+import { createStandard, updateStandard, deleteStandard } from "@/actions/standard"
+import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo } from "lucide-react"
 
 type Criterion = {
@@ -30,6 +30,10 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
   const [isCritModalOpen, setIsCritModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   
+  // Edit state
+  const [editingStdId, setEditingStdId] = useState<string | null>(null)
+  const [editingCritId, setEditingCritId] = useState<string | null>(null)
+
   // Form State
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -40,47 +44,37 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
     setExpandedStds(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  const handleCreateStandard = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const newStd = await createStandard({ name, description, year })
-      setStandards([{...newStd, criteria: [], _count: { criteria: 0 }}, ...standards])
-      setIsStdModalOpen(false)
-      setName("")
-      setDescription("")
-    } catch (err) {
-      alert("Đã xảy ra lỗi khi tạo tiêu chuẩn")
-    } finally {
-      setLoading(false)
-    }
+  // --- STANDARD HANDLERS ---
+  const openCreateStd = () => {
+    setEditingStdId(null)
+    setName("")
+    setDescription("")
+    setIsStdModalOpen(true)
   }
 
-  const handleCreateCriterion = async (e: React.FormEvent) => {
+  const openEditStd = (std: Standard, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingStdId(std.id)
+    setName(std.name)
+    setDescription(std.description || "")
+    setYear(std.year)
+    setIsStdModalOpen(true)
+  }
+
+  const handleSubmitStandard = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!parentStdId) return alert("Vui lòng chọn tiêu chuẩn cha!")
     setLoading(true)
     try {
-      const newCrit = await createCriterion({ name, description, standardId: parentStdId })
-      
-      setStandards(standards.map(std => {
-        if (std.id === parentStdId) {
-          return { 
-            ...std, 
-            criteria: [...std.criteria, newCrit],
-            _count: { criteria: std._count.criteria + 1 }
-          }
-        }
-        return std
-      }))
-      
-      setExpandedStds(prev => ({ ...prev, [parentStdId]: true }))
-      setIsCritModalOpen(false)
-      setName("")
-      setDescription("")
-      setParentStdId("")
+      if (editingStdId) {
+        await updateStandard(editingStdId, { name, description, year })
+        setStandards(standards.map(s => s.id === editingStdId ? { ...s, name, description, year } : s))
+      } else {
+        const newStd = await createStandard({ name, description, year })
+        setStandards([{...newStd, criteria: [], _count: { criteria: 0 }}, ...standards])
+      }
+      setIsStdModalOpen(false)
     } catch (err) {
-      alert("Đã xảy ra lỗi khi tạo tiêu chí")
+      alert("Đã xảy ra lỗi khi tạo/sửa tiêu chuẩn")
     } finally {
       setLoading(false)
     }
@@ -92,6 +86,61 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
       await deleteStandard(id)
       setStandards(standards.filter(s => s.id !== id))
     } catch (err) {}
+  }
+
+  // --- CRITERION HANDLERS ---
+  const openCreateCrit = () => {
+    setEditingCritId(null)
+    setName("")
+    setDescription("")
+    setParentStdId(standards[0]?.id || "")
+    setIsCritModalOpen(true)
+  }
+
+  const openEditCrit = (crit: Criterion) => {
+    setEditingCritId(crit.id)
+    setName(crit.name)
+    setDescription(crit.description || "")
+    setParentStdId(crit.standardId)
+    setIsCritModalOpen(true)
+  }
+
+  const handleSubmitCriterion = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!parentStdId) return alert("Vui lòng chọn tiêu chuẩn cha!")
+    setLoading(true)
+    try {
+      if (editingCritId) {
+        await updateCriterion(editingCritId, { name, description })
+        setStandards(standards.map(std => {
+          if (std.id === parentStdId) {
+            return {
+              ...std,
+              criteria: std.criteria.map(c => c.id === editingCritId ? { ...c, name, description } : c)
+            }
+          }
+          return std
+        }))
+      } else {
+        const newCrit = await createCriterion({ name, description, standardId: parentStdId })
+        setStandards(standards.map(std => {
+          if (std.id === parentStdId) {
+            return { 
+              ...std, 
+              criteria: [...std.criteria, newCrit],
+              _count: { criteria: std._count.criteria + 1 }
+            }
+          }
+          return std
+        }))
+        setExpandedStds(prev => ({ ...prev, [parentStdId]: true }))
+      }
+      setIsCritModalOpen(false)
+    } catch (err) {
+      alert("Đã xảy ra lỗi khi tạo/sửa tiêu chí")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDeleteCrit = async (id: string, stdId: string) => {
@@ -115,14 +164,14 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
     <div>
       <div className="flex justify-end gap-3 mb-6">
         <button 
-          onClick={() => { setIsStdModalOpen(true); setName(""); setDescription(""); }}
+          onClick={openCreateStd}
           className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm"
         >
           <Folder size={18} className="text-amber-500" />
           Thêm Tiêu chuẩn
         </button>
         <button 
-          onClick={() => { setIsCritModalOpen(true); setName(""); setDescription(""); setParentStdId(standards[0]?.id || ""); }}
+          onClick={openCreateCrit}
           className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
         >
           <Plus size={18} />
@@ -158,6 +207,9 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <button onClick={(e) => openEditStd(std, e)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                    <Edit size={18} />
+                  </button>
                   <button onClick={(e) => { e.stopPropagation(); handleDeleteStd(std.id); }} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                     <Trash2 size={18} />
                   </button>
@@ -182,9 +234,15 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
                             </div>
                             {crit.description && <p className="text-sm text-slate-500 pl-8 mt-1">{crit.description}</p>}
                           </div>
-                          <button onClick={() => handleDeleteCrit(crit.id, std.id)} className="p-1.5 text-slate-400 hover:text-red-500 opacity-0 group-hover/crit:opacity-100 transition-opacity">
-                            <Trash2 size={16} />
-                          </button>
+                          
+                          <div className="flex gap-2 opacity-0 group-hover/crit:opacity-100 transition-opacity">
+                            <button onClick={() => openEditCrit(crit)} className="p-1.5 text-slate-400 hover:text-indigo-500">
+                              <Edit size={16} />
+                            </button>
+                            <button onClick={() => handleDeleteCrit(crit.id, std.id)} className="p-1.5 text-slate-400 hover:text-red-500">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -201,9 +259,9 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold flex items-center gap-2"><Folder size={20} className="text-amber-500"/> Thêm Tiêu chuẩn</h3>
+              <h3 className="text-lg font-bold flex items-center gap-2"><Folder size={20} className="text-amber-500"/> {editingStdId ? "Cập nhật Tiêu chuẩn" : "Thêm Tiêu chuẩn"}</h3>
             </div>
-            <form onSubmit={handleCreateStandard} className="p-6 space-y-4">
+            <form onSubmit={handleSubmitStandard} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">Tên Tiêu chuẩn</label>
                 <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none focus:border-[var(--primary)]" placeholder="Vd: Tiêu chuẩn 1: Tầm nhìn" />
@@ -230,12 +288,12 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold flex items-center gap-2"><ListTodo size={20} className="text-indigo-500"/> Thêm Tiêu chí</h3>
+              <h3 className="text-lg font-bold flex items-center gap-2"><ListTodo size={20} className="text-indigo-500"/> {editingCritId ? "Cập nhật Tiêu chí" : "Thêm Tiêu chí"}</h3>
             </div>
-            <form onSubmit={handleCreateCriterion} className="p-6 space-y-4">
+            <form onSubmit={handleSubmitCriterion} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Chọn Tiêu chuẩn trực thuộc</label>
-                <select required value={parentStdId} onChange={e => setParentStdId(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm font-medium">
+                <label className="block text-sm font-semibold mb-2">Tiêu chuẩn trực thuộc</label>
+                <select required disabled={!!editingCritId} value={parentStdId} onChange={e => setParentStdId(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm font-medium disabled:opacity-50">
                   {standards.map(s => (
                     <option key={s.id} value={s.id}>Năm {s.year} - {s.name}</option>
                   ))}

@@ -34,6 +34,16 @@ export async function createStandard(data: { name: string; description?: string;
   return newStandard
 }
 
+export async function updateStandard(id: string, data: { name: string; description?: string; year: number }) {
+  await checkAdmin()
+  const updatedStandard = await prisma.standard.update({
+    where: { id },
+    data
+  })
+  revalidatePath("/admin/criteria")
+  return updatedStandard
+}
+
 export async function deleteStandard(id: string) {
   await checkAdmin()
   await prisma.standard.delete({ where: { id } })

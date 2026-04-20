@@ -24,8 +24,10 @@ export type MenuItem = {
 export const adminMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/admin", icon: LayoutDashboard },
   { title: "Tiêu chuẩn & Tiêu chí", href: "/admin/criteria", icon: FileText },
+  { title: "Nộp Minh chứng", href: "/collaborator/evidence", icon: FileText },
+  { title: "Duyệt Minh chứng", href: "/supervisor/review", icon: FileCheck },
+  { title: "Đánh giá KQ", href: "/investigator/evaluate", icon: CheckSquare },
   { title: "Quản lý thành viên", href: "/admin/users", icon: Users },
-  { title: "Báo cáo thống kê", href: "/admin/reports", icon: BarChart },
   { title: "Cài đặt hệ thống", href: "/admin/settings", icon: Settings },
 ]
 

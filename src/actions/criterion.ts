@@ -23,8 +23,18 @@ export async function getCriteria(standardId: string) {
 export async function createCriterion(data: { name: string; description?: string; standardId: string }) {
   await checkAdmin()
   const newCriterion = await prisma.criterion.create({ data })
-  revalidatePath(`/admin/criteria/${data.standardId}`)
+  revalidatePath("/admin/criteria")
   return newCriterion
+}
+
+export async function updateCriterion(id: string, data: { name: string; description?: string }) {
+  await checkAdmin()
+  const updatedCriterion = await prisma.criterion.update({
+    where: { id },
+    data
+  })
+  revalidatePath("/admin/criteria")
+  return updatedCriterion
 }
 
 export async function deleteCriterion(id: string, standardId: string) {
