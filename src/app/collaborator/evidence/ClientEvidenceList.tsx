@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createEvidence, updateEvidence, uploadFileAction } from "@/actions/evidence"
+import { createEvidence, updateEvidence } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2 } from "lucide-react"
 
 type Evidence = {
@@ -52,17 +52,44 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         const uploadedUrls: string[] = []
 
         for (const file of selectedFiles) {
-          const formData = new FormData()
-          formData.append("file", file)
-
-          const { url, error } = await uploadFileAction(formData)
-
-          if (error) {
-            throw new Error(`Lỗi tải tệp ${file.name}: ${error}`)
+          // 1. Khởi tạo luồng tải lên
+          const initRes = await fetch("/api/upload-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: file.name, mimeType: file.type || "application/octet-stream" })
+          })
+          
+          if (!initRes.ok) {
+            const err = await initRes.json().catch(() => ({ error: "Khởi tạo Upload thất bại" }))
+            throw new Error(err.error || "Khởi tạo Upload thất bại")
           }
-          if (url) {
-             uploadedUrls.push(url)
-          }
+          
+          const { uploadUrl } = await initRes.json()
+
+          // 2. Tải trực tiếp file từ trình duyệt lên Google Drive
+          const putRes = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Type": file.type || "application/octet-stream"
+            },
+            body: file
+          })
+
+          if (!putRes.ok) throw new Error(`Lỗi khi đẩy tệp ${file.name} lên Google Drive`)
+
+          const fileData = await putRes.json()
+
+          // 3. Xin quyền public & lấy link webView
+          const permRes = await fetch("/api/drive-permissions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fileId: fileData.id })
+          })
+
+          if (!permRes.ok) throw new Error(`Không lấy được link cho tệp ${file.name}`)
+          
+          const { url } = await permRes.json()
+          if (url) uploadedUrls.push(url)
         }
         
         if (finalFileUrl && finalFileUrl.trim() !== '') {

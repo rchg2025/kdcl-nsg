@@ -36,36 +36,74 @@ export async function POST(request: Request) {
       scopes: ["https://www.googleapis.com/auth/drive"],
     })
 
+    const drive = google.drive({ version: "v3", auth })
+    const folderId = folderSetting.value
+
+    // Auto-detect Shared Drive
+    let driveId: string | undefined
+    try {
+      const folderRes = await drive.files.get({
+        fileId: folderId,
+        fields: "driveId",
+        supportsAllDrives: true
+      })
+      driveId = folderRes.data.driveId || undefined
+    } catch (e) {}
+
+    const requestBody: any = {
+      name: name,
+      parents: [folderId]
+    }
+
+    const params: any = {
+      uploadType: "resumable",
+      requestBody,
+      supportsAllDrives: true
+    }
+
+    if (driveId) {
+      params.includeItemsFromAllDrives = true
+    }
+
+    // Call Google API to instantiate resumable session
+    const initRes = await drive.files.create(params)
+    
+    // The googleapis library returns the exact Location header inside the response object for resumable uploads
+    // wait, googleapis might just do the full upload if you don't pass a stream.
+    // Instead of using googleapis SDK to create session, let's use standard POST fetch with the token, because the SDK abstracts it weirdly for resumable.
+    
     const client = await auth.getClient()
     const token = await client.getAccessToken()
 
-    const folderId = folderSetting.value
+    const fetchUrl = new URL("https://www.googleapis.com/upload/drive/v3/files")
+    fetchUrl.searchParams.set("uploadType", "resumable")
+    fetchUrl.searchParams.set("supportsAllDrives", "true")
+    if (driveId) {
+       // Need to append query params or put in body? But resumable standard API: 
+       // If using API v3, it supportsAllDrives=true is usually enough
+    }
 
-    // Create Resumable Upload Session on Server side
-    const initRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true", {
+    const startRes = await fetch(fetchUrl.toString(), {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token.token}`,
         "Content-Type": "application/json",
         "X-Upload-Content-Type": mimeType
       },
-      body: JSON.stringify({
-        name: name,
-        parents: [folderId]
-      })
+      body: JSON.stringify(requestBody)
     })
 
-    if (!initRes.ok) {
-      const err = await initRes.text()
-      return NextResponse.json({ error: "Lõi máy chủ không thể khởi tạo luồng tải lên: " + err }, { status: 500 })
+    if (!startRes.ok) {
+      const err = await startRes.text()
+      return NextResponse.json({ error: "Lỗi máy chủ không thể khởi tạo luồng tải lên: " + err }, { status: 500 })
     }
 
-    const uploadUrl = initRes.headers.get("Location")
+    const uploadUrl = startRes.headers.get("Location")
     if (!uploadUrl) {
-      return NextResponse.json({ error: "Không lấy được Location từ Google" }, { status: 500 })
+      return NextResponse.json({ error: "Không lấy được Location session từ Google" }, { status: 500 })
     }
 
-    return NextResponse.json({ uploadUrl, token: token.token })
+    return NextResponse.json({ uploadUrl })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

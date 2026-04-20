@@ -66,7 +66,8 @@ export async function updateEvidence(id: string, data: { content: string; fileUr
     where: { id },
     data: {
       ...data,
-      status: "PENDING" // Reset status for re-review
+      status: "PENDING", // Reset status for re-review
+      rejectReason: null // Xóa lý do từ chối cũ
     }
   })
   
