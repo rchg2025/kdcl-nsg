@@ -57,38 +57,43 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         const uploadedUrls = []
 
         for (const file of selectedFiles) {
-          // 1. Initialize Resumable Upload
-          const initRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true", {
+          const boundary = "-------314159265358979323846"
+          const delimiter = "\r\n--" + boundary + "\r\n"
+          const close_delim = "\r\n--" + boundary + "--"
+
+          const metadata = {
+            name: file.name,
+            parents: [folderId]
+          }
+
+          const multipartBlob = new Blob([
+            delimiter,
+            "Content-Type: application/json; charset=UTF-8\r\n\r\n",
+            JSON.stringify(metadata),
+            delimiter,
+            "Content-Type: " + (file.type || "application/octet-stream") + "\r\n\r\n",
+            file,
+            close_delim
+          ], { type: "multipart/related; boundary=" + boundary })
+
+          const uploadRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
+              "Authorization": `Bearer ${token}`
+              // fetch automatically sets the boundary through the Blob type
             },
-            body: JSON.stringify({
-              name: file.name,
-              parents: [folderId]
-            })
+            body: multipartBlob
           })
-          
-          if (!initRes.ok) throw new Error(`Lỗi cấu hình tải lên tệp ${file.name}`)
-          const uploadUrl = initRes.headers.get("Location")
-          if (!uploadUrl) throw new Error("Google Drive không phản hồi địa chỉ tải lên.")
 
-          // 2. Upload Bytes to the Location
-          const uploadRes = await fetch(uploadUrl, {
-            method: "PUT",
-            body: file
-          })
-          
           if (!uploadRes.ok) {
             const errBody = await uploadRes.text()
             console.error("Drive upload error", errBody)
-            throw new Error(`Lỗi tải dữ liệu tệp ${file.name} trực tiếp. (Service Account Error)`)
+            throw new Error(`Lỗi tải dữ liệu tệp ${file.name} trực tiếp. (HTTP Status: ${uploadRes.status})`)
           }
 
           const fileData = await uploadRes.json()
           
-          // 3. Set Public Permissions & get webViewLink
+          // Set Public Permissions
           await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions?supportsAllDrives=true`, {
             method: "POST",
             headers: {
@@ -97,15 +102,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
             },
             body: JSON.stringify({ role: "reader", type: "anyone" })
           })
-          
-          // 4. Fetch the webViewLink (since resumable returns minimal info)
-          const infoRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}?fields=webViewLink&supportsAllDrives=true`, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-          })
-          const infoData = await infoRes.json()
 
-          uploadedUrls.push(infoData.webViewLink)
+          uploadedUrls.push(fileData.webViewLink)
         }
         
         finalFileUrl = uploadedUrls.join(", ")
