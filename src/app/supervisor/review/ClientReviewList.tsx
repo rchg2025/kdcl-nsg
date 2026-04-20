@@ -2,22 +2,49 @@
 
 import { useState } from "react"
 import { updateEvidenceStatus } from "@/actions/supervisor"
-import { Loader2, CheckCircle2, Clock, AlertCircle, FileText, UserCircle } from "lucide-react"
+import { Loader2, CheckCircle2, Clock, AlertCircle, FileText, UserCircle, XCircle } from "lucide-react"
 import { EvidenceStatus } from "@prisma/client"
 
 export default function ClientReviewList({ initialEvidences }: { initialEvidences: any[] }) {
   const [evidences, setEvidences] = useState(initialEvidences)
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  
+  // Rejection modal state
+  const [rejectModalId, setRejectModalId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState("")
 
-  const handleStatusChange = async (id: string, newStatus: EvidenceStatus) => {
+  const handleStatusChange = async (id: string, newStatus: EvidenceStatus, reason?: string) => {
+    if (newStatus === "REJECTED") {
+      setRejectModalId(id)
+      setRejectReason("")
+      return
+    }
+    
     setLoadingId(id)
     try {
       await updateEvidenceStatus(id, newStatus)
-      setEvidences(evidences.map(ev => ev.id === id ? { ...ev, status: newStatus } : ev))
-    } catch (err) {
-      alert("Đã xảy ra lỗi khi duyệt minh chứng")
+      setEvidences(evidences.map(ev => ev.id === id ? { ...ev, status: newStatus, rejectReason: null } : ev))
+    } catch (err: any) {
+      alert(err.message || "Đã xảy ra lỗi khi duyệt minh chứng")
     } finally {
       setLoadingId(null)
+    }
+  }
+
+  const confirmReject = async () => {
+    if (!rejectModalId) return
+    if (!rejectReason.trim()) return alert("Vui lòng nhập lý do từ chối!")
+
+    setLoadingId(rejectModalId)
+    setRejectModalId(null)
+    try {
+      await updateEvidenceStatus(rejectModalId, "REJECTED" as EvidenceStatus, rejectReason.trim())
+      setEvidences(evidences.map(ev => ev.id === rejectModalId ? { ...ev, status: "REJECTED", rejectReason: rejectReason.trim() } : ev))
+    } catch (err: any) {
+      alert(err.message || "Đã xảy ra lỗi khi từ chối minh chứng")
+    } finally {
+      setLoadingId(null)
+      setRejectReason("")
     }
   }
 
@@ -63,9 +90,23 @@ export default function ClientReviewList({ initialEvidences }: { initialEvidence
                   </div>
 
                   {ev.fileUrl && (
-                    <a href={ev.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-sm text-[var(--primary)] font-medium mt-3 hover:underline">
-                      <FileText size={16} /> Xem tệp minh chứng
-                    </a>
+                    <div className="mt-3 flex flex-col gap-1">
+                      {ev.fileUrl.split(", ").map((url: string, idx: number) => (
+                        <a key={idx} href={url} target="_blank" className="inline-flex w-fit items-center gap-2 text-sm text-[var(--primary)] font-medium hover:underline">
+                          <FileText size={16} /> Xem tệp minh chứng {idx + 1}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Show rejection reason if rejected */}
+                  {ev.status === "REJECTED" && ev.rejectReason && (
+                    <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-xs mb-1">
+                        <XCircle size={14} /> Lý do từ chối:
+                      </div>
+                      <p className="text-sm text-red-700 dark:text-red-300">{ev.rejectReason}</p>
+                    </div>
                   )}
 
                   <div className="flex items-center gap-2 mt-4 text-xs font-medium text-slate-500">
@@ -99,6 +140,52 @@ export default function ClientReviewList({ initialEvidences }: { initialEvidence
           ))
         )}
       </div>
+
+      {/* Rejection reason modal */}
+      {rejectModalId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <XCircle size={20} className="text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[var(--foreground)]">Từ chối Minh chứng</h3>
+                <p className="text-xs text-slate-500">Nhập lý do để CTV biết cần sửa gì</p>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-[var(--foreground)]">Lý do từ chối <span className="text-red-500">*</span></label>
+                <textarea
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 min-h-[100px] text-sm"
+                  placeholder="Ví dụ: Thiếu tài liệu chứng minh, cần bổ sung biên bản họp..."
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setRejectModalId(null); setRejectReason("") }}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmReject}
+                  disabled={!rejectReason.trim()}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <XCircle size={16} /> Xác nhận Từ chối
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

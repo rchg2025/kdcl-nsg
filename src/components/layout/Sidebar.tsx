@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { getTotalUnreadCount } from "@/actions/chat"
+import { getNotifications, getUnreadNotificationCount, markNotificationsRead } from "@/actions/notification"
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,7 +17,8 @@ import {
   CheckSquare,
   List,
   MessageSquare,
-  Clock
+  Clock,
+  Bell
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -61,15 +63,33 @@ export const investigatorMenu: MenuItem[] = [
   { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
 ]
 
+type NotifItem = {
+  id: string
+  title: string
+  message: string
+  type: string
+  isRead: boolean
+  link: string | null
+  createdAt: Date
+}
+
 export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], role: string }) {
   const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
+  const [notifCount, setNotifCount] = useState(0)
+  const [showNotifPanel, setShowNotifPanel] = useState(false)
+  const [notifications, setNotifications] = useState<NotifItem[]>([])
+  const notifRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchUnread = async () => {
       try {
-        const count = await getTotalUnreadCount()
-        setUnreadCount(count)
+        const [chatCount, nCount] = await Promise.all([
+          getTotalUnreadCount(),
+          getUnreadNotificationCount()
+        ])
+        setUnreadCount(chatCount)
+        setNotifCount(nCount)
       } catch (e) {}
     }
     fetchUnread()
@@ -77,15 +97,111 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
     return () => clearInterval(interval)
   }, [])
 
+  // Close panel on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifPanel(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  const openNotifPanel = async () => {
+    if (showNotifPanel) {
+      setShowNotifPanel(false)
+      return
+    }
+    try {
+      const notifs = await getNotifications()
+      setNotifications(notifs)
+      setShowNotifPanel(true)
+      // Mark all as read
+      await markNotificationsRead()
+      setNotifCount(0)
+    } catch (e) {}
+  }
+
+  const notifTypeColors: Record<string, string> = {
+    EVIDENCE_APPROVED: "text-emerald-500",
+    EVIDENCE_REJECTED: "text-red-500",
+    EVIDENCE_REVIEWING: "text-blue-500",
+    EVIDENCE_PENDING: "text-amber-500"
+  }
+
+  const timeAgo = (date: Date) => {
+    const diff = Date.now() - new Date(date).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return "Vừa xong"
+    if (mins < 60) return `${mins} phút trước`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs} giờ trước`
+    const days = Math.floor(hrs / 24)
+    return `${days} ngày trước`
+  }
+
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen text-slate-300">
-      <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800">
-        <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white shadow-lg">
-          <ShieldCheck size={20} />
+      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white shadow-lg">
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <span className="text-white font-bold text-sm block">KDCL - NSG</span>
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">{role}</span>
+          </div>
         </div>
-        <div>
-          <span className="text-white font-bold text-sm block">KDCL - NSG</span>
-          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">{role}</span>
+        
+        {/* Notification Bell */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={openNotifPanel}
+            className="relative p-2 rounded-lg hover:bg-slate-800 transition-colors"
+            title="Thông báo"
+          >
+            <Bell size={18} className={notifCount > 0 ? "text-amber-400" : "text-slate-400"} />
+            {notifCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in shadow-sm">
+                {notifCount > 9 ? "9+" : notifCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notification Dropdown Panel */}
+          {showNotifPanel && (
+            <div className="absolute left-0 top-12 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 animate-in slide-in-from-top-2 duration-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-white">Thông báo</h4>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-slate-400">
+                    <Bell size={24} className="mx-auto mb-2 opacity-40" />
+                    Chưa có thông báo nào
+                  </div>
+                ) : (
+                  notifications.map(n => (
+                    <Link
+                      key={n.id}
+                      href={n.link || "#"}
+                      onClick={() => setShowNotifPanel(false)}
+                      className={`block px-4 py-3 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${!n.isRead ? "bg-indigo-50/50 dark:bg-indigo-900/10" : ""}`}
+                    >
+                      <div className={`text-xs font-bold mb-0.5 ${notifTypeColors[n.type] || "text-slate-500"}`}>
+                        {n.title}
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                        {n.message}
+                      </p>
+                      <span className="text-[10px] text-slate-400 mt-1 block">{timeAgo(n.createdAt)}</span>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       

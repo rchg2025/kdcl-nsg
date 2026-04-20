@@ -9,6 +9,7 @@ type Evidence = {
   content: string | null
   fileUrl: string | null
   status: string
+  rejectReason: string | null
   createdAt: Date
   criterion: {
     name: string
@@ -160,11 +161,19 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                   </p>
                   {ev.fileUrl && (
                     <div className="mt-3 flex flex-col gap-1">
-                      {ev.fileUrl.split(", ").map((url, idx) => (
+                      {ev.fileUrl.split(", ").map((url: string, idx: number) => (
                         <a key={idx} href={url} target="_blank" className="inline-flex w-fit items-center gap-2 text-sm text-[var(--primary)] font-medium hover:underline">
                           <FileText size={16} /> Xem tệp đính kèm {idx + 1}
                         </a>
                       ))}
+                    </div>
+                  )}
+                  {ev.status === "REJECTED" && ev.rejectReason && (
+                    <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-xs mb-1">
+                        <AlertCircle size={14} /> Lý do từ chối:
+                      </div>
+                      <p className="text-sm text-red-700 dark:text-red-300">{ev.rejectReason}</p>
                     </div>
                   )}
                 </div>
