@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { getTotalUnreadCount } from "@/actions/chat"
 import { getNotifications, getUnreadNotificationCount, markNotificationsRead } from "@/actions/notification"
+import { getPendingEvidenceCount } from "@/actions/supervisor"
 import { 
   LayoutDashboard, 
   Users, 
@@ -77,6 +78,7 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
   const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
   const [notifCount, setNotifCount] = useState(0)
+  const [pendingEvidenceCount, setPendingEvidenceCount] = useState(0)
   const [showNotifPanel, setShowNotifPanel] = useState(false)
   const [notifications, setNotifications] = useState<NotifItem[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
@@ -90,6 +92,11 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
         ])
         setUnreadCount(chatCount)
         setNotifCount(nCount)
+
+        if (role === "Quản trị viên" || role === "Giám sát viên" || role === "ADMIN" || role === "SUPERVISOR") {
+          const pendingCount = await getPendingEvidenceCount()
+          setPendingEvidenceCount(pendingCount)
+        }
       } catch (e) {}
     }
     fetchUnread()
@@ -183,11 +190,10 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
                   </div>
                 ) : (
                   notifications.map(n => (
-                    <Link
+                    <div
                       key={n.id}
-                      href={n.link || "#"}
                       onClick={() => setShowNotifPanel(false)}
-                      className={`block px-4 py-3 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${!n.isRead ? "bg-indigo-50/50 dark:bg-indigo-900/10" : ""}`}
+                      className={`block px-4 py-3 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${!n.isRead ? "bg-indigo-50/50 dark:bg-indigo-900/10" : ""}`}
                     >
                       <div className={`text-xs font-bold mb-0.5 ${notifTypeColors[n.type] || "text-slate-500"}`}>
                         {n.title}
@@ -196,7 +202,7 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
                         {n.message}
                       </p>
                       <span className="text-[10px] text-slate-400 mt-1 block">{timeAgo(n.createdAt)}</span>
-                    </Link>
+                    </div>
                   ))
                 )}
               </div>
@@ -227,6 +233,11 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
               {item.href === "/messages" && unreadCount > 0 && (
                 <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
                   {unreadCount > 99 ? '99+' : unreadCount}
+                </div>
+              )}
+              {item.href === "/supervisor/review" && pendingEvidenceCount > 0 && (
+                <div className="bg-amber-500 text-amber-950 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
+                  {pendingEvidenceCount > 99 ? '99+' : pendingEvidenceCount}
                 </div>
               )}
             </Link>

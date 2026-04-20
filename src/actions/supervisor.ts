@@ -33,6 +33,17 @@ export async function getReviewEvidences() {
   })
 }
 
+export async function getPendingEvidenceCount() {
+  try {
+    await checkSupervisor()
+    return await prisma.evidence.count({
+      where: { status: "PENDING" }
+    })
+  } catch (error) {
+    return 0
+  }
+}
+
 const statusLabels: Record<string, string> = {
   APPROVED: "Đã duyệt",
   REJECTED: "Từ chối",

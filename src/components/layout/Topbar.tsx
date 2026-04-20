@@ -22,11 +22,7 @@ export default function Topbar({ user }: { user: any }) {
       </div>
       
       <div className="flex items-center gap-5">
-        <button className="relative text-slate-500 hover:text-[var(--primary)] transition-colors">
-          <Bell size={20} />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-[#09090b]"></span>
-        </button>
-        
+
         <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
         
         <Link href="/profile" className="flex items-center gap-3 cursor-pointer group">
