@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import StatCharts from "@/components/dashboard/StatCharts"
 
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions)
@@ -71,31 +72,9 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <h3 className="font-bold text-slate-800 dark:text-slate-200 mt-8">Tình trạng Minh chứng</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {evStats.map((stat, i) => (
-          <div key={i} className="glass p-6 rounded-2xl flex items-center gap-4 hover:-translate-y-1 transition-transform duration-300 shadow-sm border border-slate-200 dark:border-slate-800">
-            <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${stat.bg} ${stat.color}`}>
-              <stat.icon size={24} />
-            </div>
-            <div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{stat.title}</p>
-              <h3 className="text-3xl font-bold mt-1 text-[var(--foreground)]">{stat.value}</h3>
-            </div>
-          </div>
-        ))}
-      </div>
+      <StatCharts />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <div className="lg:col-span-2 glass rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
-          <h3 className="font-bold text-lg mb-4">Biểu đồ (Minh họa)</h3>
-          <div className="w-full h-64 bg-slate-50 dark:bg-slate-800/50 rounded-xl flex items-end justify-around border border-dashed border-slate-300 dark:border-slate-700 p-4 pt-12">
-            <div className="w-16 bg-blue-400 rounded-t-md relative h-[40%]" title="Q1"><span className="absolute -top-6 text-xs text-center w-full">40%</span></div>
-            <div className="w-16 bg-blue-500 rounded-t-md relative h-[65%]" title="Q2"><span className="absolute -top-6 text-xs text-center w-full">65%</span></div>
-            <div className="w-16 bg-blue-600 rounded-t-md relative h-[90%]" title="Q3"><span className="absolute -top-6 text-xs text-center w-full">90%</span></div>
-            <div className="w-16 bg-[var(--primary)] rounded-t-md relative h-[100%]" title="Q4"><span className="absolute -top-6 text-xs text-center w-full text-[var(--primary)] font-bold">100%</span></div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 mt-6">
         <div className="glass rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
           <h3 className="font-bold text-lg mb-4">Tài khoản mới</h3>
           <div className="space-y-4">

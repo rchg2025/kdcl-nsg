@@ -37,7 +37,7 @@ async function checkCollaborator() {
   return session.user.id
 }
 
-export async function createEvidence(data: { criterionId: string; content: string; fileUrl?: string }) {
+export async function createEvidence(data: { criterionId: string; content: string; fileUrl?: string; evidenceItemId?: string }) {
   const userId = await checkCollaborator()
   
   const newEvidence = await prisma.evidence.create({
@@ -54,7 +54,7 @@ export async function createEvidence(data: { criterionId: string; content: strin
   return newEvidence
 }
 
-export async function updateEvidence(id: string, data: { content: string; fileUrl?: string }) {
+export async function updateEvidence(id: string, data: { content: string; fileUrl?: string; evidenceItemId?: string }) {
   const userId = await checkCollaborator()
   
   // Verify ownership and status
@@ -108,7 +108,7 @@ export async function getAllCriteriaForDropdown() {
 
   return await prisma.criterion.findMany({
     where: whereClause,
-    include: { standard: true },
+    include: { standard: true, items: { orderBy: { createdAt: 'asc' } } },
     orderBy: [
       { standard: { year: 'desc' } },
       { name: 'asc' }

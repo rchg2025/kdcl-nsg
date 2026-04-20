@@ -4,6 +4,11 @@ import { useState } from "react"
 import { createEvidence, updateEvidence } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2 } from "lucide-react"
 
+type EvidenceItem = {
+  id: string
+  name: string
+}
+
 type Evidence = {
   id: string
   content: string | null
@@ -15,12 +20,14 @@ type Evidence = {
     name: string
     standard: { name: string; year: number }
   }
+  evidenceItem?: { name: string } | null
 }
 
 type CriterionDropdown = {
   id: string
   name: string
   standard: { name: string; year: number }
+  items: EvidenceItem[]
 }
 
 export default function ClientEvidenceList({ initialEvidences, criteriaList }: { initialEvidences: any[], criteriaList: CriterionDropdown[] }) {
@@ -30,6 +37,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const [editingId, setEditingId] = useState<string | null>(null)
   
   const [criterionId, setCriterionId] = useState(criteriaList[0]?.id || "")
+  const [evidenceItemId, setEvidenceItemId] = useState("")
   const [content, setContent] = useState("")
   const [fileUrl, setFileUrl] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
@@ -100,9 +108,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
       }
       
       if (editingId) {
-        await updateEvidence(editingId, { content, fileUrl: finalFileUrl })
+        await updateEvidence(editingId, { content, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined })
       } else {
-        await createEvidence({ criterionId, content, fileUrl: finalFileUrl })
+        await createEvidence({ criterionId, content, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined })
       }
       window.location.reload()
     } catch (err: any) {
@@ -114,6 +122,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const openEditModal = (ev: Evidence) => {
     setEditingId(ev.id)
     setCriterionId(ev.criterion.name) // Not editable, just display
+    setEvidenceItemId("") // Prevent selection change on edit for simplicity
     setSearchCriterion(ev.criterion.name)
     setContent(ev.content || "")
     setFileUrl(ev.fileUrl || "")
@@ -124,12 +133,16 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const openCreateModal = () => {
     setEditingId(null)
     setCriterionId("")
+    setEvidenceItemId("")
     setSearchCriterion("")
     setContent("")
     setFileUrl("")
     setSelectedFiles([])
     setIsModalOpen(true)
   }
+  
+  const selectedCriterionData = criteriaList.find(c => c.id === criterionId)
+  const availableItems = selectedCriterionData?.items || []
 
   const StatusIcon = ({ status }: { status: string }) => {
     switch (status) {
@@ -183,6 +196,11 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{ev.criterion.standard.name} ({ev.criterion.standard.year})</span>
                   </div>
                   <h3 className="font-bold text-lg text-[var(--foreground)]">{ev.criterion.name}</h3>
+                  {ev.evidenceItem && (
+                    <div className="inline-block mt-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-xs font-semibold">
+                      Phân loại: {ev.evidenceItem.name}
+                    </div>
+                  )}
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
                     {ev.content || "Không có nội dung mô tả"}
                   </p>
@@ -273,6 +291,24 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                   </div>
                 )}
               </div>
+
+              {availableItems.length > 0 && !editingId && (
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Phân loại (Danh mục Minh chứng)</label>
+                  <select
+                    value={evidenceItemId}
+                    onChange={e => setEvidenceItemId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    required
+                  >
+                    <option value="" disabled>--- Chọn Danh mục ---</option>
+                    {availableItems.map(item => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-500 mt-2 pl-1 italic">Vui lòng chọn minh chứng bạn đang muốn nộp theo yêu cầu của tiêu chí.</p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold mb-2">Nội dung giải trình / báo cáo</label>

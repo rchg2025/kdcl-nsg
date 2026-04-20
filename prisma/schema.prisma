@@ -60,6 +60,19 @@ model Criterion {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  evidences    Evidence[]
+  items        EvidenceItem[]
+}
+
+model EvidenceItem {
+  id          String   @id @default(cuid())
+  criterionId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   evidences   Evidence[]
 }
 
@@ -74,6 +87,8 @@ model Evidence {
   id             String    @id @default(cuid())
   criterionId    String
   criterion      Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  evidenceItemId String?
+  evidenceItem   EvidenceItem? @relation(fields: [evidenceItemId], references: [id], onDelete: Cascade)
   collaboratorId String
   collaborator   User      @relation("CollaboratorEvidence", fields: [collaboratorId], references: [id])
   content        String?

@@ -5,11 +5,19 @@ import { createStandard, updateStandard, deleteStandard } from "@/actions/standa
 import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo } from "lucide-react"
 
+type EvidenceItem = {
+  id: string
+  name: string
+  description: string | null
+  criterionId: string
+}
+
 type Criterion = {
   id: string
   name: string
   description: string | null
   standardId: string
+  items: EvidenceItem[]
 }
 
 type Standard = {
@@ -19,6 +27,129 @@ type Standard = {
   year: number
   criteria: Criterion[]
   _count: { criteria: number }
+}
+
+function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit }: any) {
+  const [items, setItems] = useState<EvidenceItem[]>(crit.items || [])
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newItemName, setNewItemName] = useState("")
+  const [newItemDesc, setNewItemDesc] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newItemName) return
+    setLoading(true)
+    try {
+      const parentModule = await import("@/actions/criterion")
+      const added = await parentModule.createEvidenceItem({ name: newItemName, description: newItemDesc, criterionId: crit.id })
+      setItems([...items, added])
+      setNewItemName("")
+      setNewItemDesc("")
+      setShowAddForm(false)
+    } catch (err) {
+      alert("Lỗi khi thêm danh mục minh chứng")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (itemId: string) => {
+    if (!confirm("Xóa danh mục minh chứng này? Các hồ sơ đã nộp sẽ mất liên kết!")) return
+    try {
+      const parentModule = await import("@/actions/criterion")
+      await parentModule.deleteEvidenceItem(itemId)
+      setItems(items.filter(i => i.id !== itemId))
+    } catch (err) {
+      alert("Lỗi khi xóa danh mục minh chứng")
+    }
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm group/crit">
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="shrink-0 w-6 h-6 rounded bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] flex items-center justify-center text-xs font-bold">{idx + 1}</span>
+            <h4 className="font-bold text-[var(--foreground)]">{crit.name}</h4>
+          </div>
+          {crit.description && <p className="text-sm text-slate-500 pl-8 mt-1">{crit.description}</p>}
+        </div>
+        
+        <div className="flex gap-2 opacity-0 group-hover/crit:opacity-100 transition-opacity ml-4">
+          <button onClick={() => openEditCrit(crit)} className="p-1.5 text-slate-400 hover:text-indigo-500 rounded hover:bg-slate-100 transition-colors">
+            <Edit size={16} />
+          </button>
+          <button onClick={() => handleDeleteCrit(crit.id, crit.standardId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded hover:bg-slate-100 transition-colors">
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+      
+      <div className="pl-8 flex flex-col mt-3">
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-1.5 self-start text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors px-2 py-1 -ml-2 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+        >
+          {isExpanded ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
+          Danh mục Minh chứng yêu cầu ({items.length})
+        </button>
+
+        {isExpanded && (
+          <div className="mt-2 pl-3 border-l-2 border-indigo-100 dark:border-indigo-900/50 space-y-2">
+            {items.map(item => (
+              <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-lg group/item">
+                <div className="flex flex-col flex-1 pl-1 border-l-2 border-amber-400">
+                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-2">{item.name}</div>
+                  {item.description && <div className="text-xs text-slate-500 ml-2 mt-0.5">{item.description}</div>}
+                </div>
+                <button 
+                  onClick={() => handleDelete(item.id)}
+                  className="text-xs font-medium text-slate-400 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity self-end sm:self-auto min-w-max px-2 py-1 rounded hover:bg-red-50"
+                >
+                  Xóa
+                </button>
+              </div>
+            ))}
+
+            {showAddForm ? (
+              <form onSubmit={handleCreate} className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg border border-indigo-100 dark:border-indigo-900 mt-2 flex flex-col gap-2">
+                <input 
+                  type="text" 
+                  value={newItemName}
+                  onChange={e => setNewItemName(e.target.value)}
+                  placeholder="Tên danh mục minh chứng (vd: Quyết định, Báo cáo...)"
+                  className="w-full px-3 py-2 text-sm rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500"
+                  required
+                />
+                <input 
+                  type="text" 
+                  value={newItemDesc}
+                  onChange={e => setNewItemDesc(e.target.value)}
+                  placeholder="Ghi chú thêm (Không bắt buộc)"
+                  className="w-full px-3 py-2 text-sm rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500"
+                />
+                <div className="flex justify-end gap-2 mt-1">
+                  <button type="button" onClick={() => setShowAddForm(false)} className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 font-medium">Hủy</button>
+                  <button type="submit" disabled={loading} className="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded font-medium disabled:opacity-70 flex items-center gap-1 hover:bg-indigo-700">
+                    {loading && <Loader2 size={12} className="animate-spin" />} Lưu
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button 
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 mt-2 pt-1 pb-1 px-2 rounded-md hover:bg-indigo-50 transition-colors w-fit"
+              >
+                <Plus size={16} /> Thêm Danh mục Minh chứng
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function ClientCriteriaList({ initialStandards }: { initialStandards: Standard[] }) {
@@ -127,7 +258,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
           if (std.id === parentStdId) {
             return { 
               ...std, 
-              criteria: [...std.criteria, newCrit],
+              criteria: [...std.criteria, { ...newCrit, items: [] } as Criterion],
               _count: { criteria: std._count.criteria + 1 }
             }
           }
@@ -226,24 +357,13 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
                   ) : (
                     <div className="space-y-3">
                       {std.criteria.map((crit, idx) => (
-                        <div key={crit.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-start group/crit">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="shrink-0 w-6 h-6 rounded bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] flex items-center justify-center text-xs font-bold">{idx + 1}</span>
-                              <h4 className="font-bold text-[var(--foreground)]">{crit.name}</h4>
-                            </div>
-                            {crit.description && <p className="text-sm text-slate-500 pl-8 mt-1">{crit.description}</p>}
-                          </div>
-                          
-                          <div className="flex gap-2 opacity-0 group-hover/crit:opacity-100 transition-opacity">
-                            <button onClick={() => openEditCrit(crit)} className="p-1.5 text-slate-400 hover:text-indigo-500">
-                              <Edit size={16} />
-                            </button>
-                            <button onClick={() => handleDeleteCrit(crit.id, std.id)} className="p-1.5 text-slate-400 hover:text-red-500">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
+                        <CriterionRow 
+                           key={crit.id} 
+                           crit={crit} 
+                           idx={idx} 
+                           openEditCrit={openEditCrit} 
+                           handleDeleteCrit={handleDeleteCrit} 
+                        />
                       ))}
                     </div>
                   )}

@@ -79,10 +79,15 @@ export default function ClientReviewList({ initialEvidences }: { initialEvidence
                     <span className="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-600 dark:text-slate-300 uppercase">
                       {ev.criterion.standard.year} - {ev.criterion.standard.name}
                     </span>
-                    <span className="text-xs font-bold text-slate-400">Tiêu chí: {ev.criterion.name}</span>
+                    <span className="text-xs font-bold text-[var(--primary)] bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md">Tiêu chí: {ev.criterion.name}</span>
                   </div>
+                  {ev.evidenceItem && (
+                    <div className="mb-3 inline-block px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-lg text-xs font-bold shadow-sm">
+                      Danh mục nộp: {ev.evidenceItem.name}
+                    </div>
+                  )}
                   
-                  <div className="bg-white dark:bg-[#0f172a]/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 mt-3 shadow-sm">
+                  <div className="bg-white dark:bg-[#0f172a]/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 mt-1 shadow-sm">
                     <h4 className="text-sm font-semibold mb-1 text-[var(--foreground)]">Nội dung báo cáo:</h4>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                       {ev.content || "Chưa có nội dung đính kèm"}

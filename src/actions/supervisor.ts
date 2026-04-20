@@ -24,7 +24,8 @@ export async function getReviewEvidences() {
       collaborator: { select: { name: true, email: true } },
       criterion: {
         include: { standard: true }
-      }
+      },
+      evidenceItem: true
     },
     orderBy: [
       { status: 'asc' },
