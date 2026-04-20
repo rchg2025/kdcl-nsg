@@ -73,7 +73,7 @@ export async function getAllCriteriaForDropdown() {
   
   let whereClause = {}
   
-  if (session.user.role !== "ADMIN") {
+  if (!["ADMIN", "SUPERVISOR"].includes(session.user.role as string)) {
     const permissions = await prisma.userPermission.findMany({
       where: { userId: session.user.id, permissionType: "CRITERION" }
     })
