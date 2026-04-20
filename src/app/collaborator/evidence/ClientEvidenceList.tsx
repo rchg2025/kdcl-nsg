@@ -32,6 +32,13 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const [content, setContent] = useState("")
   const [fileUrl, setFileUrl] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  
+  const [searchCriterion, setSearchCriterion] = useState("")
+  const [showDropdown, setShowDropdown] = useState(false)
+  
+  const filteredCriteria = criteriaList.filter(c => 
+    `${c.standard.year} - ${c.standard.name}: ${c.name}`.toLowerCase().includes(searchCriterion.toLowerCase())
+  )
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,6 +126,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const openEditModal = (ev: Evidence) => {
     setEditingId(ev.id)
     setCriterionId(ev.criterion.name) // Not editable, just display
+    setSearchCriterion(ev.criterion.name)
     setContent(ev.content || "")
     setFileUrl(ev.fileUrl || "")
     setSelectedFiles([])
@@ -127,7 +135,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
 
   const openCreateModal = () => {
     setEditingId(null)
-    setCriterionId(criteriaList[0]?.id || "")
+    setCriterionId("")
+    setSearchCriterion("")
     setContent("")
     setFileUrl("")
     setSelectedFiles([])
@@ -228,21 +237,44 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
               <div>
                 <label className="block text-sm font-semibold mb-2">Chọn Tiêu chí</label>
                 {editingId ? (
-                   <input type="text" readOnly disabled value={criterionId} className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border rounded-xl text-slate-500" />
+                   <input type="text" readOnly disabled value={criterionId} className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border rounded-xl text-slate-500 line-clamp-1 truncate" />
                 ) : (
-                  <select 
-                    value={criterionId}
-                  onChange={e => setCriterionId(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  required
-                >
-                  <option value="" disabled>-- Hãy chọn một tiêu chí --</option>
-                  {criteriaList.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.standard.year} - {c.standard.name}: {c.name}
-                    </option>
-                  ))}
-                </select>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={searchCriterion}
+                      onChange={e => {
+                        setSearchCriterion(e.target.value)
+                        setShowDropdown(true)
+                      }}
+                      onFocus={() => setShowDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                      placeholder="Gõ từ khóa để tra cứu tiêu chí..."
+                      required={!criterionId}
+                    />
+                    {showDropdown && (
+                      <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                        {filteredCriteria.length === 0 ? (
+                          <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chí phù hợp</div>
+                        ) : (
+                          filteredCriteria.map(c => (
+                            <div 
+                              key={c.id} 
+                              onClick={() => {
+                                setCriterionId(c.id)
+                                setSearchCriterion(`${c.standard.year} - ${c.standard.name}: ${c.name}`)
+                                setShowDropdown(false)
+                              }}
+                              className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${criterionId === c.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                            >
+                              {c.standard.year} - {c.standard.name}: {c.name}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
