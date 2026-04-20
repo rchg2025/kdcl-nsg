@@ -116,3 +116,9 @@ model UserPermission {
   resourceId     String   // e.g. "/collaborator/evidence" or criterionId
   action         String?  // Optional, e.g. "VIEW", "SUBMIT". For menus we could use "VIEW"
 }
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -1,13 +1,18 @@
 import { google } from "googleapis"
 import { Readable } from "stream"
+import { prisma } from "@/lib/prisma"
 
 export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mimeType: string) {
-  const clientId = process.env.GOOGLE_CLIENT_EMAIL
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID
+  const emailSetting = await prisma.systemSetting.findUnique({ where: { key: "GDRIVE_CLIENT_EMAIL" } })
+  const keySetting = await prisma.systemSetting.findUnique({ where: { key: "GDRIVE_PRIVATE_KEY" } })
+  const folderSetting = await prisma.systemSetting.findUnique({ where: { key: "GDRIVE_FOLDER_ID" } })
+
+  const clientId = emailSetting?.value
+  const privateKey = keySetting?.value?.replace(/\\n/g, '\n')
+  const folderId = folderSetting?.value
 
   if (!clientId || !privateKey || !folderId) {
-    throw new Error("Thiếu cấu hình Google Drive trong Environment Variables.")
+    throw new Error("Tài khoản Quản trị viên chưa điền Cấu hình Google Drive trong mục Cài đặt Hệ thống (Settings).")
   }
 
   const auth = new google.auth.GoogleAuth({
