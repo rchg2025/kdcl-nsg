@@ -1,0 +1,86 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  COLLABORATOR
+  INVESTIGATOR
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  role          Role      @default(COLLABORATOR)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  evidences     Evidence[]    @relation("CollaboratorEvidence")
+  evaluations   Evaluation[]  @relation("EvaluatorEvaluation")
+}
+
+model Standard {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  year        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  criteria    Criterion[]
+}
+
+model Criterion {
+  id          String   @id @default(cuid())
+  standardId  String
+  standard    Standard @relation(fields: [standardId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  evidences   Evidence[]
+}
+
+enum EvidenceStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+model Evidence {
+  id             String    @id @default(cuid())
+  criterionId    String
+  criterion      Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  collaboratorId String
+  collaborator   User      @relation("CollaboratorEvidence", fields: [collaboratorId], references: [id])
+  content        String?
+  fileUrl        String?
+  status         EvidenceStatus @default(PENDING)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  evaluations    Evaluation[]
+}
+
+model Evaluation {
+  id          String   @id @default(cuid())
+  evidenceId  String
+  evidence    Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  evaluatorId String
+  evaluator   User     @relation("EvaluatorEvaluation", fields: [evaluatorId], references: [id])
+  comments    String?
+  isApproved  Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
