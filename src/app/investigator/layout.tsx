@@ -8,6 +8,8 @@ import Topbar from "@/components/layout/Topbar"
 export default async function InvestigatorLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions)
   
+  if (!session) redirect("/login")
+  
   let allowed = ["ADMIN", "INVESTIGATOR"].includes(session.user.role as string)
   if (!allowed) {
     const { prisma } = await import("@/lib/prisma")

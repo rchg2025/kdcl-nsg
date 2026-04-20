@@ -8,7 +8,18 @@ import Topbar from "@/components/layout/Topbar"
 export default async function CollaboratorLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions)
   
-  if (!session || !["ADMIN", "COLLABORATOR"].includes(session.user.role as string)) {
+  if (!session) redirect("/login")
+  
+  let allowed = ["ADMIN", "COLLABORATOR"].includes(session.user.role as string)
+  if (!allowed) {
+    const { prisma } = await import("@/lib/prisma")
+    const perm = await prisma.userPermission.findFirst({
+      where: { userId: session.user.id, permissionType: "MENU", resourceId: "/collaborator/evidence" }
+    })
+    if (perm) allowed = true
+  }
+
+  if (!allowed) {
     redirect("/login")
   }
 
