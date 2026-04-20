@@ -8,7 +8,16 @@ import Topbar from "@/components/layout/Topbar"
 export default async function InvestigatorLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions)
   
-  if (!session || !["ADMIN", "INVESTIGATOR"].includes(session.user.role as string)) {
+  let allowed = ["ADMIN", "INVESTIGATOR"].includes(session.user.role as string)
+  if (!allowed) {
+    const { prisma } = await import("@/lib/prisma")
+    const perm = await prisma.userPermission.findFirst({
+      where: { userId: session.user.id, permissionType: "MENU", resourceId: "/investigator/evaluate" }
+    })
+    if (perm) allowed = true
+  }
+
+  if (!allowed) {
     redirect("/login")
   }
 

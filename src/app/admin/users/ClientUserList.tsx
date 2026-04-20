@@ -1,54 +1,92 @@
 "use client"
 
 import { useState } from "react"
-import { createUser, updateUserRole, deleteUser } from "@/actions/user"
-import { Plus, UserCircle, Trash2, Edit, Loader2 } from "lucide-react"
-import { Role } from "@prisma/client"
+import { createUser, deleteUser, updateUser } from "@/actions/user"
+import { Plus, Trash2, Edit2, ShieldAlert, Loader2, KeyRound } from "lucide-react"
+import Link from "next/link"
 
-type UserItem = {
+type Department = { id: string; name: string }
+type Position = { id: string; name: string }
+
+type UserInfo = {
   id: string
   name: string | null
   email: string | null
-  role: Role
+  role: string
+  departmentId: string | null
+  positionId: string | null
+  department?: Department | null
+  position?: Position | null
+  createdAt: Date
 }
 
-export default function ClientUserList({ initialUsers }: { initialUsers: UserItem[] }) {
-  const [users, setUsers] = useState(initialUsers)
+export default function ClientUserList({ initialUsers, departments, positions }: { initialUsers: UserInfo[], departments: Department[], positions: Position[] }) {
+  const [users, setUsers] = useState<UserInfo[]>(initialUsers)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   
+  // Form values
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [role, setRole] = useState<Role>("COLLABORATOR")
+  const [password, setPassword] = useState("")
+  const [role, setRole] = useState("COLLABORATOR")
+  const [departmentId, setDepartmentId] = useState("")
+  const [positionId, setPositionId] = useState("")
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingId(null)
+    setName("")
+    setEmail("")
+    setPassword("")
+    setRole("COLLABORATOR")
+    setDepartmentId("")
+    setPositionId("")
+    setIsModalOpen(true)
+  }
+
+  const openEdit = (user: UserInfo) => {
+    setEditingId(user.id)
+    setName(user.name || "")
+    setEmail(user.email || "")
+    setPassword("") // Left blank unless they want to change it
+    setRole(user.role)
+    setDepartmentId(user.departmentId || "")
+    setPositionId(user.positionId || "")
+    setIsModalOpen(true)
+  }
+
+  const handleCreateOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      const newUser = await createUser({ name, email, role })
-      setUsers([newUser, ...users])
-      setIsModalOpen(false)
-      setName("")
-      setEmail("")
-      alert("Tạo tài khoản thành công! Mật khẩu mặc định là: 123456")
+      if (editingId) {
+        await updateUser(editingId, { 
+          name, 
+          role: role as any, 
+          departmentId, 
+          positionId,
+          password: password.trim() ? password : undefined 
+        })
+      } else {
+        await createUser({ 
+          name, 
+          email, 
+          role: role as any, 
+          departmentId, 
+          positionId, 
+          password: password.trim() ? password : undefined 
+        })
+      }
+      window.location.reload()
     } catch (err: any) {
-      alert(err.message || "Đã xảy ra lỗi khi tạo thành viên")
-    } finally {
+      alert(err.message || "Đã xảy ra lỗi")
       setLoading(false)
     }
   }
 
-  const handleRoleChange = async (id: string, newRole: Role) => {
-    try {
-      await updateUserRole(id, newRole)
-      setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u))
-    } catch (err) {
-      alert("Lỗi khi cập nhật quyền")
-    }
-  }
-
   const handleDelete = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa thành viên này?")) return
+    if (!confirm("Bạn có chắc chắn muốn xóa thành viên này không?")) return
     try {
       await deleteUser(id)
       setUsers(users.filter(u => u.id !== id))
@@ -57,67 +95,79 @@ export default function ClientUserList({ initialUsers }: { initialUsers: UserIte
     }
   }
 
-  const roleLabels: Record<Role, string> = {
-    ADMIN: "Quản trị viên",
-    SUPERVISOR: "Giám sát viên",
-    COLLABORATOR: "Cộng tác viên",
-    INVESTIGATOR: "Điều tra viên"
-  }
-
-  const roleColors: Record<Role, string> = {
-    ADMIN: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400",
-    SUPERVISOR: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-    COLLABORATOR: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
-    INVESTIGATOR: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+  const roleColors: Record<string, string> = {
+    ADMIN: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    SUPERVISOR: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    COLLABORATOR: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    INVESTIGATOR: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400"
   }
 
   return (
     <div>
       <div className="flex justify-end mb-6">
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={openCreate}
           className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
         >
           <Plus size={18} />
-          Thêm Thành viên
+          Thêm thành viên
         </button>
       </div>
 
-      <div className="glass rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-separate border-spacing-y-3">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-              <th className="p-4 text-sm font-semibold text-slate-500">Tên</th>
-              <th className="p-4 text-sm font-semibold text-slate-500">Email</th>
-              <th className="p-4 text-sm font-semibold text-slate-500">Vai trò</th>
-              <th className="p-4 text-sm font-semibold text-slate-500 text-right">Hành động</th>
+            <tr className="text-slate-400 text-xs tracking-wider uppercase px-4">
+              <th className="font-semibold px-4 pb-2">Người dùng</th>
+              <th className="font-semibold px-4 pb-2">Đơn vị / Chức vụ</th>
+              <th className="font-semibold px-4 pb-2">Vai trò Hệ thống</th>
+              <th className="font-semibold px-4 pb-2 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                <td className="p-4">
+              <tr key={user.id} className="group">
+                <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-l-2xl border-y border-l border-slate-100 dark:border-slate-800 shadow-sm relative">
                   <div className="flex items-center gap-3">
-                    <UserCircle size={24} className="text-slate-400" />
-                    <span className="font-semibold text-[var(--foreground)]">{user.name || "Chưa cập nhật"}</span>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500 dark:text-slate-400">
+                      {user.name?.[0] || user.email?.[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-[var(--foreground)]">{user.name}</h4>
+                      <p className="text-xs text-slate-500">{user.email}</p>
+                    </div>
                   </div>
                 </td>
-                <td className="p-4 text-sm text-slate-500">{user.email}</td>
-                <td className="p-4">
-                  <select 
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user.id, e.target.value as Role)}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-lg outline-none cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700 ${roleColors[user.role]}`}
-                  >
-                    {Object.entries(roleLabels).map(([val, label]) => (
-                      <option key={val} value={val} className="text-slate-900 bg-white">{label}</option>
-                    ))}
-                  </select>
+                
+                <td className="bg-white dark:bg-slate-900/80 px-4 py-4 border-y border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="text-sm">
+                    <div className="font-medium text-slate-700 dark:text-slate-200">{user.department?.name || <span className="text-slate-400 italic">Chưa CBP</span>}</div>
+                    <div className="text-xs text-slate-500">{user.position?.name || "---"}</div>
+                  </div>
                 </td>
-                <td className="p-4 text-right">
-                  <button onClick={() => handleDelete(user.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg transition-colors">
-                    <Trash2 size={18} />
-                  </button>
+
+                <td className="bg-white dark:bg-slate-900/80 px-4 py-4 border-y border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="flex gap-2 items-center">
+                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider ${roleColors[user.role]}`}>
+                      {user.role}
+                    </span>
+                  </div>
+                </td>
+
+                <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-r-2xl border-y border-r border-slate-100 dark:border-slate-800 shadow-sm text-right">
+                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Link href={`/admin/users/permissions/${user.id}`} title="Ma trận Phân quyền">
+                      <button className="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors">
+                        <ShieldAlert size={16} />
+                      </button>
+                    </Link>
+                    <button onClick={() => openEdit(user)} title="Sửa thông tin" className="p-2 text-slate-400 hover:text-[var(--primary)] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                      <Edit2 size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(user.id)} title="Xóa tài khoản" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -127,66 +177,60 @@ export default function ClientUserList({ initialUsers }: { initialUsers: UserIte
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold">Thêm Thành viên mới</h3>
+              <h3 className="text-lg font-bold">{editingId ? "Cập nhật Thông tin" : "Tạo Thành viên mới"}</h3>
             </div>
-            
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Họ & Tên</label>
-                <input 
-                  type="text" 
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  placeholder="Vd: Nguyễn Văn A"
-                  required
-                />
+            <form onSubmit={handleCreateOrUpdate} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Họ và tên</label>
+                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Địa chỉ Email</label>
+                  <input required disabled={!!editingId} type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm disabled:opacity-50" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Đơn vị (Khoa/Phòng)</label>
+                  <select value={departmentId} onChange={e => setDepartmentId(e.target.value)} className="w-full px-4 py-2 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm">
+                    <option value="">-- Chưa biên chế --</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Chức vụ</label>
+                  <select value={positionId} onChange={e => setPositionId(e.target.value)} className="w-full px-4 py-2 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm">
+                    <option value="">-- Trống --</option>
+                    {positions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Đại chỉ Email (Tài khoản đăng nhập)</label>
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                  placeholder="email@truongnsg.edu.vn"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Phân quyền</label>
-                <select 
-                  value={role}
-                  onChange={e => setRole(e.target.value as Role)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                >
-                  <option value="ADMIN">Quản trị viên</option>
-                  <option value="SUPERVISOR">Giám sát viên</option>
-                  <option value="COLLABORATOR">Cộng tác viên</option>
-                  <option value="INVESTIGATOR">Điều tra viên</option>
+                <label className="block text-sm font-semibold mb-2">Vai trò Hệ thống</label>
+                <select value={role} onChange={e => setRole(e.target.value)} className="w-full px-4 py-2 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium">
+                  <option value="COLLABORATOR">Nộp & Viết báo cáo (COLLABORATOR)</option>
+                  <option value="SUPERVISOR">Thu thập & Duyệt minh chứng (SUPERVISOR)</option>
+                  <option value="INVESTIGATOR">Đánh giá Kết luận (INVESTIGATOR)</option>
+                  <option value="ADMIN">Quản trị toàn quyền (ADMIN)</option>
                 </select>
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-semibold mb-2 flex justify-between">
+                  Mật khẩu đăng nhập
+                  <span className="font-normal text-slate-500 text-xs">Để trống = "123456"</span>
+                </label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={editingId ? "Giữ trống nếu không đổi..." : "123456"} className="w-full px-4 py-2 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm" />
+              </div>
+
               <div className="flex gap-3 pt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
-                >
-                  Hủy
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="flex-1 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-                >
-                  {loading && <Loader2 size={16} className="animate-spin" />}
-                  Tạo Tài khoản
-                </button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-medium text-sm">Hủy</button>
+                <button type="submit" disabled={loading} className="flex-1 py-2 bg-[var(--primary)] text-white rounded-xl font-medium flex items-center justify-center text-sm">{loading ? <Loader2 size={16} className="animate-spin" /> : "Lưu"}</button>
               </div>
             </form>
           </div>

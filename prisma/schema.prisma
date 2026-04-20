@@ -21,11 +21,18 @@ model User {
   email         String?   @unique
   password      String?
   role          Role      @default(COLLABORATOR)
+  
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  positionId    String?
+  position      Position?   @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   evidences     Evidence[]    @relation("CollaboratorEvidence")
   evaluations   Evaluation[]  @relation("EvaluatorEvaluation")
+  permissions   UserPermission[]
 }
 
 model Standard {
@@ -83,4 +90,29 @@ model Evaluation {
   isApproved  Boolean
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+model UserPermission {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionType String   // "MENU" or "CRITERION"
+  resourceId     String   // e.g. "/collaborator/evidence" or criterionId
+  action         String?  // Optional, e.g. "VIEW", "SUBMIT". For menus we could use "VIEW"
 }

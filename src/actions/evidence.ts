@@ -63,8 +63,22 @@ export async function getCollaboratorEvidences() {
 }
 
 export async function getAllCriteriaForDropdown() {
-  await checkCollaborator()
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+  
+  let whereClause = {}
+  
+  if (session.user.role !== "ADMIN") {
+    const permissions = await prisma.userPermission.findMany({
+      where: { userId: session.user.id, permissionType: "CRITERION" }
+    })
+    const allowedIds = permissions.map(p => p.resourceId)
+    // Even if empty, it will return nothing which is correct
+    whereClause = { id: { in: allowedIds } }
+  }
+
   return await prisma.criterion.findMany({
+    where: whereClause,
     include: { standard: true },
     orderBy: [
       { standard: { year: 'desc' } },
