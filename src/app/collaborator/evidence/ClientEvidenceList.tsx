@@ -31,7 +31,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const [criterionId, setCriterionId] = useState(criteriaList[0]?.id || "")
   const [content, setContent] = useState("")
   const [fileUrl, setFileUrl] = useState("")
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,9 +40,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
     try {
       let finalFileUrl = fileUrl
       
-      if (selectedFile) {
+      if (selectedFiles.length > 0) {
         const formData = new FormData()
-        formData.append("file", selectedFile)
+        selectedFiles.forEach(f => formData.append("file", f))
         
         const res = await fetch("/api/upload", {
           method: "POST",
@@ -50,7 +50,12 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         })
         
         if (!res.ok) {
-           const errData = await res.json()
+           let errData;
+           try {
+              errData = await res.json()
+           } catch {
+              throw new Error("Lỗi nộp File: Tổng dung lượng vượt quá 4.5MB (Giới hạn của Máy chủ Vercel). Hãy nén file hoặc dùng Link Drive thủ công!")
+           }
            throw new Error(errData.error || "Lỗi khi tải file lên máy chủ")
         }
         
@@ -84,7 +89,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
     setCriterionId(criteriaList[0]?.id || "")
     setContent("")
     setFileUrl("")
-    setSelectedFile(null)
+    setSelectedFiles([])
     setIsModalOpen(true)
   }
 
@@ -144,9 +149,13 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                     {ev.content || "Không có nội dung mô tả"}
                   </p>
                   {ev.fileUrl && (
-                    <a href={ev.fileUrl} target="_blank" className="inline-flex items-center gap-2 text-sm text-[var(--primary)] font-medium mt-3 hover:underline">
-                      <FileText size={16} /> Xem tệp đính kèm
-                    </a>
+                    <div className="mt-3 flex flex-col gap-1">
+                      {ev.fileUrl.split(", ").map((url, idx) => (
+                        <a key={idx} href={url} target="_blank" className="inline-flex w-fit items-center gap-2 text-sm text-[var(--primary)] font-medium hover:underline">
+                          <FileText size={16} /> Xem tệp đính kèm {idx + 1}
+                        </a>
+                      ))}
+                    </div>
                   )}
                 </div>
                 
@@ -213,8 +222,16 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                   <div className="relative">
                     <input 
                       type="file" 
+                      multiple
                       onChange={e => {
-                        setSelectedFile(e.target.files?.[0] || null)
+                        const files = Array.from(e.target.files || [])
+                        const totalSize = files.reduce((acc, f) => acc + f.size, 0)
+                        if (totalSize > 4.5 * 1024 * 1024) {
+                            alert("Tổng dung lượng tải lên vượt quá 4.5MB (Giới hạn của Vercel Hosting). Vui lòng dán Link Drive thủ công bên dưới thay vì tải trực tiếp!")
+                            e.target.value = ""
+                            return
+                        }
+                        setSelectedFiles(files)
                         setFileUrl("") // Clear URL if choosing file
                       }}
                       className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors"
@@ -235,7 +252,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                     }}
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
                     placeholder="https://drive.google.com/..."
-                    disabled={!!selectedFile}
+                    disabled={selectedFiles.length > 0}
                   />
                 </div>
               </div>

@@ -4,20 +4,22 @@ import { uploadFileToDrive } from "@/lib/drive"
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
-    const file = formData.get("file") as File | null
+    const files = formData.getAll("file") as File[]
     
-    if (!file) {
+    if (!files || files.length === 0) {
       return NextResponse.json({ error: "Chưa cung cấp file" }, { status: 400 })
     }
 
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    const viewLinks = await Promise.all(files.map(async (file) => {
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
 
-    const viewLink = await uploadFileToDrive(buffer, file.name, file.type)
+      const viewLink = await uploadFileToDrive(buffer, file.name, file.type)
+      if (!viewLink) throw new Error("Lỗi lấy Link từ Google Drive cho file: " + file.name)
+      return viewLink
+    }))
 
-    if (!viewLink) throw new Error("Lỗi lấy Link từ Google Drive")
-
-    return NextResponse.json({ url: viewLink }, { status: 200 })
+    return NextResponse.json({ url: viewLinks.join(", ") }, { status: 200 })
   } catch (err: any) {
     console.error("Lỗi Tải lên nội bộ:", err)
     return NextResponse.json({ error: err.message || "Có lỗi bất ngờ khi tải dữ liệu lên GD" }, { status: 500 })
