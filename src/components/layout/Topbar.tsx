@@ -2,6 +2,8 @@
 
 import { Bell, Menu, Search, UserCircle } from "lucide-react"
 
+import Link from "next/link"
+
 export default function Topbar({ user }: { user: any }) {
   return (
     <header className="h-16 bg-white dark:bg-[#09090b] border-b border-[var(--border)] flex items-center justify-between px-6 z-10">
@@ -27,13 +29,13 @@ export default function Topbar({ user }: { user: any }) {
         
         <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
         
-        <div className="flex items-center gap-3 cursor-pointer">
+        <Link href="/profile" className="flex items-center gap-3 cursor-pointer group">
           <div className="text-right hidden md:block">
-            <p className="text-sm font-semibold leading-none">{user?.name || "Người dùng"}</p>
+            <p className="text-sm font-semibold leading-none group-hover:text-[var(--primary)] transition-colors">{user?.name || "Người dùng"}</p>
             <p className="text-xs text-slate-500 mt-1">{user?.email}</p>
           </div>
-          <UserCircle size={32} className="text-slate-400" />
-        </div>
+          <UserCircle size={32} className="text-slate-400 group-hover:text-[var(--primary)] transition-colors" />
+        </Link>
       </div>
     </header>
   )
