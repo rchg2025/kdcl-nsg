@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { updateSettings } from "@/actions/setting"
-import { Save, Loader2, Database, Mail, Cloud } from "lucide-react"
+import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
+import { Save, Loader2, Database, Mail, Cloud, PlayCircle } from "lucide-react"
 
 export default function ClientSettings({ initialData }: { initialData: Record<string, string> }) {
   const [loading, setLoading] = useState(false)
@@ -15,6 +15,25 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
   // Gmail State
   const [gmailUser, setGmailUser] = useState(initialData["GMAIL_USER"] || "")
   const [gmailPass, setGmailPass] = useState(initialData["GMAIL_PASS"] || "")
+
+  const [testingDrive, setTestingDrive] = useState(false)
+  const [testingSmtp, setTestingSmtp] = useState(false)
+
+  const handleTestDrive = async () => {
+    if (!driveEmail || !driveKey || !driveFolder) return alert("Vui lòng điền đủ thông tin Google Drive")
+    setTestingDrive(true)
+    const res = await testDriveConfig(driveEmail, driveKey, driveFolder)
+    alert(res.message)
+    setTestingDrive(false)
+  }
+
+  const handleTestSmtp = async () => {
+    if (!gmailUser || !gmailPass) return alert("Vui lòng điền đủ thông tin Gmail SMTP")
+    setTestingSmtp(true)
+    const res = await testSmtpConfig(gmailUser, gmailPass)
+    alert(res.message)
+    setTestingSmtp(false)
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,6 +102,16 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
               className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-blue-500 text-xs font-mono min-h-[140px]" 
             />
           </div>
+          
+          <button 
+            type="button" 
+            onClick={handleTestDrive}
+            disabled={testingDrive}
+            className="w-full py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+          >
+            {testingDrive ? <Loader2 size={16} className="animate-spin" /> : <PlayCircle size={16} />}
+            Kiểm tra Kết nối Drive
+          </button>
         </div>
       </div>
 
@@ -120,6 +149,16 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
             />
             <p className="text-xs text-slate-400 mt-2 italic">Dấu *** ẩn mã mật khẩu đảm bảo an toàn giao diện theo yêu cầu chuẩn ISO.</p>
           </div>
+
+          <button 
+            type="button" 
+            onClick={handleTestSmtp}
+            disabled={testingSmtp}
+            className="w-full py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 mt-4"
+          >
+            {testingSmtp ? <Loader2 size={16} className="animate-spin" /> : <PlayCircle size={16} />}
+            Kiểm tra Kết nối Gmail
+          </button>
         </div>
       </div>
 
