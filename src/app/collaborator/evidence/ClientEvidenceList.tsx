@@ -48,65 +48,24 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
       let finalFileUrl = fileUrl
       
       if (selectedFiles.length > 0) {
-        const tokenRes = await fetch("/api/drive-token")
-        if (!tokenRes.ok) {
-           throw new Error("Không thể lấy phiên kết nối Drive. Vui lòng kiểm tra lại cấu hình Hệ thống.")
-        }
-        const { token, folderId } = await tokenRes.json()
-
-        const uploadedUrls = []
+        const uploadedUrls: string[] = []
 
         for (const file of selectedFiles) {
-          // 1. Lấy Link Upload Phiên (Resumable Session URL) từ Máy chủ nội bộ để tránh lỗi CORS
-          const sessionRes = await fetch("/api/upload-session", {
+          const formData = new FormData()
+          formData.append("file", file)
+
+          const uploadRes = await fetch("/api/upload", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: file.name, mimeType: file.type || "application/octet-stream" })
-          })
-
-          if (!sessionRes.ok) {
-            const err = await sessionRes.json()
-            throw new Error(`Lỗi khởi tạo tải lên tệp ${file.name}: ${err.error || ""}`)
-          }
-
-          const { uploadUrl, token } = await sessionRes.json()
-
-          // 2. Bắn thẳng khối Byte Binary lên link Google Drive đã ký (Pre-signed URL)
-          const uploadRes = await fetch(uploadUrl, {
-            method: "PUT",
-            headers: {
-              "Content-Type": file.type || "application/octet-stream"
-            },
-            body: file
+            body: formData
           })
 
           if (!uploadRes.ok) {
-            const errBody = await uploadRes.text()
-            console.error("Drive upload error", errBody)
-            throw new Error(`Lỗi tải dữ liệu tệp ${file.name} trực tiếp. (HTTP Status: ${uploadRes.status})`)
+            const err = await uploadRes.json().catch(() => ({ error: "Lỗi không xác định" }))
+            throw new Error(`Lỗi tải tệp ${file.name}: ${err.error || `HTTP ${uploadRes.status}`}`)
           }
 
-          const fileData = await uploadRes.json()
-          const fileId = fileData.id
-          
-          // 3. Mở quyền truy cập công khai
-          await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ role: "reader", type: "anyone" })
-          })
-
-          // 4. Lấy Link xem trực tiếp
-          const infoRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink&supportsAllDrives=true`, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-          })
-          const infoData = await infoRes.json()
-
-          uploadedUrls.push(infoData.webViewLink)
+          const { url } = await uploadRes.json()
+          uploadedUrls.push(url)
         }
         
         finalFileUrl = uploadedUrls.join(", ")
