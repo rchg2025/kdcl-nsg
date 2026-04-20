@@ -29,7 +29,6 @@ export async function getLogs() {
     include: {
       user: { select: { name: true, email: true, role: true } }
     },
-    orderBy: { createdAt: 'desc' },
-    take: 100 // Limit to last 100 logs for performance
+    orderBy: { createdAt: 'desc' }
   })
 }
