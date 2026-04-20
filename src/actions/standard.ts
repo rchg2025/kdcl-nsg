@@ -8,7 +8,7 @@ import { createLog } from "@/actions/log"
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !["ADMIN", "SUPERVISOR"].includes(session.user.role as string)) {
     throw new Error("Unauthorized")
   }
 }
