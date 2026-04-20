@@ -47,7 +47,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
     setLoading(true)
     try {
       let finalFileUrl = fileUrl
-      
+
       if (selectedFiles.length > 0) {
         const uploadedUrls: string[] = []
 
@@ -65,7 +65,11 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
           }
         }
         
-        finalFileUrl = uploadedUrls.join(", ")
+        if (finalFileUrl && finalFileUrl.trim() !== '') {
+          finalFileUrl = finalFileUrl + (uploadedUrls.length > 0 ? ", " + uploadedUrls.join(", ") : "")
+        } else {
+          finalFileUrl = uploadedUrls.join(", ")
+        }
       }
       
       if (editingId) {
@@ -255,7 +259,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Đính kèm Tệp tin</label>
+                <label className="block text-sm font-semibold mb-2">Đính kèm Thêm Tệp tin</label>
                 <div className="space-y-3">
                   <div className="relative">
                     <input 
@@ -263,30 +267,32 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                       multiple
                       onChange={e => {
                         const files = Array.from(e.target.files || [])
-                        // Đã Bỏ chặn 4.5MB, file sẽ được tải thẳng từ Trình duyệt lên Google Drive!
-                        setSelectedFiles(files)
-                        setFileUrl("") // Clear URL if choosing file
+                        setSelectedFiles(files) // Hoặc [...prev, ...files] nếu muốn cộng dồn từng lần chọn
                       }}
                       className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors"
-                      disabled={!!fileUrl}
                     />
                   </div>
                   
+                  {selectedFiles.length > 0 && (
+                    <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      Đã chọn {selectedFiles.length} tệp mới để tải lên.
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
-                    <hr className="flex-1 border-slate-200 dark:border-slate-700" /> HOẶC DÁN LINK <hr className="flex-1 border-slate-200 dark:border-slate-700" />
+                    <hr className="flex-1 border-slate-200 dark:border-slate-700" /> DANH SÁCH FILE ĐÃ CÓ / DÁN LINK MỚI <hr className="flex-1 border-slate-200 dark:border-slate-700" />
                   </div>
                   
-                  <input 
-                    type="url" 
+                  <textarea 
                     value={fileUrl}
-                    onChange={e => {
-                      setFileUrl(e.target.value)
-                      if(e.target.value) setSelectedFiles([]) // Clear file if pasting link
-                    }}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
+                    onChange={e => setFileUrl(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm leading-relaxed"
                     placeholder="https://drive.google.com/..."
-                    disabled={selectedFiles.length > 0}
+                    rows={3}
                   />
+                  <div className="text-xs text-slate-500">
+                    * Các link cách nhau bởi dấu phẩy (,). Bạn có thể xóa link cũ hoặc dán thêm link mới.
+                  </div>
                 </div>
               </div>
               
