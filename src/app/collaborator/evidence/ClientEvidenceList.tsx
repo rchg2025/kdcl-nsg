@@ -193,6 +193,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                     </option>
                   ))}
                 </select>
+                )}
               </div>
 
               <div>
