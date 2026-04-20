@@ -57,32 +57,27 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
         const uploadedUrls = []
 
         for (const file of selectedFiles) {
-          const boundary = "-------314159265358979323846"
-          const delimiter = "\r\n--" + boundary + "\r\n"
-          const close_delim = "\r\n--" + boundary + "--"
+          // 1. Lấy Link Upload Phiên (Resumable Session URL) từ Máy chủ nội bộ để tránh lỗi CORS
+          const sessionRes = await fetch("/api/upload-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: file.name, mimeType: file.type || "application/octet-stream" })
+          })
 
-          const metadata = {
-            name: file.name,
-            parents: [folderId]
+          if (!sessionRes.ok) {
+            const err = await sessionRes.json()
+            throw new Error(`Lỗi khởi tạo tải lên tệp ${file.name}: ${err.error || ""}`)
           }
 
-          const multipartBlob = new Blob([
-            delimiter,
-            "Content-Type: application/json; charset=UTF-8\r\n\r\n",
-            JSON.stringify(metadata),
-            delimiter,
-            "Content-Type: " + (file.type || "application/octet-stream") + "\r\n\r\n",
-            file,
-            close_delim
-          ], { type: "multipart/related; boundary=" + boundary })
+          const { uploadUrl, token } = await sessionRes.json()
 
-          const uploadRes = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink", {
-            method: "POST",
+          // 2. Bắn thẳng khối Byte Binary lên link Google Drive đã ký (Pre-signed URL)
+          const uploadRes = await fetch(uploadUrl, {
+            method: "PUT",
             headers: {
-              "Authorization": `Bearer ${token}`
-              // fetch automatically sets the boundary through the Blob type
+              "Content-Type": file.type || "application/octet-stream"
             },
-            body: multipartBlob
+            body: file
           })
 
           if (!uploadRes.ok) {
@@ -92,9 +87,10 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
           }
 
           const fileData = await uploadRes.json()
+          const fileId = fileData.id
           
-          // Set Public Permissions
-          await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions?supportsAllDrives=true`, {
+          // 3. Mở quyền truy cập công khai
+          await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`, {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${token}`,
@@ -103,7 +99,14 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
             body: JSON.stringify({ role: "reader", type: "anyone" })
           })
 
-          uploadedUrls.push(fileData.webViewLink)
+          // 4. Lấy Link xem trực tiếp
+          const infoRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink&supportsAllDrives=true`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+          })
+          const infoData = await infoRes.json()
+
+          uploadedUrls.push(infoData.webViewLink)
         }
         
         finalFileUrl = uploadedUrls.join(", ")
