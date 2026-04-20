@@ -8,7 +8,7 @@ import { createLog } from "@/actions/log"
 
 async function checkCollaborator() {
   const session = await getServerSession(authOptions)
-  if (!session || !["ADMIN", "COLLABORATOR"].includes(session.user.role as string)) {
+  if (!session || !["ADMIN", "COLLABORATOR", "SUPERVISOR"].includes(session.user.role as string)) {
     throw new Error("Unauthorized")
   }
   return session.user.id

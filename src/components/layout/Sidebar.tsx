@@ -40,7 +40,8 @@ export const adminMenu: MenuItem[] = [
 
 export const supervisorMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/supervisor", icon: LayoutDashboard },
-  { title: "Cập nhật tiêu chí", href: "/supervisor/criteria", icon: FileText },
+  { title: "Tiêu chuẩn & Tiêu chí", href: "/supervisor/criteria", icon: FileText },
+  { title: "Nộp minh chứng", href: "/supervisor/evidence", icon: FileText },
   { title: "Duyệt minh chứng", href: "/supervisor/review", icon: FileCheck },
   { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
 ]
