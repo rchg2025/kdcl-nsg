@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { EvidenceStatus } from "@prisma/client"
 
-export async function getDashboardStats(year?: number) {
+export async function getDashboardStats(year?: number, type?: string) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error("Unauthorized")
 
@@ -22,13 +22,15 @@ export async function getDashboardStats(year?: number) {
     }
   }
 
-  // Standard filter based on year
-  const standardWhere = year ? { standard: { year } } : {}
+  // Standard filter based on year and type
+  const standardWhere: any = {}
+  if (year) standardWhere.year = year
+  if (type && type !== "ALL") standardWhere.type = type
 
   const evidences = await prisma.evidence.findMany({
     where: {
       ...baseWhere,
-      criterion: { ...standardWhere }
+      criterion: { standard: standardWhere }
     },
     include: {
       criterion: {

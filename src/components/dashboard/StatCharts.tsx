@@ -11,14 +11,15 @@ export default function StatCharts() {
   const [loading, setLoading] = useState(true)
   const [yearList, setYearList] = useState<number[]>([])
   const [selectedYear, setSelectedYear] = useState<string>("all")
+  const [selectedType, setSelectedType] = useState<string>("ALL")
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
       try {
-        const stats = await getDashboardStats(selectedYear === "all" ? undefined : parseInt(selectedYear))
+        const stats = await getDashboardStats(selectedYear === "all" ? undefined : parseInt(selectedYear), selectedType)
         setData(stats)
-        if (selectedYear === "all") {
+        if (selectedYear === "all" && selectedType === "ALL") {
            setYearList(stats.availableYears)
         }
       } catch (err) {
@@ -28,7 +29,7 @@ export default function StatCharts() {
       }
     }
     fetchData()
-  }, [selectedYear])
+  }, [selectedYear, selectedType])
 
   if (loading && !data) {
     return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-indigo-500" size={32} /></div>
@@ -39,21 +40,28 @@ export default function StatCharts() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-4">
         <h2 className="font-bold text-lg text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <TrendingUp className="text-indigo-500" />
+          <TrendingUp className="text-indigo-500 shrink-0" />
           Thống kê Báo cáo Minh chứng
         </h2>
-        <select 
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(e.target.value)}
-          className="px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 font-medium text-sm"
-        >
-          <option value="all">Tất cả các năm học</option>
-          {yearList.map(y => (
-            <option key={y} value={y.toString()}>Năm học {y}</option>
-          ))}
-        </select>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
+             <button onClick={() => setSelectedType("ALL")} className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${selectedType === "ALL" ? "bg-white dark:bg-slate-700 shadow text-[var(--primary)]" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>Tất cả</button>
+             <button onClick={() => setSelectedType("INSTITUTIONAL")} className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${selectedType === "INSTITUTIONAL" ? "bg-white dark:bg-slate-700 shadow text-[var(--primary)]" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>Kiểm định Trường</button>
+             <button onClick={() => setSelectedType("PROGRAM")} className={`flex-1 sm:flex-none px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${selectedType === "PROGRAM" ? "bg-white dark:bg-slate-700 shadow text-[var(--primary)]" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>Kiểm định Ngành</button>
+          </div>
+          <select 
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="w-full sm:w-auto px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 font-medium text-sm"
+          >
+            <option value="all">Tất cả các năm học</option>
+            {yearList.map(y => (
+              <option key={y} value={y.toString()}>Năm học {y}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Summary Cards */}
