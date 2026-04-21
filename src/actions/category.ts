@@ -89,6 +89,12 @@ export async function getPrograms() {
   return await prisma.program.findMany({ include: { department: true }, orderBy: { name: 'asc' } })
 }
 
+export async function getAllProgramsPublic() {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+  return await prisma.program.findMany({ include: { department: true }, orderBy: { name: 'asc' } })
+}
+
 export async function createProgram(data: { name: string, departmentId: string }) {
   await verifyAdmin()
   const val = await prisma.program.create({ data, include: { department: true } })

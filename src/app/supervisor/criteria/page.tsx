@@ -1,11 +1,11 @@
 import { getStandards } from "@/actions/standard"
-import { getPrograms } from "@/actions/category"
+import { getAllProgramsPublic } from "@/actions/category"
 import ClientCriteriaList from "@/app/admin/criteria/ClientCriteriaList"
 
 export default async function SupervisorCriteriaPage() {
   const [standards, programs] = await Promise.all([
     getStandards(),
-    getPrograms()
+    getAllProgramsPublic()
   ])
 
   return (

@@ -308,8 +308,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                     setCriterionId("")
                     setSearchCriterion("")
                   }} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
-                    <option value="INSTITUTIONAL">Cấp Trường</option>
-                    <option value="PROGRAM">Cấp Ngành</option>
+                    <option value="INSTITUTIONAL">Kiểm định Trường</option>
+                    <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
                   </select>
                 </div>
                 {accreditationType === "PROGRAM" && (
