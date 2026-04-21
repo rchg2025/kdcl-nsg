@@ -1,11 +1,15 @@
 import { getReviewEvidences } from "@/actions/supervisor"
+import { getAllProgramsPublic } from "@/actions/category"
 import ClientReviewList from "./ClientReviewList"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
 export default async function ReviewPage() {
   const session = await getServerSession(authOptions)
-  const evidences = await getReviewEvidences()
+  const [evidences, programs] = await Promise.all([
+    getReviewEvidences(),
+    getAllProgramsPublic()
+  ])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -16,7 +20,7 @@ export default async function ReviewPage() {
         </div>
       </div>
       
-      <ClientReviewList initialEvidences={evidences} isAdmin={session?.user?.role === "ADMIN"} />
+      <ClientReviewList initialEvidences={evidences} programs={programs} isAdmin={session?.user?.role === "ADMIN"} />
     </div>
   )
 }

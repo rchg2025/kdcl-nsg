@@ -52,6 +52,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [newLinkName, setNewLinkName] = useState("")
   const [newLinkUrl, setNewLinkUrl] = useState("")
   
+  const [selectedYear, setSelectedYear] = useState<number | "">("")
+  const availableYears = Array.from(new Set(criteriaList.map(c => c.standard.year))).sort((a, b) => b - a)
+
   const [selectedStandardKey, setSelectedStandardKey] = useState("")
   const [searchStandardName, setSearchStandardName] = useState("")
   const [showStandardDropdown, setShowStandardDropdown] = useState(false)
@@ -69,6 +72,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [showProgramDropdown, setShowProgramDropdown] = useState(false)
   
   const baseFilteredCriteria = criteriaList.filter(c => {
+    if (selectedYear !== "" && c.standard.year !== selectedYear) return false
     let matchType = false
     if (accreditationType === "INSTITUTIONAL") {
       matchType = c.standard.type === "INSTITUTIONAL" || !c.standard.type
@@ -184,6 +188,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setEditingId(ev.id)
     setCriterionId(ev.criterion.name) // Not editable, just display
     setEvidenceItemId("") // Prevent selection change on edit for simplicity
+    setSelectedYear(ev.criterion.standard.year || "")
     setSelectedStandardKey(`${ev.criterion.standard.year}-${ev.criterion.standard.name}`)
     setSearchStandardName(`${ev.criterion.standard.year} - ${ev.criterion.standard.name}`)
     setSearchCriterionName(ev.criterion.name)
@@ -201,6 +206,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setEditingId(null)
     setCriterionId("")
     setEvidenceItemId("")
+    setSelectedYear("")
     setSelectedStandardKey("")
     setSearchStandardName("")
     setSearchCriterionName("")
@@ -336,6 +342,22 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
             </div>
             
             <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Chọn Năm</label>
+                <select disabled={!!editingId} value={selectedYear} onChange={e => {
+                  setSelectedYear(e.target.value ? Number(e.target.value) : "")
+                  setSelectedStandardKey("")
+                  setSearchStandardName("")
+                  setCriterionId("")
+                  setSearchCriterionName("")
+                }} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
+                  <option value="">-- Tất cả --</option>
+                  {availableYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-2">Loại Kiểm định</label>
@@ -405,7 +427,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">1. Chọn Tiêu chuẩn</label>
+                  <label className="block text-sm font-semibold mb-2">1. Chọn tiêu chí</label>
                   {editingId ? (
                      <input type="text" readOnly disabled value={searchStandardName} className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border rounded-xl text-slate-500 line-clamp-1 truncate" />
                   ) : (
@@ -454,7 +476,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">2. Chọn Tiêu chí</label>
+                  <label className="block text-sm font-semibold mb-2">2. Chọn Tiêu chuẩn</label>
                   {editingId ? (
                      <input type="text" readOnly disabled value={criterionId} className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border rounded-xl text-slate-500 line-clamp-1 truncate" />
                   ) : (
@@ -501,7 +523,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
 
               {availableItems.length > 0 && !editingId && (
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Phân loại (Danh mục Minh chứng)</label>
+                  <label className="block text-sm font-semibold mb-2">3. Chọn danh mục minh chứng</label>
                   <div className="relative">
                     <input 
                       type="text"
