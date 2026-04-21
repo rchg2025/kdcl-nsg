@@ -19,7 +19,7 @@ type Evidence = {
   createdAt: Date
   criterion: {
     name: string
-    standard: { name: string; year: number }
+    standard: { name: string; year: number; type?: string; program?: { name: string } | null }
   }
   evidenceItem?: { name: string } | null
   collaborator?: { name: string | null } | null

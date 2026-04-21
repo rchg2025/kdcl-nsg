@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createStandard, updateStandard, deleteStandard } from "@/actions/standard"
+import { createStandard, updateStandard, deleteStandard, cloneStandard } from "@/actions/standard"
 import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { getAllDepartmentsPublic } from "@/actions/category"
-import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react"
+import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon, CopyPlus } from "lucide-react"
 
 type EvidenceItem = {
   id: string
@@ -276,6 +276,15 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   const [searchProgram, setSearchProgram] = useState("")
   const [showProgramDropdown, setShowProgramDropdown] = useState(false)
   
+  // Clone state
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false)
+  const [cloningStdId, setCloningStdId] = useState<string | null>(null)
+  const [cloneYear, setCloneYear] = useState(new Date().getFullYear())
+  const [cloneType, setCloneType] = useState("INSTITUTIONAL")
+  const [cloneProgramId, setCloneProgramId] = useState("")
+  const [searchCloneProgram, setSearchCloneProgram] = useState("")
+  const [showCloneProgramDropdown, setShowCloneProgramDropdown] = useState(false)
+  
   // Data State
   const [allDepartments, setAllDepartments] = useState<any[]>([])
 
@@ -353,6 +362,33 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
       await deleteStandard(id)
       setStandards(standards.filter(s => s.id !== id))
     } catch (err) {}
+  }
+
+  const openCloneModal = (std: Standard, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCloningStdId(std.id)
+    setCloneYear(new Date().getFullYear())
+    setCloneType(std.type || "INSTITUTIONAL")
+    setCloneProgramId(std.programId || "")
+    setSearchCloneProgram(std.program?.name || "")
+    setIsCloneModalOpen(true)
+  }
+
+  const handleCloneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!cloningStdId) return
+    if (cloneType === "PROGRAM" && !cloneProgramId) return alert("Vui lòng chọn Ngành")
+    
+    setLoading(true)
+    try {
+      await cloneStandard(cloningStdId, { year: cloneYear, type: cloneType as any, programId: cloneProgramId })
+      setIsCloneModalOpen(false)
+      window.location.reload()
+    } catch (err: any) {
+      alert(err.message || "Lỗi khi nhân bản")
+    } finally {
+      setLoading(false)
+    }
   }
 
   // --- CRITERION HANDLERS ---
@@ -494,10 +530,13 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <button onClick={(e) => openEditStd(std, e)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                  <button onClick={(e) => openCloneModal(std, e)} className="p-2 text-slate-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Nhân bản">
+                    <CopyPlus size={18} />
+                  </button>
+                  <button onClick={(e) => openEditStd(std, e)} className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Chỉnh sửa">
                     <Edit size={18} />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteStd(std.id); }} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                  <button onClick={(e) => { e.stopPropagation(); handleDeleteStd(std.id); }} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Xóa">
                     <Trash2 size={18} />
                   </button>
                   <div className="p-2 text-slate-400">
@@ -691,6 +730,84 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
         </div>
       )}
 
+      {/* Modal Nhân Bản */}
+      {isCloneModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-[800px] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold flex items-center gap-2"><CopyPlus size={20} className="text-indigo-500"/> Sao chép bộ Tiêu chí</h3>
+            </div>
+            <form onSubmit={handleCloneSubmit} className="p-6 space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 p-4 rounded-xl text-sm mb-4">
+                Bạn đang tạo bản sao toàn bộ cấu trúc <strong>Tiêu chuẩn</strong> hiện có từ bộ tiêu chí này. Vui lòng chọn Năm áp dụng và Mảng kiểm định mới.
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Năm áp dụng</label>
+                <input required type="number" value={cloneYear} onChange={e => setCloneYear(Number(e.target.value))} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none focus:border-[var(--primary)]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Loại Kiểm định</label>
+                  <select required value={cloneType} onChange={e => {
+                    setCloneType(e.target.value)
+                    setCloneProgramId("")
+                    setSearchCloneProgram("")
+                  }} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
+                    <option value="INSTITUTIONAL">Kiểm định Trường</option>
+                    <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
+                  </select>
+                </div>
+                {cloneType === "PROGRAM" && (
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Chọn Ngành học</label>
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        value={searchCloneProgram}
+                        onChange={e => {
+                          setSearchCloneProgram(e.target.value)
+                          setCloneProgramId("")
+                          setShowCloneProgramDropdown(true)
+                        }}
+                        onFocus={() => setShowCloneProgramDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowCloneProgramDropdown(false), 200)}
+                        placeholder="Gõ tên ngành học..."
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]"
+                        required={!cloneProgramId}
+                      />
+                      {showCloneProgramDropdown && (
+                        <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                          {initialPrograms.filter((p:any) => p.name.toLowerCase().includes(searchCloneProgram.toLowerCase())).length === 0 ? (
+                             <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy</div>
+                          ) : (
+                             initialPrograms.filter((p:any) => p.name.toLowerCase().includes(searchCloneProgram.toLowerCase())).map((p: any) => (
+                               <div 
+                                 key={p.id}
+                                 onClick={() => {
+                                   setCloneProgramId(p.id)
+                                   setSearchCloneProgram(p.name)
+                                   setShowCloneProgramDropdown(false)
+                                 }}
+                                 className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${cloneProgramId === p.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                               >
+                                 {p.name}
+                               </div>
+                             ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setIsCloneModalOpen(false)} className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-medium">Hủy</button>
+                <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">{loading ? <Loader2 size={16} className="animate-spin" /> : <><CopyPlus size={16} /> Nhân Bản</>}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createLog } from "@/actions/log"
+import { AccreditationType } from "@prisma/client"
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions)
@@ -60,4 +61,50 @@ export async function deleteStandard(id: string) {
   await prisma.standard.delete({ where: { id } })
   await createLog("DELETE", "Tiêu chí (Standard)", `Xóa tiêu chí: ${target?.name}`)
   revalidatePath("/admin/criteria")
+  revalidatePath("/supervisor/criteria")
+}
+
+export async function cloneStandard(sourceId: string, data: { year: number, type: AccreditationType, programId?: string }) {
+  await checkAdmin()
+  
+  const sourceStandard = await prisma.standard.findUnique({
+    where: { id: sourceId },
+    include: {
+      criteria: {
+        include: {
+          items: true
+        }
+      }
+    }
+  })
+  
+  if (!sourceStandard) throw new Error("Không tìm thấy Tiêu chí nguồn!")
+
+  const newStandard = await prisma.standard.create({
+    data: {
+      name: sourceStandard.name,
+      description: sourceStandard.description,
+      year: data.year,
+      type: data.type,
+      programId: data.type === 'PROGRAM' ? data.programId : null,
+      criteria: {
+        create: sourceStandard.criteria.map(crit => ({
+          name: crit.name,
+          description: crit.description,
+          items: {
+            create: crit.items.map(item => ({
+              name: item.name,
+              description: item.description
+            }))
+          }
+        }))
+      }
+    }
+  })
+
+  await createLog("CREATE", "Tiêu chí (Standard)", `Nhân bản Tiêu chí: ${newStandard.name}`)
+  revalidatePath("/admin/criteria")
+  revalidatePath("/supervisor/criteria")
+  
+  return newStandard
 }
