@@ -1,0 +1,216 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  COLLABORATOR
+  INVESTIGATOR
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  role          Role      @default(COLLABORATOR)
+  
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  positionId    String?
+  position      Position?   @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastSeenAt    DateTime? 
+
+  evidences     Evidence[]    @relation("CollaboratorEvidence")
+  evaluations   Evaluation[]  @relation("EvaluatorEvaluation")
+  permissions   UserPermission[]
+  logs          SystemLog[]
+  messages      Message[]
+  conversations ConversationParticipant[]
+  notifications Notification[]
+  
+  reviewedEvidences Evidence[] @relation("ReviewerEvidence")
+  updatedEvidences Evidence[] @relation("UpdaterEvidence")
+  
+  resetOtp        String?
+  resetOtpExpiry  DateTime?
+}
+
+model Standard {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  year        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  criteria    Criterion[]
+}
+
+model Criterion {
+  id          String   @id @default(cuid())
+  standardId  String
+  standard    Standard @relation(fields: [standardId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  evidences    Evidence[]
+  items        EvidenceItem[]
+}
+
+model EvidenceItem {
+  id          String   @id @default(cuid())
+  criterionId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  evidences   Evidence[]
+  departments Department[]
+}
+
+enum EvidenceStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+model Evidence {
+  id             String    @id @default(cuid())
+  criterionId    String
+  criterion      Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  evidenceItemId String?
+  evidenceItem   EvidenceItem? @relation(fields: [evidenceItemId], references: [id], onDelete: Cascade)
+  collaboratorId String
+  collaborator   User      @relation("CollaboratorEvidence", fields: [collaboratorId], references: [id])
+  content        String?
+  fileUrl        String?
+  status         EvidenceStatus @default(PENDING)
+  rejectReason   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  reviewerId     String?
+  reviewer       User?     @relation("ReviewerEvidence", fields: [reviewerId], references: [id])
+  reviewedAt     DateTime?
+  lastUpdaterId  String?
+  lastUpdater    User?     @relation("UpdaterEvidence", fields: [lastUpdaterId], references: [id])
+
+  evaluations    Evaluation[]
+}
+
+model Evaluation {
+  id          String   @id @default(cuid())
+  evidenceId  String
+  evidence    Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  evaluatorId String
+  evaluator   User     @relation("EvaluatorEvaluation", fields: [evaluatorId], references: [id])
+  comments    String?
+  isApproved  Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  evidenceItems EvidenceItem[]
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+model UserPermission {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionType String   // "MENU" or "CRITERION"
+  resourceId     String   // e.g. "/collaborator/evidence" or criterionId
+  action         String?  // Optional, e.g. "VIEW", "SUBMIT". For menus we could use "VIEW"
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  resource  String
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  isGroup   Boolean  @default(false)
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime     @default(now())
+  clearedAt      DateTime?
+
+  @@unique([userId, conversationId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // EVIDENCE_APPROVED, EVIDENCE_REJECTED, EVIDENCE_REVIEWING
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
