@@ -7,13 +7,13 @@ import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/actions/log"
 
-async function verifyAdmin() {
+async function verifyAdminOrSupervisor() {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized")
+  if (!session || !["ADMIN", "SUPERVISOR"].includes(session.user.role as string)) throw new Error("Unauthorized")
 }
 
 export async function getDepartments() {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   return await prisma.department.findMany({ orderBy: { name: 'asc' } })
 }
 
@@ -24,68 +24,74 @@ export async function getAllDepartmentsPublic() {
 }
 
 export async function createDepartment(data: { name: string }) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const val = await prisma.department.create({ data })
   await createLog("CREATE", "Đơn vị (Department)", `Tạo mới đơn vị: ${data.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   revalidatePath("/admin/users")
   return val
 }
 
 export async function updateDepartment(id: string, data: { name: string }) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const val = await prisma.department.update({ where: { id }, data })
   await createLog("UPDATE", "Đơn vị (Department)", `Cập nhật đơn vị: ${data.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   revalidatePath("/admin/users")
   return val
 }
 
 export async function deleteDepartment(id: string) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const target = await prisma.department.findUnique({ where: { id } })
   await prisma.department.delete({ where: { id } })
   await createLog("DELETE", "Đơn vị (Department)", `Đã xóa đơn vị: ${target?.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   revalidatePath("/admin/users")
 }
 
 // -- POSITIONS --
 export async function getPositions() {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   return await prisma.position.findMany({ orderBy: { name: 'asc' } })
 }
 
 export async function createPosition(data: { name: string }) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const val = await prisma.position.create({ data })
   await createLog("CREATE", "Chức vụ (Position)", `Tạo mới chức vụ: ${data.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   revalidatePath("/admin/users")
   return val
 }
 
 export async function updatePosition(id: string, data: { name: string }) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const val = await prisma.position.update({ where: { id }, data })
   await createLog("UPDATE", "Chức vụ (Position)", `Cập nhật chức vụ: ${data.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   revalidatePath("/admin/users")
   return val
 }
 
 export async function deletePosition(id: string) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const target = await prisma.position.findUnique({ where: { id } })
   await prisma.position.delete({ where: { id } })
   await createLog("DELETE", "Chức vụ (Position)", `Đã xóa chức vụ: ${target?.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   revalidatePath("/admin/users")
 }
 
 // -- PROGRAMS --
 export async function getPrograms() {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   return await prisma.program.findMany({ include: { department: true }, orderBy: { name: 'asc' } })
 }
 
@@ -96,23 +102,25 @@ export async function getAllProgramsPublic() {
 }
 
 export async function createProgram(data: { name: string, departmentId: string }) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const val = await prisma.program.create({ data, include: { department: true } })
   await createLog("CREATE", "Đào tạo (Program)", `Tạo mới ngành: ${data.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   return val
 }
 
 export async function updateProgram(id: string, data: { name: string, departmentId: string }) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const val = await prisma.program.update({ where: { id }, data, include: { department: true } })
   await createLog("UPDATE", "Đào tạo (Program)", `Cập nhật ngành: ${data.name}`)
   revalidatePath("/admin/categories")
+  revalidatePath("/supervisor/categories")
   return val
 }
 
 export async function deleteProgram(id: string) {
-  await verifyAdmin()
+  await verifyAdminOrSupervisor()
   const target = await prisma.program.findUnique({ where: { id } })
   await prisma.program.delete({ where: { id } })
   await createLog("DELETE", "Đào tạo (Program)", `Đã xóa ngành: ${target?.name}`)
