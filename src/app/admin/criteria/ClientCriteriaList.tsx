@@ -443,7 +443,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
             className="flex-1 xl:flex-none justify-center bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm"
           >
             <Folder size={18} className="text-amber-500" />
-            Thêm TC
+            Thêm Tiêu chí
           </button>
           <button 
             onClick={openCreateCrit}

@@ -143,7 +143,7 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
                     <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-300 uppercase">
                       {ev.criterion.standard.year} - {ev.criterion.standard.name}
                     </span>
-                    <span className="text-[10px] font-bold text-[var(--primary)] bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">TC: {ev.criterion.name}</span>
+                    <span className="text-[10px] font-bold text-[var(--primary)] bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">Tiêu chuẩn: {ev.criterion.name}</span>
                   </div>
                   <div className="px-2 py-1 bg-emerald-500 text-white font-bold text-[10px] rounded flex items-center gap-1 shadow-sm">
                      <CheckCircle2 size={12} /> Đã Duyệt
