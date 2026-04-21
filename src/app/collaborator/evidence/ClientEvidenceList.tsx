@@ -81,7 +81,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [showEvProgramDropdown, setShowEvProgramDropdown] = useState(false)
 
   const listAvailableYears = Array.from(new Set(evidences.map(ev => ev.criterion?.standard?.year).filter(Boolean))).sort((a,b) => Number(b) - Number(a)) as number[]
-  const programs = Array.from(new Map(criteriaList.filter(c => c.standard.type === "PROGRAM" && c.standard.program).map(c => [c.standard.programId, c.standard.program])).values());
+
 
   const filteredEvidencesList = evidences.filter(ev => {
     let match = true;
