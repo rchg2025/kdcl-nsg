@@ -205,11 +205,6 @@ export default function ClientUserList({ initialUsers, departments, positions }:
 
                 <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-r-2xl border-y border-r border-slate-100 dark:border-slate-800 shadow-sm text-right">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Link href={`/admin/users/permissions/${user.id}`} title="Ma trận Phân quyền">
-                      <button className="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors">
-                        <ShieldAlert size={16} />
-                      </button>
-                    </Link>
                     <button onClick={() => openEdit(user)} title="Sửa thông tin" className="p-2 text-slate-400 hover:text-[var(--primary)] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                       <Edit2 size={16} />
                     </button>
