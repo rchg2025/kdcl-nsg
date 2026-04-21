@@ -251,9 +251,10 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   const [standards, setStandards] = useState(initialStandards)
   const [expandedStds, setExpandedStds] = useState<Record<string, boolean>>({})
   
-  // Search and Pagination
   const [searchName, setSearchName] = useState("")
   const [searchYear, setSearchYear] = useState("")
+  const [filterType, setFilterType] = useState("ALL")
+  const [filterProgramId, setFilterProgramId] = useState("ALL")
   const [page, setPage] = useState(1)
   const limit = 10
 
@@ -299,7 +300,9 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   const filteredStandards = standards.filter(s => {
     const matchName = !searchName || s.name.toLowerCase().includes(searchName.toLowerCase())
     const matchYear = !searchYear || s.year.toString() === searchYear
-    return matchName && matchYear
+    const matchType = filterType === "ALL" || s.type === filterType
+    const matchProgram = filterType !== "PROGRAM" || filterProgramId === "ALL" || s.programId === filterProgramId
+    return matchName && matchYear && matchType && matchProgram
   })
 
   // Reset page when filter changes
@@ -472,7 +475,24 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Search size={12} /> Tìm Tiêu chí</label>
             <input type="text" placeholder="Tên tiêu chí..." value={searchName} onChange={e => handleFilterChange(setSearchName, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)]" />
           </div>
-          <div className="w-full md:w-48">
+          <div className="w-full md:w-36">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Loại Kiểm định</label>
+            <select value={filterType} onChange={e => { handleFilterChange(setFilterType, e.target.value); setFilterProgramId("ALL"); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300">
+              <option value="ALL">Tất cả Loại</option>
+              <option value="INSTITUTIONAL">Kiểm định Trường</option>
+              <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
+            </select>
+          </div>
+          {filterType === "PROGRAM" && (
+            <div className="w-full md:w-48">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Chọn Ngành</label>
+              <select value={filterProgramId} onChange={e => handleFilterChange(setFilterProgramId, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300">
+                <option value="ALL">Tất cả Ngành</option>
+                {initialPrograms?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="w-full md:w-32">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Lọc bằng Năm</label>
             <input type="number" placeholder="Nhập năm..." value={searchYear} onChange={e => handleFilterChange(setSearchYear, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300" />
           </div>
