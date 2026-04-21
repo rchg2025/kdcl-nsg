@@ -225,13 +225,13 @@ export default function ClientCategoryList({ initialDepartments, initialPosition
         </h3>
         
         <form onSubmit={handleAddProg} className="flex flex-col gap-2 mb-6">
+          <select required value={progDeptId} onChange={e => setProgDeptId(e.target.value)} className="w-full px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-emerald-500 text-sm">
+            <option value="">-- Khoa/Đơn vị --</option>
+            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
           <div className="flex gap-2">
-            <select required value={progDeptId} onChange={e => setProgDeptId(e.target.value)} className="w-1/3 min-w-[100px] px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-emerald-500 text-sm">
-              <option value="">-- Khoa/Đơn vị --</option>
-              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
             <input required type="text" value={progName} onChange={e => setProgName(e.target.value)} placeholder="Nhập tên ngành..." className="flex-1 px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-emerald-500 text-sm" />
-            <button disabled={loading} type="submit" className="bg-emerald-500 text-white p-2.5 rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-50">
+            <button disabled={loading} type="submit" className="bg-emerald-500 text-white p-2.5 rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-50 shrink-0">
               {loading && progName ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
             </button>
           </div>
@@ -244,18 +244,20 @@ export default function ClientCategoryList({ initialDepartments, initialPosition
             programs.map(p => (
               <div key={p.id} className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl group hover:border-emerald-200 border border-slate-100 dark:border-slate-800 transition-colors gap-2">
                 {editingProgId === p.id ? (
-                  <div className="w-full flex gap-2">
-                     <select required value={editProgDeptId} onChange={e => setEditProgDeptId(e.target.value)} className="w-1/3 min-w-[80px] px-2 py-1.5 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded outline-none focus:border-emerald-500 text-xs">
+                  <div className="w-full flex flex-col gap-2">
+                     <select required value={editProgDeptId} onChange={e => setEditProgDeptId(e.target.value)} className="w-full px-2 py-1.5 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded outline-none focus:border-emerald-500 text-xs">
                         <option value="">-- Đơn vị --</option>
                         {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                      </select>
-                     <input autoFocus type="text" value={editProgName} onChange={e => setEditProgName(e.target.value)} className="flex-1 px-3 py-1.5 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded outline-none focus:border-emerald-500 text-sm w-full" />
-                     <button disabled={loading} onClick={() => handleUpdateProg(p.id)} className="bg-emerald-500 text-white p-1.5 rounded hover:bg-emerald-600 shrink-0">
-                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                     </button>
-                     <button onClick={() => setEditingProgId(null)} className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-1.5 rounded hover:bg-slate-300 shrink-0">
-                        <X size={16} />
-                     </button>
+                     <div className="flex gap-2">
+                       <input autoFocus type="text" value={editProgName} onChange={e => setEditProgName(e.target.value)} className="flex-1 px-3 py-1.5 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded outline-none focus:border-emerald-500 text-sm w-full" />
+                       <button disabled={loading} onClick={() => handleUpdateProg(p.id)} className="bg-emerald-500 text-white p-1.5 rounded hover:bg-emerald-600 shrink-0">
+                          {loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                       </button>
+                       <button onClick={() => setEditingProgId(null)} className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-1.5 rounded hover:bg-slate-300 shrink-0">
+                          <X size={16} />
+                       </button>
+                     </div>
                   </div>
                 ) : (
                   <div className="w-full flex items-center justify-between">
