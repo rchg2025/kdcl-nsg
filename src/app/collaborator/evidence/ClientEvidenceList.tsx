@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { createEvidence, updateEvidence } from "@/actions/evidence"
-import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle } from "lucide-react"
+import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
 
 type EvidenceItem = {
@@ -71,6 +71,43 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [searchProgramName, setSearchProgramName] = useState("")
   const [showProgramDropdown, setShowProgramDropdown] = useState(false)
   
+  // List filtering state
+  const [searchEv, setSearchEv] = useState("")
+  const [filterEvYear, setFilterEvYear] = useState("ALL")
+  const [filterEvStatus, setFilterEvStatus] = useState("ALL")
+  const [filterEvType, setFilterEvType] = useState("ALL")
+  const [filterEvProgramId, setFilterEvProgramId] = useState("")
+  const [searchEvProgramName, setSearchEvProgramName] = useState("")
+  const [showEvProgramDropdown, setShowEvProgramDropdown] = useState(false)
+
+  const listAvailableYears = Array.from(new Set(evidences.map(ev => ev.criterion?.standard?.year).filter(Boolean))).sort((a,b) => Number(b) - Number(a)) as number[]
+  const programs = Array.from(new Map(criteriaList.filter(c => c.standard.type === "PROGRAM" && c.standard.program).map(c => [c.standard.programId, c.standard.program])).values());
+
+  const filteredEvidencesList = evidences.filter(ev => {
+    let match = true;
+    if (searchEv) {
+       const q = searchEv.toLowerCase();
+       const criterionMatch = ev.criterion?.name?.toLowerCase().includes(q);
+       const stdMatch = ev.criterion?.standard?.name?.toLowerCase().includes(q);
+       const contentMatch = ev.content?.toLowerCase().includes(q);
+       const itemMatch = ev.evidenceItem?.name?.toLowerCase().includes(q);
+       match = match && (criterionMatch || stdMatch || contentMatch || itemMatch);
+    }
+    if (filterEvYear !== "ALL") {
+       match = match && ev.criterion?.standard?.year?.toString() === filterEvYear;
+    }
+    if (filterEvStatus !== "ALL") {
+       match = match && ev.status === filterEvStatus;
+    }
+    if (filterEvType !== "ALL") {
+       match = match && ev.criterion?.standard?.type === filterEvType;
+    }
+    if (filterEvType === "PROGRAM" && filterEvProgramId) {
+       match = match && ev.criterion?.standard?.programId === filterEvProgramId;
+    }
+    return match;
+  });
+
   const baseFilteredCriteria = criteriaList.filter(c => {
     if (selectedYear !== "" && c.standard.year !== selectedYear) return false
     let matchType = false
@@ -260,8 +297,93 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
         </button>
       </div>
 
+      <div className="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800 mb-6">
+        <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-[var(--foreground)]">
+          <Filter size={18} /> Bộ lọc tra cứu minh chứng
+        </h3>
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Tìm kiếm</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                value={searchEv} 
+                onChange={e => setSearchEv(e.target.value)} 
+                placeholder="Nội dung, Tên tiêu chuẩn, Tiêu chí..." 
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm" 
+              />
+            </div>
+          </div>
+          <div className="w-[120px]">
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Năm</label>
+             <select value={filterEvYear} onChange={e => setFilterEvYear(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
+               <option value="ALL">Tất cả</option>
+               {listAvailableYears.map(y => <option key={y} value={y.toString()}>{y}</option>)}
+             </select>
+          </div>
+          <div className="w-[180px]">
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Trạng thái</label>
+             <select value={filterEvStatus} onChange={e => setFilterEvStatus(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
+               <option value="ALL">Tất cả trạng thái</option>
+               <option value="PENDING">Chờ duyệt</option>
+               <option value="REVIEWING">Đang xem xét</option>
+               <option value="APPROVED">Đã duyệt</option>
+               <option value="REJECTED">Không đạt</option>
+             </select>
+          </div>
+          <div className="w-[180px]">
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Loại kiểm định</label>
+             <select value={filterEvType} onChange={e => { setFilterEvType(e.target.value); setFilterEvProgramId(""); setSearchEvProgramName(""); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
+               <option value="ALL">Tất cả các loại</option>
+               <option value="INSTITUTIONAL">Kiểm định Trường</option>
+               <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
+             </select>
+          </div>
+          {filterEvType === "PROGRAM" && (
+            <div className="w-[220px] relative">
+              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Ngành đào tạo</label>
+              <input 
+                type="text"
+                value={searchEvProgramName}
+                onChange={e => {
+                  setSearchEvProgramName(e.target.value);
+                  setFilterEvProgramId("");
+                  setShowEvProgramDropdown(true);
+                }}
+                onFocus={() => setShowEvProgramDropdown(true)}
+                onBlur={() => setTimeout(() => setShowEvProgramDropdown(false), 200)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm"
+                placeholder="Tra cứu ngành học..."
+              />
+              {showEvProgramDropdown && (
+                <div className="absolute z-10 w-[300px] right-0 mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                  {programs.filter((p:any) => p?.name?.toLowerCase().includes(searchEvProgramName.toLowerCase())).length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
+                  ) : (
+                    programs.filter((p:any) => p?.name?.toLowerCase().includes(searchEvProgramName.toLowerCase())).map((p:any) => (
+                      <div 
+                        key={p.id} 
+                        onClick={() => {
+                          setFilterEvProgramId(p.id);
+                          setSearchEvProgramName(p.name);
+                          setShowEvProgramDropdown(false);
+                        }}
+                        className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${filterEvProgramId === p.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                      >
+                        {p.name}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-4">
-        {evidences.length === 0 ? (
+        {filteredEvidencesList.length === 0 ? (
           <div className="glass p-12 rounded-2xl flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
               <FileText size={28} className="text-slate-400" />
@@ -270,7 +392,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
             <p className="text-slate-500 text-sm mt-1 max-w-sm">Bạn chưa tải lên hay báo cáo minh chứng nào.</p>
           </div>
         ) : (
-          evidences.map((ev) => (
+          filteredEvidencesList.map((ev) => (
             <div key={ev.id} id={`ev-${ev.id}`} className="glass rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
