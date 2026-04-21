@@ -19,6 +19,10 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user || !user.password) return null
+        
+        if (user.isActive === false) {
+           throw new Error("Tài khoản của bạn đã bị vô hiệu hóa")
+        }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 

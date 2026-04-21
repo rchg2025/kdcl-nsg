@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { createUser, deleteUser, updateUser } from "@/actions/user"
-import { Plus, Trash2, Edit2, ShieldAlert, Loader2, KeyRound, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react"
+import { createUser, deleteUser, updateUser, toggleUserActive } from "@/actions/user"
+import { Plus, Trash2, Edit2, Loader2, KeyRound, Search, Filter, ChevronLeft, ChevronRight, Power, PowerOff } from "lucide-react"
 import Link from "next/link"
 
 type Department = { id: string; name: string }
@@ -17,6 +17,7 @@ type UserInfo = {
   positionId: string | null
   department?: Department | null
   position?: Position | null
+  isActive: boolean
   createdAt: Date
 }
 
@@ -107,13 +108,22 @@ export default function ClientUserList({ initialUsers, departments, positions }:
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa thành viên này không?")) return
+  const handleDelete = async (id: string, name: string | null) => {
+    if (!confirm(`Xóa tài khoản ${name || "này"}?`)) return
     try {
       await deleteUser(id)
       setUsers(users.filter(u => u.id !== id))
-    } catch (err) {
-      alert("Đã xảy ra lỗi khi xóa")
+    } catch(err) {}
+  }
+
+  const handleToggleActive = async (user: UserInfo) => {
+    const actionStr = user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'
+    if (!confirm(`Bạn có chắc chắn muốn ${actionStr} tài khoản ${user.name}?`)) return
+    try {
+      await toggleUserActive(user.id, !user.isActive)
+      setUsers(users.map(u => u.id === user.id ? { ...u, isActive: !u.isActive } : u))
+    } catch(err) {
+      alert("Đã có lỗi xảy ra.")
     }
   }
 
@@ -178,11 +188,12 @@ export default function ClientUserList({ initialUsers, departments, positions }:
               <tr key={user.id} className="group">
                 <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-l-2xl border-y border-l border-slate-100 dark:border-slate-800 shadow-sm relative">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500 dark:text-slate-400">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold relative ${user.isActive ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' : 'bg-red-50 dark:bg-red-900/20 text-red-400'}`}>
                       {user.name?.[0] || user.email?.[0]?.toUpperCase()}
+                      {!user.isActive && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></div>}
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-[var(--foreground)]">{user.name}</h4>
+                      <h4 className={`font-bold text-sm ${user.isActive ? 'text-[var(--foreground)]' : 'text-slate-400 line-through'}`}>{user.name}</h4>
                       <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
                   </div>
@@ -205,10 +216,13 @@ export default function ClientUserList({ initialUsers, departments, positions }:
 
                 <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-r-2xl border-y border-r border-slate-100 dark:border-slate-800 shadow-sm text-right">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => handleToggleActive(user)} title={user.isActive ? "Vô hiệu hóa đăng nhập" : "Kích hoạt đăng nhập"} className={`p-2 rounded-lg transition-colors ${user.isActive ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'}`}>
+                      {user.isActive ? <PowerOff size={16} /> : <Power size={16} />}
+                    </button>
                     <button onClick={() => openEdit(user)} title="Sửa thông tin" className="p-2 text-slate-400 hover:text-[var(--primary)] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => handleDelete(user.id)} title="Xóa tài khoản" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                    <button onClick={() => handleDelete(user.id, user.name)} title="Xóa tài khoản" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                       <Trash2 size={16} />
                     </button>
                   </div>

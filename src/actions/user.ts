@@ -90,3 +90,17 @@ export async function deleteUser(id: string) {
   
   revalidatePath("/admin/users")
 }
+
+export async function toggleUserActive(id: string, isActive: boolean) {
+  await checkAdmin()
+  
+  await prisma.user.update({
+    where: { id },
+    data: { isActive }
+  })
+  
+  const statusStr = isActive ? "Kích hoạt" : "Vô hiệu hóa"
+  await createLog("UPDATE", "Thành viên (User)", `Đã ${statusStr} tài khoản ID: ${id}`)
+  
+  revalidatePath("/admin/users")
+}
