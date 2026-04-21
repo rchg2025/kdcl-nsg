@@ -1,10 +1,12 @@
 import { getCollaboratorEvidences, getAllCriteriaForDropdown } from "@/actions/evidence"
+import { getAllProgramsPublic } from "@/actions/category"
 import ClientEvidenceList from "@/app/collaborator/evidence/ClientEvidenceList"
 
 export default async function SupervisorEvidencePage() {
-  const [evidences, criteriaList] = await Promise.all([
+  const [evidences, criteriaList, programs] = await Promise.all([
     getCollaboratorEvidences(),
-    getAllCriteriaForDropdown()
+    getAllCriteriaForDropdown(),
+    getAllProgramsPublic()
   ])
 
   return (
@@ -15,8 +17,7 @@ export default async function SupervisorEvidencePage() {
           <p className="text-slate-500 mt-1">Giám sát viên báo cáo mức độ đạt được của các tiêu chuẩn</p>
         </div>
       </div>
-      
-      <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} />
+      <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} programs={programs} />
     </div>
   )
 }

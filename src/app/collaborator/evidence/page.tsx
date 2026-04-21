@@ -1,12 +1,12 @@
 import { getCollaboratorEvidences, getAllCriteriaForDropdown } from "@/actions/evidence"
-import { getPrograms } from "@/actions/category"
+import { getAllProgramsPublic } from "@/actions/category"
 import ClientEvidenceList from "./ClientEvidenceList"
 
 export default async function EvidencePage() {
   const [evidences, criteriaList, programs] = await Promise.all([
     getCollaboratorEvidences(),
     getAllCriteriaForDropdown(),
-    getPrograms()
+    getAllProgramsPublic()
   ])
 
   return (
