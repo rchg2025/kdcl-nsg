@@ -272,6 +272,9 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   const [type, setType] = useState("INSTITUTIONAL")
   const [programId, setProgramId] = useState("")
   const [parentStdId, setParentStdId] = useState("")
+
+  const [searchProgram, setSearchProgram] = useState("")
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false)
   
   // Data State
   const [allDepartments, setAllDepartments] = useState<any[]>([])
@@ -307,6 +310,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
     setDescription("")
     setType("INSTITUTIONAL")
     setProgramId("")
+    setSearchProgram("")
     setIsStdModalOpen(true)
   }
 
@@ -318,6 +322,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
     setYear(std.year)
     setType(std.type || "INSTITUTIONAL")
     setProgramId(std.programId || "")
+    setSearchProgram(std.program?.name || "")
     setIsStdModalOpen(true)
   }
 
@@ -604,10 +609,43 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                 {type === "PROGRAM" && (
                   <div>
                     <label className="block text-sm font-semibold mb-2">Chọn Ngành</label>
-                    <select required value={programId} onChange={e => setProgramId(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
-                      <option value="">-- Chọn ngành học --</option>
-                      {initialPrograms.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        value={searchProgram}
+                        onChange={e => {
+                          setSearchProgram(e.target.value)
+                          setProgramId("") // reset selected if typing
+                          setShowProgramDropdown(true)
+                        }}
+                        onFocus={() => setShowProgramDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
+                        placeholder="Gõ tên ngành học để tra cứu..."
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]"
+                        required={!programId}
+                      />
+                      {showProgramDropdown && (
+                        <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                          {initialPrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
+                             <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành phù hợp</div>
+                          ) : (
+                             initialPrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map((p: any) => (
+                               <div 
+                                 key={p.id}
+                                 onClick={() => {
+                                   setProgramId(p.id)
+                                   setSearchProgram(p.name)
+                                   setShowProgramDropdown(false)
+                                 }}
+                                 className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${programId === p.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                               >
+                                 {p.name}
+                               </div>
+                             ))
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
