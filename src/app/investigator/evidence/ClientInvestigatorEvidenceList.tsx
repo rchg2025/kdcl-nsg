@@ -10,6 +10,7 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
   const [searchUser, setSearchUser] = useState("")
   const [searchKeyword, setSearchKeyword] = useState("")
   const [filterYear, setFilterYear] = useState("ALL")
+  const [filterType, setFilterType] = useState("ALL")
 
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
@@ -56,6 +57,9 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
     }
     if (filterYear !== "ALL") {
       match = match && ev.criterion.standard.year.toString() === filterYear
+    }
+    if (filterType !== "ALL") {
+      match = match && ev.criterion.standard.type === filterType
     }
     return match
   })
@@ -113,6 +117,14 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
                {availableYears.map(year => (
                  <option key={year} value={year.toString()}>{year}</option>
                ))}
+             </select>
+          </div>
+          <div className="w-[200px]">
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Loại đánh giá</label>
+             <select value={filterType} onChange={e => { setFilterType(e.target.value); setCurrentPage(1); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
+               <option value="ALL">Tất cả các loại</option>
+               <option value="INSTITUTIONAL">Kiểm định Trường</option>
+               <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
              </select>
           </div>
         </div>

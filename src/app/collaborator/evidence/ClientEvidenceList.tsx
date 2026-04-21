@@ -61,6 +61,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [accreditationType, setAccreditationType] = useState("INSTITUTIONAL")
   const [selectedProgramId, setSelectedProgramId] = useState("")
   
+  const [searchProgramName, setSearchProgramName] = useState("")
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false)
+  
   const filteredCriteria = criteriaList.filter(c => {
     let matchType = false
     if (accreditationType === "INSTITUTIONAL") {
@@ -156,6 +159,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setEvidenceItemId("") // Prevent selection change on edit for simplicity
     setSearchCriterion(ev.criterion.name)
     setSearchItem("")
+    setSearchProgramName(ev.criterion.standard.program?.name || "")
     setContent(ev.content || "")
     setExistingFiles(parseFilesForForm(ev.fileUrl))
     setSelectedFiles([])
@@ -177,6 +181,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setNewLinkUrl("")
     setAccreditationType("INSTITUTIONAL")
     setSelectedProgramId("")
+    setSearchProgramName("")
     setIsModalOpen(true)
   }
   
@@ -315,14 +320,48 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                 {accreditationType === "PROGRAM" && (
                   <div>
                     <label className="block text-sm font-semibold mb-2">Chọn Ngành học</label>
-                    <select disabled={!!editingId} value={selectedProgramId} onChange={e => {
-                      setSelectedProgramId(e.target.value)
-                      setCriterionId("")
-                      setSearchCriterion("")
-                    }} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
-                      <option value="">-- Chọn ngành --</option>
-                      {programs.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        disabled={!!editingId}
+                        value={searchProgramName}
+                        onChange={e => {
+                          setSearchProgramName(e.target.value);
+                          setSelectedProgramId("");
+                          setCriterionId("");
+                          setSearchCriterion("");
+                          setShowProgramDropdown(true);
+                        }}
+                        onFocus={() => setShowProgramDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
+                        placeholder="Gõ tên ngành học để tìm kiếm..."
+                        required={!selectedProgramId}
+                      />
+                      {showProgramDropdown && !editingId && (
+                        <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                          {programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).length === 0 ? (
+                            <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành học phù hợp</div>
+                          ) : (
+                            programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).map((p:any) => (
+                              <div 
+                                key={p.id} 
+                                onClick={() => {
+                                  setSelectedProgramId(p.id);
+                                  setSearchProgramName(p.name);
+                                  setCriterionId("");
+                                  setSearchCriterion("");
+                                  setShowProgramDropdown(false);
+                                }}
+                                className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${selectedProgramId === p.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                              >
+                                {p.name}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
