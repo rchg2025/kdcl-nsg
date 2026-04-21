@@ -126,40 +126,24 @@ export default function ClientLogs({ logs }: { logs: LogItem[] }) {
       l.details || ""
     ])
 
-    // Build XML-based Excel (xlsx-compatible)
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += '<?mso-application progid="Excel.Sheet"?>\n'
-    xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n'
-    xml += '<Styles><Style ss:ID="header"><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#4F46E5" ss:Pattern="Solid"/><Font ss:Color="#FFFFFF" ss:Bold="1"/></Style></Styles>\n'
-    xml += '<Worksheet ss:Name="Nhật ký hệ thống"><Table>\n'
-
-    // Column widths
-    const widths = [150, 150, 200, 120, 100, 180, 400]
-    widths.forEach(w => { xml += `<Column ss:Width="${w}"/>\n` })
-
-    // Header row
-    xml += '<Row>'
-    header.forEach(h => { xml += `<Cell ss:StyleID="header"><Data ss:Type="String">${h}</Data></Cell>` })
-    xml += '</Row>\n'
-
-    // Data rows
+    // Convert to CSV
+    let csvContent = "\uFEFF"; // BOM for Excel UTF-8
+    csvContent += header.join(",") + "\n";
+    
     rows.forEach(row => {
-      xml += '<Row>'
-      row.forEach(cell => {
-        const escaped = String(cell).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        xml += `<Cell><Data ss:Type="String">${escaped}</Data></Cell>`
-      })
-      xml += '</Row>\n'
-    })
+      let rowString = row.map(cell => {
+        let cellStr = String(cell).replace(/"/g, '""'); // Escape quotes
+        return `"${cellStr}"`; // Wrap in quotes
+      }).join(",");
+      csvContent += rowString + "\n";
+    });
 
-    xml += '</Table></Worksheet></Workbook>'
-
-    const blob = new Blob([xml], { type: "application/vnd.ms-excel" })
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
     const now = new Date().toISOString().slice(0, 10)
-    a.download = `nhat-ky-he-thong_${now}.xls`
+    a.download = `nhat-ky-he-thong_${now}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

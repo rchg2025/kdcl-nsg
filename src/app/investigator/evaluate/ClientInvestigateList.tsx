@@ -105,7 +105,7 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
       )}
 
       {/* Search & Filters */}
-      <div className="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800">
+      <div className="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800 relative z-30">
         <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-[var(--foreground)]">
           <Filter size={18} /> Bộ lọc tra cứu Tiêu chí
         </h3>
