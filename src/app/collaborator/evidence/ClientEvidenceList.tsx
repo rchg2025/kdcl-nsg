@@ -87,10 +87,10 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     let match = true;
     if (searchEv) {
        const q = searchEv.toLowerCase();
-       const criterionMatch = ev.criterion?.name?.toLowerCase().includes(q);
-       const stdMatch = ev.criterion?.standard?.name?.toLowerCase().includes(q);
-       const contentMatch = ev.content?.toLowerCase().includes(q);
-       const itemMatch = ev.evidenceItem?.name?.toLowerCase().includes(q);
+       const criterionMatch = ev.criterion?.name?.toLowerCase().includes(q) ?? false;
+       const stdMatch = ev.criterion?.standard?.name?.toLowerCase().includes(q) ?? false;
+       const contentMatch = ev.content?.toLowerCase().includes(q) ?? false;
+       const itemMatch = ev.evidenceItem?.name?.toLowerCase().includes(q) ?? false;
        match = match && (criterionMatch || stdMatch || contentMatch || itemMatch);
     }
     if (filterEvYear !== "ALL") {
