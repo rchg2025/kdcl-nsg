@@ -5,12 +5,15 @@ import { CheckCircle2, Clock, AlertCircle, FileText, UserCircle, Search, Filter,
 import { evaluateEvidence } from "@/actions/investigator"
 import FileAttachments from "@/components/FileAttachments"
 
-export default function ClientInvestigatorEvidenceList({ initialEvidences }: { initialEvidences: any[] }) {
+export default function ClientInvestigatorEvidenceList({ initialEvidences, programs = [] }: { initialEvidences: any[], programs?: any[] }) {
   // Filter & Pagination States
   const [searchUser, setSearchUser] = useState("")
   const [searchKeyword, setSearchKeyword] = useState("")
   const [filterYear, setFilterYear] = useState("ALL")
   const [filterType, setFilterType] = useState("ALL")
+  const [filterProgramId, setFilterProgramId] = useState("")
+  const [searchProgramName, setSearchProgramName] = useState("")
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false)
 
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
@@ -60,6 +63,9 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
     }
     if (filterType !== "ALL") {
       match = match && ev.criterion.standard.type === filterType
+    }
+    if (filterType === "PROGRAM" && filterProgramId) {
+      match = match && ev.criterion.standard.programId === filterProgramId
     }
     return match
   })
@@ -119,14 +125,60 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
                ))}
              </select>
           </div>
-          <div className="w-[200px]">
+          <div className="w-[180px]">
              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Loại đánh giá</label>
-             <select value={filterType} onChange={e => { setFilterType(e.target.value); setCurrentPage(1); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
+             <select value={filterType} onChange={e => { 
+                setFilterType(e.target.value); 
+                setFilterProgramId(""); 
+                setSearchProgramName("");
+                setCurrentPage(1); 
+              }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
                <option value="ALL">Tất cả các loại</option>
                <option value="INSTITUTIONAL">Kiểm định Trường</option>
-               <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
+               <option value="PROGRAM">Kiểm định Ngành đào</option>
              </select>
           </div>
+          {filterType === "PROGRAM" && (
+            <div className="w-[220px] relative">
+              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Chọn Ngành đào tạo</label>
+              <input 
+                type="text"
+                value={searchProgramName}
+                onChange={e => {
+                  setSearchProgramName(e.target.value);
+                  setFilterProgramId("");
+                  setShowProgramDropdown(true);
+                  setCurrentPage(1);
+                }}
+                onFocus={() => setShowProgramDropdown(true)}
+                onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm"
+                placeholder="Tra cứu ngành học..."
+              />
+              {showProgramDropdown && (
+                <div className="absolute z-10 w-[300px] right-0 mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                  {programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
+                  ) : (
+                    programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).map((p:any) => (
+                      <div 
+                        key={p.id} 
+                        onClick={() => {
+                          setFilterProgramId(p.id);
+                          setSearchProgramName(p.name);
+                          setShowProgramDropdown(false);
+                          setCurrentPage(1);
+                        }}
+                        className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${filterProgramId === p.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                      >
+                        {p.name}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
