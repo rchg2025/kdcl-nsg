@@ -1,24 +1,31 @@
 "use client"
 
 import { useState } from "react"
-import { createDepartment, updateDepartment, deleteDepartment, createPosition, updatePosition, deletePosition } from "@/actions/category"
-import { Plus, Trash2, Building2, Briefcase, Loader2, Edit2, X, Check } from "lucide-react"
+import { createDepartment, updateDepartment, deleteDepartment, createPosition, updatePosition, deletePosition, createProgram, updateProgram, deleteProgram } from "@/actions/category"
+import { Plus, Trash2, Building2, Briefcase, Loader2, Edit2, X, Check, BookOpen } from "lucide-react"
 
 type Department = { id: string; name: string }
 type Position = { id: string; name: string }
+type Program = { id: string; name: string; departmentId: string; department?: Department }
 
-export default function ClientCategoryList({ initialDepartments, initialPositions }: { initialDepartments: Department[], initialPositions: Position[] }) {
+export default function ClientCategoryList({ initialDepartments, initialPositions, initialPrograms }: { initialDepartments: Department[], initialPositions: Position[], initialPrograms: Program[] }) {
   const [departments, setDepartments] = useState(initialDepartments)
   const [positions, setPositions] = useState(initialPositions)
+  const [programs, setPrograms] = useState(initialPrograms)
 
   const [loading, setLoading] = useState(false)
   const [deptName, setDeptName] = useState("")
   const [posName, setPosName] = useState("")
+  const [progName, setProgName] = useState("")
+  const [progDeptId, setProgDeptId] = useState("")
   
   const [editingDeptId, setEditingDeptId] = useState<string | null>(null)
   const [editDeptName, setEditDeptName] = useState("")
   const [editingPosId, setEditingPosId] = useState<string | null>(null)
   const [editPosName, setEditPosName] = useState("")
+  const [editingProgId, setEditingProgId] = useState<string | null>(null)
+  const [editProgName, setEditProgName] = useState("")
+  const [editProgDeptId, setEditProgDeptId] = useState("")
 
   const handleAddDept = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,8 +87,39 @@ export default function ClientCategoryList({ initialDepartments, initialPosition
     } catch {}
   }
 
+  const handleAddProg = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!progDeptId) return alert("Vui lòng chọn Khoa/Đơn vị quản lý ngành")
+    setLoading(true)
+    try {
+      const newPr = await createProgram({ name: progName, departmentId: progDeptId })
+      setPrograms([...programs, newPr])
+      setProgName("")
+    } catch { alert("Lỗi khi thêm Ngành") }
+    finally { setLoading(false) }
+  }
+
+  const handleUpdateProg = async (id: string) => {
+    if (!editProgName.trim() || !editProgDeptId) return
+    setLoading(true)
+    try {
+      const updatedPr = await updateProgram(id, { name: editProgName, departmentId: editProgDeptId })
+      setPrograms(programs.map(p => p.id === id ? updatedPr : p))
+      setEditingProgId(null)
+    } catch { alert("Lỗi khi cập nhật Ngành") }
+    finally { setLoading(false) }
+  }
+
+  const handleDeleteProg = async (id: string) => {
+    if (!confirm("Chắc chắn xóa Ngành này chứ?")) return
+    try {
+      await deleteProgram(id)
+      setPrograms(programs.filter(p => p.id !== id))
+    } catch {}
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {/* CỘT ĐƠN VỊ */}
       <div className="glass rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
         <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
@@ -173,6 +211,67 @@ export default function ClientCategoryList({ initialDepartments, initialPosition
                         </button>
                      </div>
                   </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      {/* CỘT NGÀNH */}
+      <div className="glass rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+        <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+          <BookOpen className="text-emerald-500" size={20} />
+          Danh mục Ngành
+        </h3>
+        
+        <form onSubmit={handleAddProg} className="flex flex-col gap-2 mb-6">
+          <div className="flex gap-2">
+            <select required value={progDeptId} onChange={e => setProgDeptId(e.target.value)} className="w-1/3 min-w-[100px] px-3 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-emerald-500 text-sm">
+              <option value="">-- Khoa/Đơn vị --</option>
+              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+            <input required type="text" value={progName} onChange={e => setProgName(e.target.value)} placeholder="Nhập tên ngành..." className="flex-1 px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-emerald-500 text-sm" />
+            <button disabled={loading} type="submit" className="bg-emerald-500 text-white p-2.5 rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-50">
+              {loading && progName ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+            </button>
+          </div>
+        </form>
+
+        <div className="space-y-2">
+          {programs.length === 0 ? (
+            <p className="text-center text-slate-400 text-sm py-4">Chưa có ngành nào.</p>
+          ) : (
+            programs.map(p => (
+              <div key={p.id} className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl group hover:border-emerald-200 border border-slate-100 dark:border-slate-800 transition-colors gap-2">
+                {editingProgId === p.id ? (
+                  <div className="w-full flex gap-2">
+                     <select required value={editProgDeptId} onChange={e => setEditProgDeptId(e.target.value)} className="w-1/3 min-w-[80px] px-2 py-1.5 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded outline-none focus:border-emerald-500 text-xs">
+                        <option value="">-- Đơn vị --</option>
+                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                     </select>
+                     <input autoFocus type="text" value={editProgName} onChange={e => setEditProgName(e.target.value)} className="flex-1 px-3 py-1.5 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded outline-none focus:border-emerald-500 text-sm w-full" />
+                     <button disabled={loading} onClick={() => handleUpdateProg(p.id)} className="bg-emerald-500 text-white p-1.5 rounded hover:bg-emerald-600 shrink-0">
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                     </button>
+                     <button onClick={() => setEditingProgId(null)} className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 p-1.5 rounded hover:bg-slate-300 shrink-0">
+                        <X size={16} />
+                     </button>
+                  </div>
+                ) : (
+                  <div className="w-full flex items-center justify-between">
+                     <div className="flex flex-col">
+                        <span className="font-medium text-sm text-slate-700 dark:text-slate-300">{p.name}</span>
+                        <span className="text-xs text-slate-400 mt-0.5">{p.department?.name || 'Vô danh'}</span>
+                     </div>
+                     <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setEditingProgId(p.id); setEditProgName(p.name); setEditProgDeptId(p.departmentId) }} className="text-slate-400 hover:text-emerald-500 p-1">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => handleDeleteProg(p.id)} className="text-slate-400 hover:text-red-500 p-1">
+                          <Trash2 size={16} />
+                        </button>
+                     </div>
+                  </div>
                 )}
               </div>
             ))

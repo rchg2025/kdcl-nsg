@@ -1,8 +1,12 @@
 import { getStandards } from "@/actions/standard"
+import { getPrograms } from "@/actions/category"
 import ClientCriteriaList from "./ClientCriteriaList"
 
 export default async function CriteriaPage() {
-  const standards = await getStandards()
+  const [standards, programs] = await Promise.all([
+    getStandards(),
+    getPrograms()
+  ])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -12,8 +16,7 @@ export default async function CriteriaPage() {
           <p className="text-slate-500 mt-1">Quản lý danh mục kiểm định chất lượng theo năm</p>
         </div>
       </div>
-      
-      <ClientCriteriaList initialStandards={standards} />
+      <ClientCriteriaList initialStandards={standards} initialPrograms={programs} />
     </div>
   )
 }

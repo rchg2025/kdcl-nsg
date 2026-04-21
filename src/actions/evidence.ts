@@ -162,7 +162,7 @@ export async function getAllCriteriaForDropdown() {
   return await prisma.criterion.findMany({
     where: whereClause,
     include: { 
-      standard: true, 
+      standard: { include: { program: true } }, 
       items: { 
         ...itemsFilter,
         orderBy: { createdAt: 'asc' } 

@@ -34,11 +34,11 @@ type FileLink = { name: string, url: string }
 type CriterionDropdown = {
   id: string
   name: string
-  standard: { name: string; year: number }
+  standard: { name: string; year: number; type: string; programId: string | null; program?: { id: string; name: string } | null }
   items: EvidenceItem[]
 }
 
-export default function ClientEvidenceList({ initialEvidences, criteriaList }: { initialEvidences: any[], criteriaList: CriterionDropdown[] }) {
+export default function ClientEvidenceList({ initialEvidences, criteriaList, programs=[] }: { initialEvidences: any[], criteriaList: CriterionDropdown[], programs?: any[] }) {
   const [evidences, setEvidences] = useState<Evidence[]>(initialEvidences)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -58,9 +58,18 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
   const [searchItem, setSearchItem] = useState("")
   const [showItemDropdown, setShowItemDropdown] = useState(false)
   
-  const filteredCriteria = criteriaList.filter(c => 
-    `${c.standard.year} - ${c.standard.name}: ${c.name}`.toLowerCase().includes(searchCriterion.toLowerCase())
-  )
+  const [accreditationType, setAccreditationType] = useState("INSTITUTIONAL")
+  const [selectedProgramId, setSelectedProgramId] = useState("")
+  
+  const filteredCriteria = criteriaList.filter(c => {
+    let matchType = false
+    if (accreditationType === "INSTITUTIONAL") {
+      matchType = c.standard.type === "INSTITUTIONAL" || !c.standard.type // fallback for old records
+    } else {
+      matchType = c.standard.type === "PROGRAM" && c.standard.programId === selectedProgramId
+    }
+    return matchType && `${c.standard.year} - ${c.standard.name}: ${c.name}`.toLowerCase().includes(searchCriterion.toLowerCase())
+  })
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -166,6 +175,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
     setSelectedFiles([])
     setNewLinkName("")
     setNewLinkUrl("")
+    setAccreditationType("INSTITUTIONAL")
+    setSelectedProgramId("")
     setIsModalOpen(true)
   }
   
@@ -289,6 +300,33 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
             </div>
             
             <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Loại Kiểm định</label>
+                  <select disabled={!!editingId} value={accreditationType} onChange={e => {
+                    setAccreditationType(e.target.value)
+                    setCriterionId("")
+                    setSearchCriterion("")
+                  }} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
+                    <option value="INSTITUTIONAL">Cấp Trường</option>
+                    <option value="PROGRAM">Cấp Ngành</option>
+                  </select>
+                </div>
+                {accreditationType === "PROGRAM" && (
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Chọn Ngành học</label>
+                    <select disabled={!!editingId} value={selectedProgramId} onChange={e => {
+                      setSelectedProgramId(e.target.value)
+                      setCriterionId("")
+                      setSearchCriterion("")
+                    }} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
+                      <option value="">-- Chọn ngành --</option>
+                      {programs.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+              
               <div>
                 <label className="block text-sm font-semibold mb-2">Chọn Tiêu chuẩn</label>
                 {editingId ? (

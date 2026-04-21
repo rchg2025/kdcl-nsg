@@ -46,11 +46,30 @@ model User {
   resetOtpExpiry  DateTime?
 }
 
+enum AccreditationType {
+  INSTITUTIONAL
+  PROGRAM
+}
+
+model Program {
+  id           String     @id @default(cuid())
+  name         String
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  standards    Standard[]
+}
+
 model Standard {
   id          String   @id @default(cuid())
   name        String
   description String?
   year        Int
+  type        AccreditationType @default(INSTITUTIONAL)
+  programId   String?
+  program     Program? @relation(fields: [programId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -134,6 +153,7 @@ model Department {
   users       User[]
 
   evidenceItems EvidenceItem[]
+  programs      Program[]
 }
 
 model Position {

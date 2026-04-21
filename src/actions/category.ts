@@ -82,3 +82,33 @@ export async function deletePosition(id: string) {
   revalidatePath("/admin/categories")
   revalidatePath("/admin/users")
 }
+
+// -- PROGRAMS --
+export async function getPrograms() {
+  await verifyAdmin()
+  return await prisma.program.findMany({ include: { department: true }, orderBy: { name: 'asc' } })
+}
+
+export async function createProgram(data: { name: string, departmentId: string }) {
+  await verifyAdmin()
+  const val = await prisma.program.create({ data, include: { department: true } })
+  await createLog("CREATE", "Đào tạo (Program)", `Tạo mới ngành: ${data.name}`)
+  revalidatePath("/admin/categories")
+  return val
+}
+
+export async function updateProgram(id: string, data: { name: string, departmentId: string }) {
+  await verifyAdmin()
+  const val = await prisma.program.update({ where: { id }, data, include: { department: true } })
+  await createLog("UPDATE", "Đào tạo (Program)", `Cập nhật ngành: ${data.name}`)
+  revalidatePath("/admin/categories")
+  return val
+}
+
+export async function deleteProgram(id: string) {
+  await verifyAdmin()
+  const target = await prisma.program.findUnique({ where: { id } })
+  await prisma.program.delete({ where: { id } })
+  await createLog("DELETE", "Đào tạo (Program)", `Đã xóa ngành: ${target?.name}`)
+  revalidatePath("/admin/categories")
+}

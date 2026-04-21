@@ -23,7 +23,7 @@ export async function getReviewEvidences() {
     include: {
       collaborator: { select: { name: true, email: true, department: { select: { name: true } } } },
       criterion: {
-        include: { standard: true }
+        include: { standard: { include: { program: true } } }
       },
       evidenceItem: true,
       reviewer: { select: { name: true, email: true } },

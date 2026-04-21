@@ -1,10 +1,12 @@
 import { getCollaboratorEvidences, getAllCriteriaForDropdown } from "@/actions/evidence"
+import { getPrograms } from "@/actions/category"
 import ClientEvidenceList from "./ClientEvidenceList"
 
 export default async function EvidencePage() {
-  const [evidences, criteriaList] = await Promise.all([
+  const [evidences, criteriaList, programs] = await Promise.all([
     getCollaboratorEvidences(),
-    getAllCriteriaForDropdown()
+    getAllCriteriaForDropdown(),
+    getPrograms()
   ])
 
   return (
@@ -16,7 +18,7 @@ export default async function EvidencePage() {
         </div>
       </div>
       
-      <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} />
+      <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} programs={programs} />
     </div>
   )
 }

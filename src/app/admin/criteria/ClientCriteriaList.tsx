@@ -26,6 +26,9 @@ type Standard = {
   name: string
   description: string | null
   year: number
+  type: string
+  programId: string | null
+  program?: { id: string, name: string } | null
   criteria: Criterion[]
   _count: { criteria: number }
 }
@@ -244,7 +247,7 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
   )
 }
 
-export default function ClientCriteriaList({ initialStandards }: { initialStandards: Standard[] }) {
+export default function ClientCriteriaList({ initialStandards, initialPrograms=[] }: { initialStandards: Standard[], initialPrograms?: any[] }) {
   const [standards, setStandards] = useState(initialStandards)
   const [expandedStds, setExpandedStds] = useState<Record<string, boolean>>({})
   
@@ -263,10 +266,11 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
   const [editingStdId, setEditingStdId] = useState<string | null>(null)
   const [editingCritId, setEditingCritId] = useState<string | null>(null)
 
-  // Form State
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [year, setYear] = useState(new Date().getFullYear())
+  const [type, setType] = useState("INSTITUTIONAL")
+  const [programId, setProgramId] = useState("")
   const [parentStdId, setParentStdId] = useState("")
   
   // Data State
@@ -301,6 +305,8 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
     setEditingStdId(null)
     setName("")
     setDescription("")
+    setType("INSTITUTIONAL")
+    setProgramId("")
     setIsStdModalOpen(true)
   }
 
@@ -310,19 +316,23 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
     setName(std.name)
     setDescription(std.description || "")
     setYear(std.year)
+    setType(std.type || "INSTITUTIONAL")
+    setProgramId(std.programId || "")
     setIsStdModalOpen(true)
   }
 
   const handleSubmitStandard = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (type === "PROGRAM" && !programId) return alert("Vui lòng chọn Ngành")
     setLoading(true)
     try {
+      const payload = { name, description, year, type, programId: type === "PROGRAM" ? programId : null }
       if (editingStdId) {
-        await updateStandard(editingStdId, { name, description, year })
-        setStandards(standards.map(s => s.id === editingStdId ? { ...s, name, description, year } : s))
+        await updateStandard(editingStdId, payload)
+        setStandards(standards.map(s => s.id === editingStdId ? { ...s, ...payload, program: type === "PROGRAM" ? initialPrograms.find(p => p.id === programId) : null } : s))
       } else {
-        const newStd = await createStandard({ name, description, year })
-        setStandards([{...newStd, criteria: [], _count: { criteria: 0 }}, ...standards])
+        const newStd = await createStandard(payload)
+        setStandards([{...newStd, program: type === "PROGRAM" ? initialPrograms.find(p => p.id === programId) : null, criteria: [], _count: { criteria: 0 }}, ...standards])
       }
       setIsStdModalOpen(false)
     } catch (err) {
@@ -459,16 +469,22 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
                     {expandedStds[std.id] ? <Folder size={24} /> : <Folder size={24} className="fill-current opacity-20" />}
                   </div>
                   <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-lg text-[var(--foreground)]">{std.name}</h3>
-                      <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold rounded-lg">Năm {std.year}</span>
-                    </div>
-                    {std.description && <p className="text-sm text-slate-500 mt-1.5">{std.description}</p>}
-                    <div className="mt-3 flex items-center gap-4 text-xs font-medium text-slate-500">
-                      <span className="flex items-center gap-1 font-semibold text-[var(--primary)]">
-                        {std._count.criteria} Tiêu chuẩn bên trong
-                      </span>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-bold text-lg text-[var(--foreground)]">{std.name}</h3>
+                        <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold rounded-lg">Năm {std.year}</span>
+                        {std.type === "PROGRAM" && (
+                          <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-lg">Ngành {std.program?.name || "???"}</span>
+                        )}
+                        {std.type === "INSTITUTIONAL" && (
+                          <span className="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-lg">Cấp Trường</span>
+                        )}
+                      </div>
+                      {std.description && <p className="text-sm text-slate-500 mt-1.5">{std.description}</p>}
+                      <div className="mt-3 flex items-center gap-4 text-xs font-medium text-slate-500">
+                        <span className="flex items-center gap-1 font-semibold text-[var(--primary)]">
+                          {std._count.criteria} Tiêu chuẩn bên trong
+                        </span>
+                      </div>
                   </div>
                 </div>
                 
@@ -575,7 +591,25 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2">Năm áp dụng</label>
-                <input required type="number" value={year} onChange={e => setYear(Number(e.target.value))} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none" />
+                <input required type="number" value={year} onChange={e => setYear(Number(e.target.value))} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none focus:border-[var(--primary)]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Loại Kiểm định</label>
+                  <select required value={type} onChange={e => setType(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
+                    <option value="INSTITUTIONAL">Cấp Trường</option>
+                    <option value="PROGRAM">Cấp Ngành</option>
+                  </select>
+                </div>
+                {type === "PROGRAM" && (
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Chọn Ngành</label>
+                    <select required value={programId} onChange={e => setProgramId(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm focus:border-[var(--primary)]">
+                      <option value="">-- Chọn ngành học --</option>
+                      {initialPrograms.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setIsStdModalOpen(false)} className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-medium">Hủy</button>

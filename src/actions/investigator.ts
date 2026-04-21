@@ -22,7 +22,7 @@ export async function getInvestigatorEvidences() {
     include: {
       collaborator: { select: { name: true } },
       criterion: {
-        include: { standard: true }
+        include: { standard: { include: { program: true } } }
       },
       evidenceItem: true,
       evaluations: {

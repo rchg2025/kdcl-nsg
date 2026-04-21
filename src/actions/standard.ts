@@ -17,6 +17,7 @@ export async function getStandards() {
   await checkAdmin()
   return await prisma.standard.findMany({
     include: {
+      program: true,
       criteria: {
         include: { 
           items: { 
@@ -34,7 +35,7 @@ export async function getStandards() {
   })
 }
 
-export async function createStandard(data: { name: string; description?: string; year: number }) {
+export async function createStandard(data: { name: string; description?: string; year: number, type?: any, programId?: string|null }) {
   await checkAdmin()
   const newStandard = await prisma.standard.create({ data })
   await createLog("CREATE", "Tiêu chí (Standard)", `Tạo tiêu chí: ${data.name} (${data.year})`)
@@ -42,7 +43,7 @@ export async function createStandard(data: { name: string; description?: string;
   return newStandard
 }
 
-export async function updateStandard(id: string, data: { name: string; description?: string; year: number }) {
+export async function updateStandard(id: string, data: { name: string; description?: string; year: number, type?: any, programId?: string|null }) {
   await checkAdmin()
   const updatedStandard = await prisma.standard.update({
     where: { id },
