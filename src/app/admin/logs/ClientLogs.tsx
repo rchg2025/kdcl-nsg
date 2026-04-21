@@ -167,7 +167,7 @@ export default function ClientLogs({ logs }: { logs: LogItem[] }) {
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="glass rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="glass rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm relative z-30">
         <div className="flex flex-col md:flex-row gap-4 md:items-end">
           <div className="w-full md:flex-1">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Users size={12} /> Tra cứu Thành viên</label>
