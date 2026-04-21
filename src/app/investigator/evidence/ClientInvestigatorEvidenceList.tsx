@@ -84,7 +84,7 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences }: { i
         </h3>
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Nội dung Tiêu chuẩn</label>
+            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Nội dung Tiêu chí</label>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 

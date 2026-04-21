@@ -38,13 +38,13 @@ export default async function AdminDashboardPage() {
 
   const stats = [
     { title: "Tổng số thành viên", value: userCount.toString(), icon: Users, color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-900/30" },
-    { title: "Tổng tiêu chuẩn", value: standardCount.toString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-100 dark:bg-indigo-900/30" },
-    { title: "Tổng tiêu chí con", value: criteriaCount.toString(), icon: FileText, color: "text-purple-500", bg: "bg-purple-100 dark:bg-purple-900/30" },
+    { title: "Tổng tiêu chí", value: standardCount.toString(), icon: Database, color: "text-indigo-500", bg: "bg-indigo-100 dark:bg-indigo-900/30" },
+    { title: "Tổng tiêu chuẩn con", value: criteriaCount.toString(), icon: FileText, color: "text-purple-500", bg: "bg-purple-100 dark:bg-purple-900/30" },
   ]
 
   const evStats = [
     { title: "Minh chứng Đạt", value: approvedEvidences.toString(), icon: CheckCircle, color: "text-emerald-500", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
-    { title: "Chưa Đạt / Bị từ chối", value: rejectedEvidences.toString(), icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-100 dark:bg-rose-900/30" },
+    { title: "Chưa Đạt / Bị không đạt", value: rejectedEvidences.toString(), icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-100 dark:bg-rose-900/30" },
     { title: "Đang chờ duyệt", value: pendingEvidences.toString(), icon: FileText, color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-900/30" },
   ]
 

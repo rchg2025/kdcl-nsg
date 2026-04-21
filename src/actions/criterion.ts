@@ -27,7 +27,7 @@ export async function getCriteria(standardId: string) {
 export async function createCriterion(data: { name: string; description?: string; standardId: string }) {
   await checkAdmin()
   const newCriterion = await prisma.criterion.create({ data })
-  await createLog("CREATE", "Tiêu chí (Criterion)", `Tạo tiêu chí mới: ${data.name}`)
+  await createLog("CREATE", "Tiêu chuẩn (Criterion)", `Tạo tiêu chuẩn mới: ${data.name}`)
   revalidatePath("/admin/criteria")
   return newCriterion
 }
@@ -38,7 +38,7 @@ export async function updateCriterion(id: string, data: { name: string; descript
     where: { id },
     data
   })
-  await createLog("UPDATE", "Tiêu chí (Criterion)", `Cập nhật tiêu chí: ${data.name}`)
+  await createLog("UPDATE", "Tiêu chuẩn (Criterion)", `Cập nhật tiêu chuẩn: ${data.name}`)
   revalidatePath("/admin/criteria")
   return updatedCriterion
 }
@@ -47,7 +47,7 @@ export async function deleteCriterion(id: string, standardId: string) {
   await checkAdmin()
   const target = await prisma.criterion.findUnique({ where: { id } })
   await prisma.criterion.delete({ where: { id } })
-  await createLog("DELETE", "Tiêu chí (Criterion)", `Xóa tiêu chí: ${target?.name}`)
+  await createLog("DELETE", "Tiêu chuẩn (Criterion)", `Xóa tiêu chuẩn: ${target?.name}`)
   revalidatePath(`/admin/criteria/${standardId}`)
 }
 

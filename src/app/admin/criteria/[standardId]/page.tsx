@@ -27,7 +27,7 @@ export default async function CriteriaDetailPage({ params }: { params: Promise<{
             Quay lại Danh mục
           </Link>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">{standard.name}</h1>
-          <p className="text-slate-500 mt-1">Danh sách tiêu chí thuộc {standard.name} (Năm {standard.year})</p>
+          <p className="text-slate-500 mt-1">Danh sách tiêu chuẩn thuộc {standard.name} (Năm {standard.year})</p>
         </div>
       </div>
       

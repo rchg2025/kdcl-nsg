@@ -163,14 +163,14 @@ export default function ClientCriterionList({ initialCriteria, standardId }: { i
       setName("")
       setDescription("")
     } catch (err) {
-      alert("Đã xảy ra lỗi khi tạo tiêu chí")
+      alert("Đã xảy ra lỗi khi tạo tiêu chuẩn")
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa tiêu chí này? Toàn bộ minh chứng sẽ mất!")) return
+    if (!confirm("Bạn có chắc chắn muốn xóa tiêu chuẩn này? Toàn bộ minh chứng sẽ mất!")) return
     try {
       await deleteCriterion(id, standardId)
       setCriteria(criteria.filter(c => c.id !== id))
@@ -187,7 +187,7 @@ export default function ClientCriterionList({ initialCriteria, standardId }: { i
           className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
         >
           <Plus size={18} />
-          Thêm Tiêu chí
+          Thêm Tiêu chuẩn
         </button>
       </div>
 
@@ -197,8 +197,8 @@ export default function ClientCriterionList({ initialCriteria, standardId }: { i
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
               <ListTodo size={28} className="text-slate-400" />
             </div>
-            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Chưa có Tiêu chí nào</h3>
-            <p className="text-slate-500 text-sm mt-1 max-w-sm">Hãy thêm nội dung các tiêu chí cần đánh giá vào đây.</p>
+            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Chưa có Tiêu chuẩn nào</h3>
+            <p className="text-slate-500 text-sm mt-1 max-w-sm">Hãy thêm nội dung các tiêu chuẩn cần đánh giá vào đây.</p>
           </div>
         ) : (
           criteria.map((crit, index) => (
@@ -217,12 +217,12 @@ export default function ClientCriterionList({ initialCriteria, standardId }: { i
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold">Thêm Tiêu chí mới</h3>
+              <h3 className="text-lg font-bold">Thêm Tiêu chuẩn mới</h3>
             </div>
             
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Tên Tiêu chí</label>
+                <label className="block text-sm font-semibold mb-2">Tên Tiêu chuẩn</label>
                 <input 
                   type="text" 
                   value={name}
@@ -239,7 +239,7 @@ export default function ClientCriterionList({ initialCriteria, standardId }: { i
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] min-h-[120px]"
-                  placeholder="Diễn giải chung cho tiêu chí này..."
+                  placeholder="Diễn giải chung cho tiêu chuẩn này..."
                 />
               </div>
               
@@ -257,7 +257,7 @@ export default function ClientCriterionList({ initialCriteria, standardId }: { i
                   className="flex-1 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                 >
                   {loading && <Loader2 size={16} className="animate-spin" />}
-                  Lưu Tiêu chí
+                  Lưu Tiêu chuẩn
                 </button>
               </div>
             </form>

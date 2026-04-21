@@ -44,7 +44,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
 
   const confirmReject = async () => {
     if (!rejectModalId) return
-    if (!rejectReason.trim()) return alert("Vui lòng nhập lý do từ chối!")
+    if (!rejectReason.trim()) return alert("Vui lòng nhập lý do không đạt!")
 
     setLoadingId(rejectModalId)
     setRejectModalId(null)
@@ -52,7 +52,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
       await updateEvidenceStatus(rejectModalId, "REJECTED" as EvidenceStatus, rejectReason.trim())
       setEvidences(evidences.map(ev => ev.id === rejectModalId ? { ...ev, status: "REJECTED", rejectReason: rejectReason.trim() } : ev))
     } catch (err: any) {
-      alert(err.message || "Đã xảy ra lỗi khi từ chối minh chứng")
+      alert(err.message || "Đã xảy ra lỗi khi không đạt minh chứng")
     } finally {
       setLoadingId(null)
       setRejectReason("")
@@ -140,7 +140,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
                 type="text" 
                 value={searchUser} 
                 onChange={e => { setSearchUser(e.target.value); setCurrentPage(1); }} 
-                placeholder="Tên NV, Email, Tên tiêu chí, Tên minh chứng..." 
+                placeholder="Tên NV, Email, Tên tiêu chuẩn, Tên minh chứng..." 
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm" 
               />
             </div>
@@ -152,7 +152,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
                <option value="PENDING">Chờ duyệt</option>
                <option value="REVIEWING">Đang xem xét</option>
                <option value="APPROVED">Đạt (Phê duyệt)</option>
-               <option value="REJECTED">Từ chối</option>
+               <option value="REJECTED">Không đạt</option>
              </select>
           </div>
           {departments.length > 0 && (
@@ -232,7 +232,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
                 {ev.status === "REJECTED" && ev.rejectReason && (
                   <div className="mt-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2.5">
                     <div className="flex items-center gap-1.5 text-orange-600 dark:text-orange-400 font-semibold text-xs mb-1">
-                      <XCircle size={12} /> Giám sát viên từ chối:
+                      <XCircle size={12} /> Giám sát viên không đạt:
                     </div>
                     <p className="text-xs text-orange-700 dark:text-orange-300 line-clamp-2">{ev.rejectReason}</p>
                   </div>
@@ -271,7 +271,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
                       <option value="PENDING" className="bg-white text-slate-900">Chờ duyệt</option>
                       <option value="REVIEWING" className="bg-white text-slate-900">Đang xem xét</option>
                       <option value="APPROVED" className="bg-white text-slate-900">Phê duyệt</option>
-                      <option value="REJECTED" className="bg-white text-slate-900">Từ chối</option>
+                      <option value="REJECTED" className="bg-white text-slate-900">Không đạt</option>
                     </select>
                     {loadingId === ev.id ? (
                       <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-500" />
@@ -338,13 +338,13 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
                 <XCircle size={20} className="text-red-500" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[var(--foreground)]">Từ chối Minh chứng</h3>
+                <h3 className="text-lg font-bold text-[var(--foreground)]">Không đạt Minh chứng</h3>
                 <p className="text-xs text-slate-500">Nhập lý do để CTV biết cần sửa gì</p>
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2 text-[var(--foreground)]">Lý do từ chối <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-semibold mb-2 text-[var(--foreground)]">Lý do không đạt <span className="text-red-500">*</span></label>
                 <textarea
                   value={rejectReason}
                   onChange={e => setRejectReason(e.target.value)}
@@ -367,7 +367,7 @@ export default function ClientReviewList({ initialEvidences, isAdmin = false }: 
                   disabled={!rejectReason.trim()}
                   className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <XCircle size={16} /> Xác nhận Từ chối
+                  <XCircle size={16} /> Xác nhận Không đạt
                 </button>
               </div>
             </div>

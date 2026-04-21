@@ -326,14 +326,14 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
       }
       setIsStdModalOpen(false)
     } catch (err) {
-      alert("Đã xảy ra lỗi khi tạo/sửa tiêu chuẩn")
+      alert("Đã xảy ra lỗi khi tạo/sửa tiêu chí")
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeleteStd = async (id: string) => {
-    if (!confirm("Xóa Tiêu chuẩn này sẽ xóa mọi Tiêu chí và Minh chứng bên trong. Bạn chắc chưa?")) return
+    if (!confirm("Xóa Tiêu chí này sẽ xóa mọi Tiêu chuẩn và Minh chứng bên trong. Bạn chắc chưa?")) return
     try {
       await deleteStandard(id)
       setStandards(standards.filter(s => s.id !== id))
@@ -359,7 +359,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
 
   const handleSubmitCriterion = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!parentStdId) return alert("Vui lòng chọn tiêu chuẩn cha!")
+    if (!parentStdId) return alert("Vui lòng chọn tiêu chí cha!")
     setLoading(true)
     try {
       if (editingCritId) {
@@ -389,14 +389,14 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
       }
       setIsCritModalOpen(false)
     } catch (err) {
-      alert("Đã xảy ra lỗi khi tạo/sửa tiêu chí")
+      alert("Đã xảy ra lỗi khi tạo/sửa tiêu chuẩn")
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeleteCrit = async (id: string, stdId: string) => {
-    if (!confirm("Xóa Tiêu chí này? Toàn bộ minh chứng sẽ mất!")) return
+    if (!confirm("Xóa Tiêu chuẩn này? Toàn bộ minh chứng sẽ mất!")) return
     try {
       await deleteCriterion(id, stdId)
       setStandards(standards.map(std => {
@@ -418,8 +418,8 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
         
         <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto flex-1">
           <div className="xl:w-80">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Search size={12} /> Tìm Tiêu chuẩn</label>
-            <input type="text" placeholder="Tên tiêu chuẩn..." value={searchName} onChange={e => handleFilterChange(setSearchName, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)]" />
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Search size={12} /> Tìm Tiêu chí</label>
+            <input type="text" placeholder="Tên tiêu chí..." value={searchName} onChange={e => handleFilterChange(setSearchName, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)]" />
           </div>
           <div className="w-full md:w-48">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Lọc bằng Năm</label>
@@ -440,7 +440,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
             className="flex-1 xl:flex-none justify-center bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
           >
             <Plus size={18} />
-            Thêm Tiêu chí
+            Thêm Tiêu chuẩn
           </button>
         </div>
       </div>
@@ -448,7 +448,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
       <div className="grid grid-cols-1 gap-4">
         {paginatedStandards.length === 0 ? (
           <div className="glass p-12 rounded-2xl flex flex-col items-center justify-center text-center">
-            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Không tìm thấy Tiêu chuẩn nào</h3>
+            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Không tìm thấy Tiêu chí nào</h3>
           </div>
         ) : (
           paginatedStandards.map((std) => (
@@ -466,7 +466,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
                     {std.description && <p className="text-sm text-slate-500 mt-1.5">{std.description}</p>}
                     <div className="mt-3 flex items-center gap-4 text-xs font-medium text-slate-500">
                       <span className="flex items-center gap-1 font-semibold text-[var(--primary)]">
-                        {std._count.criteria} Tiêu chí bên trong
+                        {std._count.criteria} Tiêu chuẩn bên trong
                       </span>
                     </div>
                   </div>
@@ -488,7 +488,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
               {expandedStds[std.id] && (
                 <div className="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 p-4 pl-[4.5rem]">
                   {std.criteria.length === 0 ? (
-                    <div className="text-sm text-slate-500 py-3 italic">Chưa có tiêu chí nào trong thư mục này.</div>
+                    <div className="text-sm text-slate-500 py-3 italic">Chưa có tiêu chuẩn nào trong thư mục này.</div>
                   ) : (
                     <div className="space-y-3">
                       {std.criteria.map((crit, idx) => (
@@ -513,7 +513,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-xs text-slate-500 font-medium">
-            Hiển thị {(currentPage - 1) * limit + 1} - {Math.min(currentPage * limit, filteredStandards.length)} / {filteredStandards.length} Tiêu chuẩn
+            Hiển thị {(currentPage - 1) * limit + 1} - {Math.min(currentPage * limit, filteredStandards.length)} / {filteredStandards.length} Tiêu chí
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -557,17 +557,17 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
         </div>
       )}
 
-      {/* Modal Tiêu chuẩn */}
+      {/* Modal Tiêu chí */}
       {isStdModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold flex items-center gap-2"><Folder size={20} className="text-amber-500"/> {editingStdId ? "Cập nhật Tiêu chuẩn" : "Thêm Tiêu chuẩn"}</h3>
+              <h3 className="text-lg font-bold flex items-center gap-2"><Folder size={20} className="text-amber-500"/> {editingStdId ? "Cập nhật Tiêu chí" : "Thêm Tiêu chí"}</h3>
             </div>
             <form onSubmit={handleSubmitStandard} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Tên Tiêu chuẩn</label>
-                <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none focus:border-[var(--primary)]" placeholder="Vd: Tiêu chuẩn 1: Tầm nhìn" />
+                <label className="block text-sm font-semibold mb-2">Tên Tiêu chí</label>
+                <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none focus:border-[var(--primary)]" placeholder="Vd: Tiêu chí 1: Tầm nhìn" />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2">Mô tả chi tiết</label>
@@ -586,16 +586,16 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
         </div>
       )}
 
-      {/* Modal Tiêu chí */}
+      {/* Modal Tiêu chuẩn */}
       {isCritModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold flex items-center gap-2"><ListTodo size={20} className="text-indigo-500"/> {editingCritId ? "Cập nhật Tiêu chí" : "Thêm Tiêu chí"}</h3>
+              <h3 className="text-lg font-bold flex items-center gap-2"><ListTodo size={20} className="text-indigo-500"/> {editingCritId ? "Cập nhật Tiêu chuẩn" : "Thêm Tiêu chuẩn"}</h3>
             </div>
             <form onSubmit={handleSubmitCriterion} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Tiêu chuẩn trực thuộc</label>
+                <label className="block text-sm font-semibold mb-2">Tiêu chí trực thuộc</label>
                 <select required disabled={!!editingCritId} value={parentStdId} onChange={e => setParentStdId(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-sm font-medium disabled:opacity-50">
                   {standards.map(s => (
                     <option key={s.id} value={s.id}>Năm {s.year} - {s.name}</option>
@@ -603,7 +603,7 @@ export default function ClientCriteriaList({ initialStandards }: { initialStanda
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Tên Tiêu chí</label>
+                <label className="block text-sm font-semibold mb-2">Tên Tiêu chuẩn</label>
                 <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none focus:border-[var(--primary)]" placeholder="Vd: 1.1 Khảo sát tầm nhìn" />
               </div>
               <div>

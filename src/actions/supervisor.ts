@@ -90,7 +90,7 @@ export async function deleteEvidenceAsAdmin(evidenceId: string) {
 
 const statusLabels: Record<string, string> = {
   APPROVED: "Đã duyệt",
-  REJECTED: "Từ chối",
+  REJECTED: "Không đạt",
   PENDING: "Chờ duyệt",
   REVIEWING: "Đang xem xét"
 }
@@ -107,7 +107,7 @@ export async function updateEvidenceStatus(evidenceId: string, status: EvidenceS
 
   // Require reason when rejecting
   if (status === "REJECTED" && !rejectReason?.trim()) {
-    throw new Error("Vui lòng nhập lý do từ chối")
+    throw new Error("Vui lòng nhập lý do không đạt")
   }
 
   await prisma.evidence.update({
@@ -125,7 +125,7 @@ export async function updateEvidenceStatus(evidenceId: string, status: EvidenceS
   const notifTitle = status === "APPROVED"
     ? "✅ Minh chứng Đạt"
     : status === "REJECTED"
-      ? "❌ Minh chứng bị Từ chối"
+      ? "❌ Minh chứng bị Không đạt"
       : `📋 Minh chứng ${statusLabels[status] || status}`
 
   let notifMessage = `Minh chứng cho "${criterionLabel}" đã được cập nhật sang trạng thái: ${statusLabels[status]}.`
@@ -142,7 +142,7 @@ export async function updateEvidenceStatus(evidenceId: string, status: EvidenceS
     `/collaborator/evidence#ev-${evidence.id}`
   )
 
-  await createLog("UPDATE", "Duyệt nội bộ (Supervisor)", `Duyệt trạng thái Tiêu chí: ${evidence.criterion.name} sang: ${status}${rejectReason ? ` | Lý do: ${rejectReason}` : ""}`)
+  await createLog("UPDATE", "Duyệt nội bộ (Supervisor)", `Duyệt trạng thái Tiêu chuẩn: ${evidence.criterion.name} sang: ${status}${rejectReason ? ` | Lý do: ${rejectReason}` : ""}`)
 
   revalidatePath("/supervisor/review")
   revalidatePath("/collaborator/evidence")

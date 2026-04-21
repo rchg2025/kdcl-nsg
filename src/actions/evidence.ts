@@ -52,7 +52,7 @@ export async function createEvidence(data: { criterionId: string; content: strin
   const criterionInfo = await prisma.criterion.findUnique({ where: { id: data.criterionId } })
   const itemName = criterionInfo?.name || data.criterionId
 
-  await createLog("CREATE", "Minh chứng (Evidence)", `Đã báo cáo minh chứng mới cho Tiêu chí: ${itemName}`)
+  await createLog("CREATE", "Minh chứng (Evidence)", `Đã báo cáo minh chứng mới cho Tiêu chuẩn: ${itemName}`)
   
   revalidatePath("/collaborator/evidence")
   return newEvidence
@@ -80,12 +80,12 @@ export async function updateEvidence(id: string, data: { content: string; fileUr
     data: {
       ...data,
       status: "PENDING", // Reset status for re-review
-      rejectReason: null, // Xóa lý do từ chối cũ
+      rejectReason: null, // Xóa lý do không đạt cũ
       lastUpdaterId: userId
     }
   })
   
-  await createLog("UPDATE", "Minh chứng (Evidence)", `Cập nhật lại minh chứng cho Tiêu chí: ${existing.criterion.name}`)
+  await createLog("UPDATE", "Minh chứng (Evidence)", `Cập nhật lại minh chứng cho Tiêu chuẩn: ${existing.criterion.name}`)
   
   revalidatePath("/collaborator/evidence")
   return updatedEvidence

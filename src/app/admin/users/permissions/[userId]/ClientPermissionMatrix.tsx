@@ -94,8 +94,8 @@ export default function ClientPermissionMatrix({ userId, userRole, initialPermis
       {/* CỘT TIÊU CHÍ */}
       <div className="glass rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[70vh] overflow-hidden">
         <div className="shrink-0">
-          <h3 className="text-lg font-bold mb-1">Cấp quyền Tham gia Tiêu chí (Criterion)</h3>
-          <p className="text-xs text-slate-500 mb-6">Tài khoản này được phép nộp minh chứng cho những tiêu chí cụ thể nào?</p>
+          <h3 className="text-lg font-bold mb-1">Cấp quyền Tham gia Tiêu chuẩn (Criterion)</h3>
+          <p className="text-xs text-slate-500 mb-6">Tài khoản này được phép nộp minh chứng cho những tiêu chuẩn cụ thể nào?</p>
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2 space-y-6">
@@ -117,7 +117,7 @@ export default function ClientPermissionMatrix({ userId, userRole, initialPermis
                     <span className="text-sm font-medium">{crit.name}</span>
                   </label>
                 ))}
-                {std.criteria.length === 0 && <span className="text-xs text-slate-400 italic">Chưa có tiêu chí con.</span>}
+                {std.criteria.length === 0 && <span className="text-xs text-slate-400 italic">Chưa có tiêu chuẩn con.</span>}
               </div>
             </div>
           ))}

@@ -64,10 +64,14 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!criterionId) return alert("Vui lòng chọn tiêu chí!")
+    if (!criterionId) return alert("Vui lòng chọn tiêu chuẩn!")
     setLoading(true)
     try {
-      let finalFileUrl = JSON.stringify(existingFiles)
+      const finalFiles = [...existingFiles]
+      if (newLinkUrl.trim() !== "") {
+        finalFiles.push({ name: newLinkName.trim() || "Xem liên kết", url: newLinkUrl.trim() })
+      }
+      let finalFileUrl = JSON.stringify(finalFiles)
 
       if (selectedFiles.length > 0) {
         const uploadedUrls: FileLink[] = []
@@ -109,7 +113,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
           if (url) uploadedUrls.push({ name: file.name, url })
         }
         
-        finalFileUrl = JSON.stringify([...existingFiles, ...uploadedUrls])
+        finalFileUrl = JSON.stringify([...finalFiles, ...uploadedUrls])
       }
       
       if (editingId) {
@@ -186,7 +190,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
 
   const statusLabels: Record<string, string> = {
     APPROVED: "Đã duyệt",
-    REJECTED: "Từ chối",
+    REJECTED: "Không đạt",
     PENDING: "Chờ duyệt",
     REVIEWING: "Đang xem xét"
   }
@@ -233,7 +237,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                   {ev.status === "REJECTED" && ev.rejectReason && (
                     <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
                       <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-xs mb-1">
-                        <AlertCircle size={14} /> Lý do từ chối:
+                        <AlertCircle size={14} /> Lý do không đạt:
                       </div>
                       <p className="text-sm text-red-700 dark:text-red-300">{ev.rejectReason}</p>
                     </div>
@@ -286,7 +290,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
             
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Chọn Tiêu chí</label>
+                <label className="block text-sm font-semibold mb-2">Chọn Tiêu chuẩn</label>
                 {editingId ? (
                    <input type="text" readOnly disabled value={criterionId} className="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border rounded-xl text-slate-500 line-clamp-1 truncate" />
                 ) : (
@@ -301,13 +305,13 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                       onFocus={() => setShowDropdown(true)}
                       onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                       className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
-                      placeholder="Gõ từ khóa để tra cứu tiêu chí..."
+                      placeholder="Gõ từ khóa để tra cứu tiêu chuẩn..."
                       required={!criterionId}
                     />
                     {showDropdown && (
                       <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                         {filteredCriteria.length === 0 ? (
-                          <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chí phù hợp</div>
+                          <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chuẩn phù hợp</div>
                         ) : (
                           filteredCriteria.map(c => (
                             <div 
@@ -368,7 +372,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList }: {
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-2 pl-1 italic">Vui lòng chọn minh chứng bạn đang muốn nộp theo yêu cầu của tiêu chí.</p>
+                  <p className="text-xs text-slate-500 mt-2 pl-1 italic">Vui lòng chọn minh chứng bạn đang muốn nộp theo yêu cầu của tiêu chuẩn.</p>
                 </div>
               )}
 

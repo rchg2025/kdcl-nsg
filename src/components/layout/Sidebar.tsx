@@ -33,7 +33,7 @@ export type MenuItem = {
 
 export const adminMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/admin", icon: LayoutDashboard },
-  { title: "Tiêu chuẩn & Tiêu chí", href: "/admin/criteria", icon: FileText },
+  { title: "Tiêu chí & Tiêu chuẩn", href: "/admin/criteria", icon: FileText },
   { title: "Nộp Minh chứng", href: "/collaborator/evidence", icon: FileText },
   { title: "Duyệt Minh chứng", href: "/supervisor/review", icon: FileCheck },
   { title: "Xem minh chứng", href: "/investigator/evidence", icon: Search },
@@ -47,7 +47,7 @@ export const adminMenu: MenuItem[] = [
 
 export const supervisorMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/supervisor", icon: LayoutDashboard },
-  { title: "Tiêu chuẩn & Tiêu chí", href: "/supervisor/criteria", icon: FileText },
+  { title: "Tiêu chí & Tiêu chuẩn", href: "/supervisor/criteria", icon: FileText },
   { title: "Nộp minh chứng", href: "/supervisor/evidence", icon: FileText },
   { title: "Duyệt minh chứng", href: "/supervisor/review", icon: FileCheck },
   { title: "Trò chuyện", href: "/messages", icon: MessageSquare },

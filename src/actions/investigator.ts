@@ -45,7 +45,7 @@ export async function evaluateEvidence(data: { evidenceId: string; isApproved: b
   })
   const evaluatedEvidence = await prisma.evidence.findUnique({ where: { id: data.evidenceId }, include: { criterion: true } })
   const logTitle = evaluatedEvidence?.criterion.name || data.evidenceId
-  await createLog("APPROVE", "Đánh giá KQ (Evaluation)", `Đánh giá Tiêu chí: ${logTitle}. Kết quả: ${data.isApproved ? 'Đạt' : 'Không đạt'}`)
+  await createLog("APPROVE", "Đánh giá KQ (Evaluation)", `Đánh giá Tiêu chuẩn: ${logTitle}. Kết quả: ${data.isApproved ? 'Đạt' : 'Không đạt'}`)
   
   revalidatePath("/investigator/evaluate")
 }

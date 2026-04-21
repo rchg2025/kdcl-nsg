@@ -30,9 +30,9 @@ export default function DetailedSupervisorStats({ detailedStats }: { detailedSta
     filteredStats.forEach(stat => {
       // Add summary row for the criterion
       excelData.push({
-        "Tiêu chuẩn": stat.standardName,
+        "Tiêu chí": stat.standardName,
         "Tiêu/Tên minh chứng": `[Tổng hợp] ${stat.criterionName}`,
-        "Tình trạng (Khái quát)": `Tổng: ${stat.total} | Chờ GSV: ${stat.pending} | GSV Từ chối: ${stat.rejected} | GSV Duyệt: ${stat.approved} | ĐTV Đạt: ${stat.investigatorApproved} | ĐTV Không đạt: ${stat.investigatorRejected}`
+        "Tình trạng (Khái quát)": `Tổng: ${stat.total} | Chờ GSV: ${stat.pending} | GSV Không đạt: ${stat.rejected} | GSV Duyệt: ${stat.approved} | ĐTV Đạt: ${stat.investigatorApproved} | ĐTV Không đạt: ${stat.investigatorRejected}`
       })
       
       // Add individual evidence rows
@@ -40,11 +40,11 @@ export default function DetailedSupervisorStats({ detailedStats }: { detailedSta
         stat.rawEvidences.forEach((ev: any, idx: number) => {
            let statusText = "Chờ duyệt"
            if (ev.status === "APPROVED") statusText = "GSV Đã duyệt"
-           if (ev.status === "REJECTED") statusText = "GSV Từ chối"
+           if (ev.status === "REJECTED") statusText = "GSV Không đạt"
            if (ev.status === "REVIEWING") statusText = "GSV Đang xem xét"
            
            excelData.push({
-             "Tiêu chuẩn": "",
+             "Tiêu chí": "",
              "Tiêu/Tên minh chứng": `   ${idx + 1}. ${ev.itemName}`,
              "Tình trạng (Khái quát)": `${statusText} - Điều tra viên: ${ev.invEval}`
            })
@@ -64,7 +64,7 @@ export default function DetailedSupervisorStats({ detailedStats }: { detailedSta
       <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Chi tiết Báo cáo & Đánh giá</h3>
-          <p className="text-sm text-slate-500 mt-1">Sơ lược tình hình nộp và kiểm tra chéo theo tiêu chí</p>
+          <p className="text-sm text-slate-500 mt-1">Sơ lược tình hình nộp và kiểm tra chéo theo tiêu chuẩn</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -72,7 +72,7 @@ export default function DetailedSupervisorStats({ detailedStats }: { detailedSta
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Tìm theo tên tiêu chuẩn/tiêu chí..." 
+              placeholder="Tìm theo tên tiêu chí/tiêu chuẩn..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 text-sm"
@@ -89,7 +89,7 @@ export default function DetailedSupervisorStats({ detailedStats }: { detailedSta
               <option value="ALL">Tất cả tình trạng</option>
               <option value="APPROVED">Có hồ sơ đã duyệt</option>
               <option value="PENDING">Đang chờ xử lý</option>
-              <option value="REJECTED">Có báo cáo bị từ chối</option>
+              <option value="REJECTED">Có báo cáo bị không đạt</option>
             </select>
           </div>
 
@@ -107,11 +107,11 @@ export default function DetailedSupervisorStats({ detailedStats }: { detailedSta
         <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
           <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th className="px-5 py-4 w-[250px] max-w-[250px]">Tiêu chuẩn</th>
-              <th className="px-5 py-4 w-[300px] max-w-[300px]">Tiêu chí</th>
+              <th className="px-5 py-4 w-[250px] max-w-[250px]">Tiêu chí</th>
+              <th className="px-5 py-4 w-[300px] max-w-[300px]">Tiêu chuẩn</th>
               <th className="px-5 py-4 text-center">Tổng HS</th>
               <th className="px-5 py-4 text-center">GSV Chờ Duyệt (Mới / Sửa)</th>
-              <th className="px-5 py-4 text-center">GSV Từ chối</th>
+              <th className="px-5 py-4 text-center">GSV Không đạt</th>
               <th className="px-5 py-4 text-center">GSV Duyệt<br/><span className="text-[9px] font-medium text-slate-400">(Chờ ĐTV)</span></th>
               <th className="px-5 py-4 text-center text-emerald-600">ĐTV Đạt</th>
               <th className="px-5 py-4 text-center text-red-500">ĐTV<br/>K. Đạt</th>

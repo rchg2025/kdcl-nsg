@@ -75,7 +75,7 @@ export default function StatCharts() {
          <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-red-200 dark:border-red-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
             <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center relative shrink-0"><AlertTriangle size={24} /></div>
-            <div className="relative"><p className="text-sm font-medium text-red-600 dark:text-red-400 leading-tight">{data.userRole === "INVESTIGATOR" ? "ĐTV Đã phân Không đạt" : "Bị từ chối"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.userRole === "INVESTIGATOR" ? data.summary.invRejectedCount : data.summary.rejected}</p></div>
+            <div className="relative"><p className="text-sm font-medium text-red-600 dark:text-red-400 leading-tight">{data.userRole === "INVESTIGATOR" ? "ĐTV Đã phân Không đạt" : "Bị không đạt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.userRole === "INVESTIGATOR" ? data.summary.invRejectedCount : data.summary.rejected}</p></div>
          </div>
       </div>
 
@@ -113,7 +113,7 @@ export default function StatCharts() {
 
         {/* Bar Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">Phân bố & Tỉ lệ duyệt theo Tiêu chuẩn</h3>
+          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">Phân bố & Tỉ lệ duyệt theo Tiêu chí</h3>
           <div className="h-[300px]">
              {data.standardData.length > 0 ? (
                <ResponsiveContainer width="100%" height="100%">
@@ -124,7 +124,7 @@ export default function StatCharts() {
                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} />
                    <Legend />
                    <Bar dataKey="approved" name="Đã duyệt" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                   <Bar dataKey="pending" name="Chưa duyệt/Từ chối" stackId="a" fill="#fbd38d" radius={[4, 4, 0, 0]} />
+                   <Bar dataKey="pending" name="Chưa duyệt/Không đạt" stackId="a" fill="#fbd38d" radius={[4, 4, 0, 0]} />
                  </BarChart>
                </ResponsiveContainer>
              ) : (

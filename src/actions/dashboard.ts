@@ -64,7 +64,7 @@ export async function getDashboardStats(year?: number) {
   ].filter(d => d.value > 0) : [
     { name: "Đã duyệt", value: approved, fill: "#10b981" },
     { name: "Chờ duyệt", value: pending, fill: "#f59e0b" },
-    { name: "Từ chối", value: rejected, fill: "#ef4444" }
+    { name: "Không đạt", value: rejected, fill: "#ef4444" }
   ].filter(d => d.value > 0) // Only show non-zero
 
   // 3. Data for Standard Bar Chart
@@ -113,7 +113,7 @@ export async function getDashboardStats(year?: number) {
         total: 0,
         approved: 0, // GSV duyệt
         pending: 0, // Chờ duyệt
-        rejected: 0, // GSV từ chối
+        rejected: 0, // GSV không đạt
         investigatorApproved: 0, // ĐTV đánh giá Đạt
         investigatorRejected: 0, // ĐTV đánh giá Không đạt
         rawEvidences: [] as any[]
