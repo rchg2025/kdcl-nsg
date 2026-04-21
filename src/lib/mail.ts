@@ -59,35 +59,35 @@ export async function sendWelcomeEmail(toEmail: string, name: string, plainTextP
 <body>
     <div class="container">
         <div class="header">
-            <h1>Chào mừng đến với \${systemName}</h1>
+            <h1>Chào mừng đến với ${systemName}</h1>
         </div>
         <div class="content">
-            <p>Xin chào <strong>\${name}</strong>,</p>
-            <p>Tài khoản của bạn trên <strong>\${systemName}</strong> đã được tạo thành công bởi Quản trị viên. Dưới đây là thông tin đăng nhập của bạn:</p>
+            <p>Xin chào <strong>${name}</strong>,</p>
+            <p>Tài khoản của bạn trên <strong>${systemName}</strong> đã được tạo thành công bởi Quản trị viên. Dưới đây là thông tin đăng nhập của bạn:</p>
             
             <div class="account-info">
                 <div class="info-row">
                     <span class="info-label">Email:</span>
-                    <span class="info-value">\${toEmail}</span>
+                    <span class="info-value">${toEmail}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Mật khẩu:</span>
-                    <span class="info-value">\${plainTextPassword}</span>
+                    <span class="info-value">${plainTextPassword}</span>
                 </div>
             </div>
 
             <p style="color: #ef4444; font-size: 14px;"><strong>Lưu ý:</strong> Vui lòng đổi mật khẩu ngay sau khi đăng nhập lần đầu để đảm bảo an toàn.</p>
 
             <div class="btn-container">
-                <a href="\${appUrl}/login" class="btn">Truy cập Hệ thống</a>
+                <a href="${appUrl}/login" class="btn">Truy cập Hệ thống</a>
             </div>
             
             <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với Quản trị viên hệ thống.</p>
-            <p>Trân trọng,<br>Ban Quản trị \${systemName}</p>
+            <p>Trân trọng,<br>Ban Quản trị ${systemName}</p>
         </div>
         <div class="footer">
             <p>Đây là email tự động, vui lòng không trả lời qua email này.</p>
-            <p>&copy; \${new Date().getFullYear()} \${systemName}. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} ${systemName}. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -95,9 +95,9 @@ export async function sendWelcomeEmail(toEmail: string, name: string, plainTextP
     `
 
     const info = await transporter.sendMail({
-      from: \`"\${systemName}" <\${smtpUser}>\`,
+      from: `"${systemName}" <${smtpUser}>`,
       to: toEmail,
-      subject: \`Thông tin tài khoản mới - \${systemName}\`,
+      subject: `Thông tin tài khoản mới - ${systemName}`,
       html: htmlTemplate,
     })
 
