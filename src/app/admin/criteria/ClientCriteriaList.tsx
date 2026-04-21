@@ -468,14 +468,14 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
 
   return (
     <div>
-      <div className="flex flex-col xl:flex-row justify-between items-end gap-4 mb-6 glass rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-end gap-4 mb-6 glass rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
         
-        <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto flex-1">
-          <div className="xl:w-80">
+        <div className="flex flex-wrap items-end gap-4 w-full flex-1">
+          <div className="w-full sm:w-auto xl:w-64">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Search size={12} /> Tìm Tiêu chí</label>
             <input type="text" placeholder="Tên tiêu chí..." value={searchName} onChange={e => handleFilterChange(setSearchName, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)]" />
           </div>
-          <div className="w-full md:w-36">
+          <div className="w-full sm:w-auto border-l-0 sm:border-l border-slate-200 dark:border-slate-700 sm:pl-4">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Loại Kiểm định</label>
             <select value={filterType} onChange={e => { handleFilterChange(setFilterType, e.target.value); setFilterProgramId("ALL"); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300">
               <option value="ALL">Tất cả Loại</option>
@@ -484,21 +484,21 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
             </select>
           </div>
           {filterType === "PROGRAM" && (
-            <div className="w-full md:w-48">
+            <div className="w-full sm:w-auto">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Chọn Ngành</label>
-              <select value={filterProgramId} onChange={e => handleFilterChange(setFilterProgramId, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300">
+              <select value={filterProgramId} onChange={e => handleFilterChange(setFilterProgramId, e.target.value)} className="w-full max-w-full sm:max-w-[280px] text-ellipsis px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300">
                 <option value="ALL">Tất cả Ngành</option>
                 {initialPrograms?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
           )}
-          <div className="w-full md:w-32">
+          <div className="w-full sm:w-auto border-l-0 sm:border-l border-slate-200 dark:border-slate-700 sm:pl-4">
             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1"><Filter size={12} /> Lọc bằng Năm</label>
             <input type="number" placeholder="Nhập năm..." value={searchYear} onChange={e => handleFilterChange(setSearchYear, e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-[var(--primary)] text-slate-700 dark:text-slate-300" />
           </div>
         </div>
 
-        <div className="flex w-full xl:w-auto justify-end gap-3 shrink-0">
+        <div className="flex w-full xl:w-auto justify-start xl:justify-end gap-3 shrink-0 mt-4 xl:mt-0">
           <button 
             onClick={openCreateStd}
             className="flex-1 xl:flex-none justify-center bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm"
