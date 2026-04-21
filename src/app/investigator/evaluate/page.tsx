@@ -1,8 +1,10 @@
 import { getInvestigatorEvidences } from "@/actions/investigator"
+import { getAllProgramsPublic } from "@/actions/category"
 import ClientInvestigateList from "./ClientInvestigateList"
 
 export default async function InvestigatorEvaluatePage() {
   const evidences = await getInvestigatorEvidences()
+  const programs = await getAllProgramsPublic()
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -13,7 +15,7 @@ export default async function InvestigatorEvaluatePage() {
         </div>
       </div>
       
-      <ClientInvestigateList initialEvidences={evidences} />
+      <ClientInvestigateList initialEvidences={evidences} programs={programs} />
     </div>
   )
 }
