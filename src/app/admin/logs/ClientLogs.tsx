@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Clock, ShieldAlert, FileText, UserPlus, FileEdit, Trash2, CheckCircle2, Search, Download, ChevronLeft, ChevronRight, CalendarDays, Users, Filter } from "lucide-react"
+import { deleteSystemLogs } from "@/actions/log"
+import { Clock, ShieldAlert, FileText, UserPlus, FileEdit, Trash2, CheckCircle2, Search, Download, ChevronLeft, ChevronRight, CalendarDays, Users, Filter, Loader2 } from "lucide-react"
 
 type LogItem = {
   id: string
@@ -19,6 +20,22 @@ export default function ClientLogs({ logs }: { logs: LogItem[] }) {
   const [filterKeyword, setFilterKeyword] = useState("")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
+
+  const [showDeleteDropdown, setShowDeleteDropdown] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDeleteLogs = async (months: number) => {
+    const periodStr = months === 0 ? "toàn bộ" : `từ trước ${months} tháng`
+    if (!confirm(`Xác nhận xóa ${periodStr} nhật ký hệ thống? Thao tác này không thể hoàn tác.`)) return
+    
+    setIsDeleting(true)
+    setShowDeleteDropdown(false)
+    try {
+      await deleteSystemLogs(months)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   // Get unique users for filter dropdown
   const uniqueUsers = useMemo(() => {
@@ -199,6 +216,25 @@ export default function ClientLogs({ logs }: { logs: LogItem[] }) {
             >
               <Filter size={14} /> Xóa lọc
             </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowDeleteDropdown(!showDeleteDropdown)}
+                disabled={isDeleting}
+                className="w-full h-full flex-1 md:flex-none px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-sm font-bold transition-colors justify-center flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Xóa nhật ký
+              </button>
+              {showDeleteDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 overflow-hidden text-sm">
+                  <button onClick={() => handleDeleteLogs(12)} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700/50">Trước 12 tháng</button>
+                  <button onClick={() => handleDeleteLogs(9)} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700/50">Trước 9 tháng</button>
+                  <button onClick={() => handleDeleteLogs(6)} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700/50">Trước 6 tháng</button>
+                  <button onClick={() => handleDeleteLogs(3)} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700/50">Trước 3 tháng</button>
+                  <button onClick={() => handleDeleteLogs(1)} className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700/50">Trước 1 tháng</button>
+                  <button onClick={() => handleDeleteLogs(0)} className="w-full text-left px-4 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold">Xóa tất cả</button>
+                </div>
+              )}
+            </div>
             <button
               onClick={exportToExcel}
               className="flex-1 md:flex-none px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-colors justify-center flex items-center gap-1.5 shadow-sm"

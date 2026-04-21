@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { revalidatePath } from "next/cache"
 import { checkAdmin } from "@/actions/user"
 
 export async function createSystemLog(userId: string, action: string, resource: string, details?: string) {
@@ -38,4 +39,27 @@ export async function getLogs() {
     },
     orderBy: { createdAt: 'desc' }
   })
+}
+
+export async function deleteSystemLogs(monthsToKeep: number) {
+  await checkAdmin()
+  
+  if (monthsToKeep === 0) {
+    await prisma.systemLog.deleteMany({})
+    await createLog("DELETE", "Nhật ký hệ thống", "Đã xóa toàn bộ nhật ký hệ thống")
+  } else {
+    const cutoffDate = new Date()
+    cutoffDate.setMonth(cutoffDate.getMonth() - monthsToKeep)
+    
+    await prisma.systemLog.deleteMany({
+      where: {
+        createdAt: {
+          lt: cutoffDate
+        }
+      }
+    })
+    await createLog("DELETE", "Nhật ký hệ thống", `Đã xóa các nhật ký từ trước ${monthsToKeep} tháng`)
+  }
+  
+  revalidatePath("/admin/logs")
 }

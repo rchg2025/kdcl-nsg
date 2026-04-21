@@ -75,7 +75,7 @@ export async function updateUser(id: string, data: { name: string; role: Role; d
     data: updateData
   })
   
-  await createLog("UPDATE", "Thành viên (User)", `Chỉnh sửa thông tin tài khoản ID: ${id} (Cấp Quyền: ${data.role})`)
+  await createLog("UPDATE", "Thành viên (User)", `Chỉnh sửa thông tin tài khoản: ${data.name} (Quyền: ${data.role})`)
   
   revalidatePath("/admin/users")
 }
@@ -94,13 +94,14 @@ export async function deleteUser(id: string) {
 export async function toggleUserActive(id: string, isActive: boolean) {
   await checkAdmin()
   
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id },
-    data: { isActive }
+    data: { isActive },
+    select: { name: true, email: true }
   })
   
   const statusStr = isActive ? "Kích hoạt" : "Vô hiệu hóa"
-  await createLog("UPDATE", "Thành viên (User)", `Đã ${statusStr} tài khoản ID: ${id}`)
+  await createLog("UPDATE", "Thành viên (User)", `Đã ${statusStr} tài khoản: ${user.name || user.email}`)
   
   revalidatePath("/admin/users")
 }

@@ -74,14 +74,16 @@ export async function deleteEvidenceAsAdmin(evidenceId: string) {
     throw new Error("Không có quyền thực hiện. Chỉ dành cho Quản trị viên.")
   }
 
-  const exv = await prisma.evidence.findUnique({ where: { id: evidenceId } })
+  let criterionName = "Không xác định";
+  const exv = await prisma.evidence.findUnique({ where: { id: evidenceId }, include: { criterion: true } })
   if (!exv) throw new Error("Không tìm thấy minh chứng.")
+  criterionName = exv.criterion.name;
 
   await prisma.evidence.delete({
     where: { id: evidenceId }
   })
   
-  await createLog("DELETE", "Xóa minh chứng", `Admin đã xóa minh chứng ID: ${evidenceId}`)
+  await createLog("DELETE", "Xóa minh chứng", `Admin đã xóa minh chứng của tiêu chuẩn: ${criterionName}`)
   
   revalidatePath("/supervisor/review")
   revalidatePath("/collaborator/evidence")
