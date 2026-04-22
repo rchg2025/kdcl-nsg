@@ -494,9 +494,9 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
             
             <div className="p-6 max-h-[70vh] overflow-y-auto">
               <div className="mb-4 text-sm text-slate-500">
-                Từ tiêu chuẩn: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.standard?.name} ({viewingSharedEvidence.criterion?.standard?.year})</strong>
+                Từ tiêu chí: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.standard?.name} ({viewingSharedEvidence.criterion?.standard?.year})</strong>
                 <br />
-                Tiêu chí: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.name}</strong>
+                Tiêu chuẩn: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.name}</strong>
               </div>
               
               <div className="mb-4">
