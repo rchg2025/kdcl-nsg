@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, X, Check, Filter } from "lucide-react"
+import { Search, X, Check, Link2 } from "lucide-react"
 
 type SharedEvidenceSelectorModalProps = {
   isOpen: boolean
@@ -22,16 +22,22 @@ export default function SharedEvidenceSelectorModal({
 }: SharedEvidenceSelectorModalProps) {
   const [selectedYear, setSelectedYear] = useState<number | "">("")
   const [selectedType, setSelectedType] = useState<string | "">("")
+  
   const [selectedProgramId, setSelectedProgramId] = useState<string | "">("")
-  const [selectedStandardId, setSelectedStandardId] = useState<string | "">("")
-  const [selectedCriterionId, setSelectedCriterionId] = useState<string | "">("")
-  const [selectedEvidenceItemId, setSelectedEvidenceItemId] = useState<string | "">("")
-
-  // Search states
   const [searchProgram, setSearchProgram] = useState("")
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false)
+
+  const [selectedStandardId, setSelectedStandardId] = useState<string | "">("")
   const [searchStandard, setSearchStandard] = useState("")
+  const [showStandardDropdown, setShowStandardDropdown] = useState(false)
+
+  const [selectedCriterionId, setSelectedCriterionId] = useState<string | "">("")
   const [searchCriterion, setSearchCriterion] = useState("")
+  const [showCriterionDropdown, setShowCriterionDropdown] = useState(false)
+
+  const [selectedEvidenceItemId, setSelectedEvidenceItemId] = useState<string | "">("")
   const [searchItem, setSearchItem] = useState("")
+  const [showItemDropdown, setShowItemDropdown] = useState(false)
 
   const validItems = useMemo(() => {
     return allEvidenceItems.filter(item => item.id !== excludeItemId)
@@ -106,20 +112,12 @@ export default function SharedEvidenceSelectorModal({
     }
   }
 
-  const resetFrom = (level: number) => {
-    if (level <= 1) setSelectedType("")
-    if (level <= 2) { setSelectedProgramId(""); setSearchProgram(""); }
-    if (level <= 3) { setSelectedStandardId(""); setSearchStandard(""); }
-    if (level <= 4) { setSelectedCriterionId(""); setSearchCriterion(""); }
-    if (level <= 5) { setSelectedEvidenceItemId(""); setSearchItem(""); }
-  }
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-[800px] max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-[800px] max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-visible animate-in zoom-in-95 duration-200">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 rounded-t-2xl">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <Filter size={20} className="text-[var(--primary)]" />
+            <Link2 size={20} className="text-indigo-500" />
             Chọn nguồn Minh chứng Dùng chung
           </h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
@@ -127,190 +125,224 @@ export default function SharedEvidenceSelectorModal({
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* 1. Chọn Năm */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">1. Chọn Năm áp dụng</label>
+              <label className="block text-sm font-semibold mb-2">Chọn Năm</label>
               <select 
                 value={selectedYear} 
-                onChange={e => { setSelectedYear(e.target.value ? Number(e.target.value) : ""); resetFrom(1); }}
-                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
+                onChange={e => { 
+                  setSelectedYear(e.target.value ? Number(e.target.value) : "");
+                  setSelectedType("");
+                  setSelectedProgramId(""); setSearchProgram("");
+                  setSelectedStandardId(""); setSearchStandard("");
+                  setSelectedCriterionId(""); setSearchCriterion("");
+                  setSelectedEvidenceItemId(""); setSearchItem("");
+                }}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 border rounded-xl outline-none text-sm focus:border-[var(--primary)]"
               >
                 <option value="">-- Tất cả Năm --</option>
                 {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
 
-            {/* 2. Loại Kiểm định */}
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">2. Loại kiểm định</label>
+              <label className="block text-sm font-semibold mb-2">Loại Kiểm định</label>
               <select 
                 value={selectedType} 
-                onChange={e => { setSelectedType(e.target.value); resetFrom(2); }}
-                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm disabled:opacity-50"
+                onChange={e => { 
+                  setSelectedType(e.target.value);
+                  setSelectedProgramId(""); setSearchProgram("");
+                  setSelectedStandardId(""); setSearchStandard("");
+                  setSelectedCriterionId(""); setSearchCriterion("");
+                  setSelectedEvidenceItemId(""); setSearchItem("");
+                }}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none text-sm focus:border-[var(--primary)]"
               >
                 <option value="">-- Tất cả Loại --</option>
-                {availableTypes.includes("INSTITUTIONAL") && <option value="INSTITUTIONAL">Kiểm định Trường</option>}
-                {availableTypes.includes("PROGRAM") && <option value="PROGRAM">Kiểm định Ngành đào tạo</option>}
+                <option value="INSTITUTIONAL">Kiểm định Trường</option>
+                <option value="PROGRAM">Kiểm định Ngành đào tạo</option>
               </select>
             </div>
-          </div>
-
-          {/* 3. Chọn Ngành (If PROGRAM) */}
-          {selectedType === "PROGRAM" && (
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">3. Chọn Ngành học</label>
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text" 
-                  value={searchProgram}
-                  onChange={e => { setSearchProgram(e.target.value); setSelectedProgramId(""); resetFrom(3); }}
-                  placeholder="Tra cứu ngành học..."
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
-                />
-              </div>
-              {!selectedProgramId && (
-                <div className="mt-2 max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
-                  {availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
-                    <div className="p-3 text-sm text-slate-500 text-center bg-white dark:bg-slate-900">Không tìm thấy</div>
-                  ) : (
-                    availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map(p => (
-                      <div 
-                        key={p.id} 
-                        onClick={() => { setSelectedProgramId(p.id); setSearchProgram(p.name); resetFrom(3); }}
-                        className="px-4 py-2 text-sm bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer"
-                      >
-                        {p.name}
-                      </div>
-                    ))
+            
+            {selectedType === "PROGRAM" && (
+              <div className="col-span-2">
+                <label className="block text-sm font-semibold mb-2">Chọn Ngành học</label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={searchProgram}
+                    onChange={e => { 
+                      setSearchProgram(e.target.value); 
+                      setSelectedProgramId("");
+                      setSelectedStandardId(""); setSearchStandard("");
+                      setSelectedCriterionId(""); setSearchCriterion("");
+                      setSelectedEvidenceItemId(""); setSearchItem("");
+                      setShowProgramDropdown(true);
+                    }}
+                    onFocus={() => setShowProgramDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
+                    placeholder="Gõ tên ngành học để tìm kiếm..."
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
+                  />
+                  {showProgramDropdown && (
+                    <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                      {availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
+                        <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
+                      ) : (
+                        availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map(p => (
+                          <div 
+                            key={p.id} 
+                            onClick={() => { 
+                              setSelectedProgramId(p.id); 
+                              setSearchProgram(p.name);
+                              setShowProgramDropdown(false);
+                            }}
+                            className="p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            {p.name}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* 4. Chọn Tiêu chí (Standard) */}
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-              {selectedType === "PROGRAM" ? "4" : "3"}. Chọn Tiêu chí
-            </label>
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
-                value={searchStandard}
-                onChange={e => { setSearchStandard(e.target.value); setSelectedStandardId(""); resetFrom(4); }}
-                placeholder="Tra cứu tiêu chí (Standard)..."
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
-              />
-            </div>
-            {!selectedStandardId && (
-              <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
-                {availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).length === 0 ? (
-                  <div className="p-3 text-sm text-slate-500 text-center bg-white dark:bg-slate-900">Không tìm thấy</div>
-                ) : (
-                  availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).map(s => (
-                    <div 
-                      key={s.id} 
-                      onClick={() => { setSelectedStandardId(s.id); setSearchStandard(`${s.name} (${s.year})`); resetFrom(4); }}
-                      className="px-4 py-2 text-sm bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer"
-                    >
-                      {s.name} <span className="text-xs text-slate-500 ml-1">({s.year})</span>
-                    </div>
-                  ))
-                )}
               </div>
             )}
           </div>
 
-          {/* 5. Chọn Tiêu chuẩn (Criterion) */}
-          {selectedStandardId && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                {selectedType === "PROGRAM" ? "5" : "4"}. Chọn Tiêu chuẩn
-              </label>
+              <label className="block text-sm font-semibold mb-2">1. Chọn tiêu chí</label>
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  value={searchStandard}
+                  onChange={e => { 
+                    setSearchStandard(e.target.value); 
+                    setSelectedStandardId("");
+                    setSelectedCriterionId(""); setSearchCriterion("");
+                    setSelectedEvidenceItemId(""); setSearchItem("");
+                    setShowStandardDropdown(true);
+                  }}
+                  onFocus={() => setShowStandardDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowStandardDropdown(false), 200)}
+                  placeholder="Gõ từ khóa để tìm tiêu chí..."
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
+                />
+                {showStandardDropdown && (
+                  <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                    {availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).length === 0 ? (
+                      <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chí</div>
+                    ) : (
+                      availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).map(s => (
+                        <div 
+                          key={s.id} 
+                          onClick={() => { 
+                            setSelectedStandardId(s.id); 
+                            setSearchStandard(`${s.year} - ${s.name}`); 
+                            setShowStandardDropdown(false);
+                          }}
+                          className="p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        >
+                          {s.year} - {s.name}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">2. Chọn Tiêu chuẩn</label>
+              <div className="relative">
                 <input 
                   type="text" 
                   value={searchCriterion}
-                  onChange={e => { setSearchCriterion(e.target.value); setSelectedCriterionId(""); resetFrom(5); }}
-                  placeholder="Tra cứu tiêu chuẩn (Criterion)..."
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
+                  onChange={e => { 
+                    setSearchCriterion(e.target.value); 
+                    setSelectedCriterionId("");
+                    setSelectedEvidenceItemId(""); setSearchItem("");
+                    setShowCriterionDropdown(true);
+                  }}
+                  onFocus={() => setShowCriterionDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowCriterionDropdown(false), 200)}
+                  placeholder={selectedStandardId ? "Gõ từ khóa để tìm tiêu chuẩn..." : "Vui lòng chọn tiêu chí trước"}
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
+                  disabled={!selectedStandardId}
                 />
+                {showCriterionDropdown && selectedStandardId && (
+                  <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                    {availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).length === 0 ? (
+                      <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chuẩn</div>
+                    ) : (
+                      availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).map(c => (
+                        <div 
+                          key={c.id} 
+                          onClick={() => { 
+                            setSelectedCriterionId(c.id); 
+                            setSearchCriterion(c.name); 
+                            setShowCriterionDropdown(false);
+                          }}
+                          className="p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        >
+                          {c.name}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
-              {!selectedCriterionId && (
-                <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
-                  {availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).length === 0 ? (
-                    <div className="p-3 text-sm text-slate-500 text-center bg-white dark:bg-slate-900">Không tìm thấy</div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2">3. Chọn danh mục minh chứng</label>
+            <div className="relative">
+              <input 
+                type="text" 
+                value={searchItem}
+                onChange={e => {
+                  setSearchItem(e.target.value);
+                  setSelectedEvidenceItemId("");
+                  setShowItemDropdown(true);
+                }}
+                onFocus={() => setShowItemDropdown(true)}
+                onBlur={() => setTimeout(() => setShowItemDropdown(false), 200)}
+                placeholder={selectedCriterionId ? "Gõ từ khóa để tìm phân loại/danh mục..." : "Vui lòng chọn tiêu chuẩn trước"}
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
+                disabled={!selectedCriterionId}
+              />
+              {showItemDropdown && selectedCriterionId && (
+                <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                  {availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy danh mục phù hợp</div>
                   ) : (
-                    availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).map(c => (
+                    availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).map(i => (
                       <div 
-                        key={c.id} 
-                        onClick={() => { setSelectedCriterionId(c.id); setSearchCriterion(c.name); resetFrom(5); }}
-                        className="px-4 py-2 text-sm bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer"
+                        key={i.id} 
+                        onClick={() => { 
+                          setSelectedEvidenceItemId(i.id); 
+                          setSearchItem(i.name); 
+                          setShowItemDropdown(false);
+                        }}
+                        className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${selectedEvidenceItemId === i.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
                       >
-                        {c.name}
+                        {i.name}
                       </div>
                     ))
                   )}
                 </div>
               )}
             </div>
-          )}
-
-          {/* 6. Chọn Danh mục Minh chứng (EvidenceItem) */}
-          {selectedCriterionId && (
-            <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
-              <label className="block text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-3">
-                {selectedType === "PROGRAM" ? "6" : "5"}. Chọn Danh mục Minh chứng cuối cùng
-              </label>
-              
-              <div className="relative mb-3">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text" 
-                  value={searchItem}
-                  onChange={e => setSearchItem(e.target.value)}
-                  placeholder="Lọc danh mục minh chứng..."
-                  className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-[var(--primary)] text-sm"
-                />
-              </div>
-
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).length === 0 ? (
-                  <div className="p-4 text-sm text-slate-500 text-center italic">Không có danh mục nào phù hợp</div>
-                ) : (
-                  availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).map(i => (
-                    <div 
-                      key={i.id} 
-                      onClick={() => setSelectedEvidenceItemId(i.id)}
-                      className={`p-3 text-sm rounded-xl border transition-colors cursor-pointer flex items-start gap-3 ${
-                        selectedEvidenceItemId === i.id 
-                          ? 'bg-white dark:bg-slate-800 border-[var(--primary)] shadow-sm' 
-                          : 'bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 hover:border-indigo-300'
-                      }`}
-                    >
-                      <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${selectedEvidenceItemId === i.id ? 'border-[var(--primary)] bg-[var(--primary)] text-white' : 'border-slate-300 dark:border-slate-600'}`}>
-                        {selectedEvidenceItemId === i.id && <Check size={10} strokeWidth={3} />}
-                      </div>
-                      <div>
-                        <div className={`font-semibold ${selectedEvidenceItemId === i.id ? 'text-[var(--primary)]' : 'text-slate-700 dark:text-slate-300'}`}>{i.name}</div>
-                        {i.description && <div className="text-xs text-slate-500 mt-1 line-clamp-2">{i.description}</div>}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
+            {selectedCriterionId && <p className="text-xs text-slate-500 mt-2 pl-1 italic">Vui lòng chọn mục minh chứng dùng chung phù hợp nhất.</p>}
+          </div>
 
         </div>
         
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end gap-3 rounded-b-2xl">
+          <button onClick={onClose} className="px-5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
             Đóng
           </button>
           <button 
