@@ -17,14 +17,30 @@ async function checkAdmin() {
 export async function getStandards() {
   await checkAdmin()
   return await prisma.standard.findMany({
-    include: {
-      program: true,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      year: true,
+      type: true,
+      programId: true,
+      program: { select: { id: true, name: true } },
       criteria: {
-        include: { 
-          items: { 
-            include: { departments: true },
-            orderBy: { createdAt: 'asc' } 
-          } 
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          standardId: true,
+          items: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              criterionId: true,
+              departments: { select: { id: true, name: true } }
+            },
+            orderBy: { createdAt: 'asc' }
+          }
         },
         orderBy: { createdAt: 'asc' }
       },

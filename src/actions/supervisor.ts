@@ -20,16 +20,35 @@ export async function getReviewEvidences() {
   await checkSupervisor()
   
   return await prisma.evidence.findMany({
-    include: {
+    select: {
+      id: true,
+      content: true,
+      fileUrl: true,
+      status: true,
+      rejectReason: true,
+      createdAt: true,
+      reviewedAt: true,
+      updatedAt: true,
       collaborator: { select: { name: true, email: true, department: { select: { name: true } } } },
       criterion: {
-        include: { standard: { include: { program: true } } }
+        select: {
+          name: true,
+          standard: {
+            select: { name: true, year: true, type: true, programId: true, program: { select: { id: true, name: true } } }
+          }
+        }
       },
-      evidenceItem: true,
+      evidenceItem: { select: { name: true } },
       reviewer: { select: { name: true, email: true } },
       lastUpdater: { select: { name: true, email: true } },
       evaluations: {
-        include: { evaluator: { select: { name: true } } },
+        select: {
+          id: true,
+          isApproved: true,
+          comments: true,
+          createdAt: true,
+          evaluator: { select: { name: true } }
+        },
         orderBy: { createdAt: 'desc' }
       }
     },
@@ -56,12 +75,18 @@ export async function getRejectedEvaluationsCount() {
     await checkSupervisor()
     const evidences = await prisma.evidence.findMany({
       where: { status: "APPROVED" },
-      include: { evaluations: { orderBy: { createdAt: 'asc' } } }
+      select: {
+        evaluations: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { isApproved: true }
+        }
+      }
     })
     
     return evidences.filter(ev => {
       if (!ev.evaluations || ev.evaluations.length === 0) return false
-      return !ev.evaluations[ev.evaluations.length - 1].isApproved
+      return !ev.evaluations[0].isApproved
     }).length
   } catch (error) {
     return 0

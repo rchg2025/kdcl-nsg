@@ -37,7 +37,8 @@ export async function getLogs() {
     include: {
       user: { select: { name: true, email: true, role: true } }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    take: 1000
   })
 }
 

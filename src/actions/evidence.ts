@@ -105,12 +105,25 @@ export async function getCollaboratorEvidences() {
 
   return await prisma.evidence.findMany({
     where: baseWhere,
-    include: {
-      collaborator: { select: { name: true, department: true } },
+    select: {
+      id: true,
+      content: true,
+      fileUrl: true,
+      status: true,
+      rejectReason: true,
+      createdAt: true,
+      reviewedAt: true,
+      updatedAt: true,
+      collaborator: { select: { name: true, department: { select: { name: true } } } },
       criterion: {
-        include: { standard: true }
+        select: {
+          name: true,
+          standard: {
+            select: { name: true, year: true, type: true, programId: true, program: { select: { name: true } } }
+          }
+        }
       },
-      evidenceItem: true,
+      evidenceItem: { select: { name: true } },
       reviewer: { select: { name: true, email: true } },
       lastUpdater: { select: { name: true, email: true } }
     },
@@ -161,10 +174,15 @@ export async function getAllCriteriaForDropdown() {
 
   return await prisma.criterion.findMany({
     where: whereClause,
-    include: { 
-      standard: { include: { program: true } }, 
+    select: { 
+      id: true,
+      name: true,
+      standard: { 
+        select: { name: true, year: true, type: true, programId: true, program: { select: { id: true, name: true } } } 
+      }, 
       items: { 
         ...itemsFilter,
+        select: { id: true, name: true },
         orderBy: { createdAt: 'asc' } 
       } 
     },

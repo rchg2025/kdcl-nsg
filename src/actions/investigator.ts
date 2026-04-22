@@ -19,14 +19,29 @@ export async function getInvestigatorEvidences() {
   
   return await prisma.evidence.findMany({
     where: { status: "APPROVED" }, // Investigators only verify what is already "Approved" by supervisors
-    include: {
+    select: {
+      id: true,
+      content: true,
+      fileUrl: true,
+      status: true,
       collaborator: { select: { name: true } },
       criterion: {
-        include: { standard: { include: { program: true } } }
+        select: {
+          name: true,
+          standard: {
+            select: { name: true, year: true, type: true, programId: true, program: { select: { id: true, name: true } } }
+          }
+        }
       },
-      evidenceItem: true,
+      evidenceItem: { select: { name: true } },
       evaluations: {
-        include: { evaluator: { select: { name: true } } },
+        select: {
+          id: true,
+          isApproved: true,
+          comments: true,
+          createdAt: true,
+          evaluator: { select: { name: true } }
+        },
         orderBy: { createdAt: 'asc' }
       }
     },
