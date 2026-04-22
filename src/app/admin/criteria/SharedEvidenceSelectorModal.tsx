@@ -171,7 +171,7 @@ export default function SharedEvidenceSelectorModal({
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
                 />
               </div>
-              {searchProgram && !selectedProgramId && (
+              {!selectedProgramId && (
                 <div className="mt-2 max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                   {availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
                     <div className="p-3 text-sm text-slate-500 text-center bg-white dark:bg-slate-900">Không tìm thấy</div>
@@ -206,7 +206,7 @@ export default function SharedEvidenceSelectorModal({
                 className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
               />
             </div>
-            {searchStandard && !selectedStandardId && (
+            {!selectedStandardId && (
               <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                 {availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).length === 0 ? (
                   <div className="p-3 text-sm text-slate-500 text-center bg-white dark:bg-slate-900">Không tìm thấy</div>
@@ -241,7 +241,7 @@ export default function SharedEvidenceSelectorModal({
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm"
                 />
               </div>
-              {searchCriterion && !selectedCriterionId && (
+              {!selectedCriterionId && (
                 <div className="mt-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
                   {availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).length === 0 ? (
                     <div className="p-3 text-sm text-slate-500 text-center bg-white dark:bg-slate-900">Không tìm thấy</div>
