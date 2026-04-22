@@ -181,7 +181,7 @@ export default function SharedEvidenceSelectorModal({
                       setShowProgramDropdown(true);
                     }}
                     onFocus={() => setShowProgramDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
+                    onBlur={() => setShowProgramDropdown(false)}
                     placeholder="Gõ tên ngành học để tìm kiếm..."
                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
                   />
@@ -193,7 +193,8 @@ export default function SharedEvidenceSelectorModal({
                         availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map(p => (
                           <div 
                             key={p.id} 
-                            onClick={() => { 
+                            onMouseDown={(e) => { 
+                              e.preventDefault();
                               setSelectedProgramId(p.id); 
                               setSearchProgram(p.name);
                               setShowProgramDropdown(false);
@@ -226,7 +227,7 @@ export default function SharedEvidenceSelectorModal({
                     setShowStandardDropdown(true);
                   }}
                   onFocus={() => setShowStandardDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowStandardDropdown(false), 200)}
+                  onBlur={() => setShowStandardDropdown(false)}
                   placeholder="Gõ từ khóa để tìm tiêu chí..."
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
                 />
@@ -238,7 +239,8 @@ export default function SharedEvidenceSelectorModal({
                       availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).map(s => (
                         <div 
                           key={s.id} 
-                          onClick={() => { 
+                          onMouseDown={(e) => { 
+                            e.preventDefault();
                             setSelectedStandardId(s.id); 
                             setSearchStandard(`${s.year} - ${s.name}`); 
                             setShowStandardDropdown(false);
@@ -267,7 +269,7 @@ export default function SharedEvidenceSelectorModal({
                     setShowCriterionDropdown(true);
                   }}
                   onFocus={() => setShowCriterionDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowCriterionDropdown(false), 200)}
+                  onBlur={() => setShowCriterionDropdown(false)}
                   placeholder={selectedStandardId ? "Gõ từ khóa để tìm tiêu chuẩn..." : "Vui lòng chọn tiêu chí trước"}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
                   disabled={!selectedStandardId}
@@ -280,7 +282,8 @@ export default function SharedEvidenceSelectorModal({
                       availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).map(c => (
                         <div 
                           key={c.id} 
-                          onClick={() => { 
+                          onMouseDown={(e) => { 
+                            e.preventDefault();
                             setSelectedCriterionId(c.id); 
                             setSearchCriterion(c.name); 
                             setShowCriterionDropdown(false);
@@ -309,7 +312,7 @@ export default function SharedEvidenceSelectorModal({
                   setShowItemDropdown(true);
                 }}
                 onFocus={() => setShowItemDropdown(true)}
-                onBlur={() => setTimeout(() => setShowItemDropdown(false), 200)}
+                onBlur={() => setShowItemDropdown(false)}
                 placeholder={selectedCriterionId ? "Gõ từ khóa để tìm phân loại/danh mục..." : "Vui lòng chọn tiêu chuẩn trước"}
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
                 disabled={!selectedCriterionId}
@@ -322,7 +325,8 @@ export default function SharedEvidenceSelectorModal({
                     availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).map(i => (
                       <div 
                         key={i.id} 
-                        onClick={() => { 
+                        onMouseDown={(e) => { 
+                          e.preventDefault();
                           setSelectedEvidenceItemId(i.id); 
                           setSearchItem(i.name); 
                           setShowItemDropdown(false);
