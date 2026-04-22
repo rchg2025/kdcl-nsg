@@ -13,6 +13,7 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
   // Rejection modal state
   const [rejectModalId, setRejectModalId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")
+  const [viewingSharedEvidence, setViewingSharedEvidence] = useState<any>(null)
 
   // Filter & Pagination States
   const [searchUser, setSearchUser] = useState("")
