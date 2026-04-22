@@ -158,6 +158,34 @@ export async function updateEvidenceStatus(evidenceId: string, status: EvidenceS
     }
   })
 
+  // Auto-sync logic
+  if (status === "APPROVED" && evidence.evidenceItemId) {
+    const linkedItems = await prisma.evidenceItem.findMany({
+      where: { sharedFromId: evidence.evidenceItemId }
+    })
+    
+    for (const item of linkedItems) {
+      const existing = await prisma.evidence.findFirst({
+        where: { evidenceItemId: item.id, sharedFromId: evidence.id }
+      })
+      if (!existing) {
+        await prisma.evidence.create({
+          data: {
+            criterionId: item.criterionId,
+            evidenceItemId: item.id,
+            collaboratorId: evidence.collaboratorId,
+            status: "APPROVED",
+            sharedFromId: evidence.id,
+            content: evidence.content,
+            fileUrl: evidence.fileUrl,
+            reviewerId: reviewer.id,
+            reviewedAt: new Date()
+          }
+        })
+      }
+    }
+  }
+
   // Create notification for the collaborator
   const criterionLabel = `${evidence.criterion.standard.name} > ${evidence.criterion.name}`
   const notifTitle = status === "APPROVED"

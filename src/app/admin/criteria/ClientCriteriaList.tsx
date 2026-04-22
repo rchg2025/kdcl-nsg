@@ -11,6 +11,14 @@ type EvidenceItem = {
   name: string
   description: string | null
   criterionId: string
+  sharedFromId?: string | null
+  sharedFrom?: {
+    name: string
+    criterion: {
+      name: string
+      standard: { name: string, year: number }
+    }
+  } | null
 }
 
 type Criterion = {
@@ -33,18 +41,20 @@ type Standard = {
   _count: { criteria: number }
 }
 
-function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartments }: any) {
+function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartments, allEvidenceItems }: any) {
   const [items, setItems] = useState<EvidenceItem[]>(crit.items || [])
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newItemName, setNewItemName] = useState("")
   const [newItemDesc, setNewItemDesc] = useState("")
   const [newItemDepts, setNewItemDepts] = useState<string[]>([])
+  const [newItemSharedFrom, setNewItemSharedFrom] = useState("")
   const [loading, setLoading] = useState(false)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editItemName, setEditItemName] = useState("")
   const [editItemDesc, setEditItemDesc] = useState("")
   const [editItemDepts, setEditItemDepts] = useState<string[]>([])
+  const [editItemSharedFrom, setEditItemSharedFrom] = useState("")
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,11 +62,12 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
     setLoading(true)
     try {
       const parentModule = await import("@/actions/criterion")
-      const added = await parentModule.createEvidenceItem({ name: newItemName, description: newItemDesc, criterionId: crit.id, departmentIds: newItemDepts })
+      const added = await parentModule.createEvidenceItem({ name: newItemName, description: newItemDesc, criterionId: crit.id, departmentIds: newItemDepts, sharedFromId: newItemSharedFrom || undefined })
       setItems([...items, added])
       setNewItemName("")
       setNewItemDesc("")
       setNewItemDepts([])
+      setNewItemSharedFrom("")
       setShowAddForm(false)
     } catch (err) {
       alert("Lỗi khi thêm danh mục minh chứng")
@@ -82,7 +93,7 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
     setLoading(true)
     try {
       const parentModule = await import("@/actions/criterion")
-      const updated = await parentModule.updateEvidenceItem(editingItemId, { name: editItemName, description: editItemDesc, departmentIds: editItemDepts })
+      const updated = await parentModule.updateEvidenceItem(editingItemId, { name: editItemName, description: editItemDesc, departmentIds: editItemDepts, sharedFromId: editItemSharedFrom || undefined })
       setItems(items.map(i => i.id === editingItemId ? updated : i))
       setEditingItemId(null)
     } catch (err) {
@@ -144,6 +155,15 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                       className="w-full px-3 py-1.5 text-sm rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500"
                     />
                     <div className="flex flex-col gap-1.5 mt-1 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
+                      <span className="text-xs font-semibold text-slate-500">Dùng chung minh chứng từ mục (Tự động đồng bộ):</span>
+                      <select value={editItemSharedFrom} onChange={e => setEditItemSharedFrom(e.target.value)} className="w-full px-3 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500 max-w-full">
+                        <option value="">-- Không dùng chung --</option>
+                        {allEvidenceItems?.filter((x: any) => x.id !== editingItemId).map((x: any) => (
+                          <option key={x.id} value={x.id}>{x.criterion.standard.name} ({x.criterion.standard.year}) - {x.criterion.name} - {x.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 mt-1 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
                       <span className="text-xs font-semibold text-slate-500">Gán Đơn vị (Bỏ trống = Mọi người dùng chung)</span>
                       <div className="grid grid-cols-2 gap-2 mt-1 max-h-[100px] overflow-y-auto">
                         {allDepartments.map((d: any) => (
@@ -166,9 +186,14 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                   </form>
                 ) : (
                   <>
-                    <div className="flex flex-col flex-1 pl-1 border-l-2 border-amber-400">
-                      <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-2">{item.name}</div>
+                    <div className="flex flex-col flex-1 pl-1 border-l-2 border-amber-400 overflow-hidden">
+                      <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-2 truncate" title={item.name}>{item.name}</div>
                       {item.description && <div className="text-xs text-slate-500 ml-2 mt-0.5">{item.description}</div>}
+                      {item.sharedFromId && item.sharedFrom && (
+                        <div className="text-[10px] text-indigo-600 dark:text-indigo-400 ml-2 mt-1 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md inline-block w-fit">
+                          🔗 Dùng chung từ: {item.sharedFrom.criterion?.standard?.name} - {item.sharedFrom.criterion?.name} ({item.sharedFrom.name})
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity self-end sm:self-auto min-w-max">
                       <button 
@@ -177,6 +202,7 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                           setEditItemName(item.name)
                           setEditItemDesc(item.description || "")
                           setEditItemDepts((item as any).departments?.map((d: any) => d.id) || [])
+                          setEditItemSharedFrom(item.sharedFromId || "")
                         }}
                         className="text-xs font-medium text-slate-400 hover:text-indigo-500 px-2 py-1 rounded hover:bg-indigo-50"
                       >
@@ -211,6 +237,15 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                   placeholder="Ghi chú thêm (Không bắt buộc)"
                   className="w-full px-3 py-2 text-sm rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500"
                 />
+                <div className="flex flex-col gap-1.5 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-white dark:bg-slate-900">
+                  <span className="text-xs font-semibold text-slate-500">Dùng chung minh chứng từ mục (Tự động đồng bộ):</span>
+                  <select value={newItemSharedFrom} onChange={e => setNewItemSharedFrom(e.target.value)} className="w-full px-3 py-1.5 text-xs rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500 max-w-full">
+                    <option value="">-- Không dùng chung --</option>
+                    {allEvidenceItems?.map((x: any) => (
+                      <option key={x.id} value={x.id}>{x.criterion.standard.name} ({x.criterion.standard.year}) - {x.criterion.name} - {x.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex flex-col gap-1.5 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-white dark:bg-slate-900">
                   <span className="text-xs font-semibold text-slate-500">Gán Đơn vị (Bỏ trống = Mọi người dùng chung)</span>
                   <div className="grid grid-cols-2 gap-2 mt-1 max-h-[100px] overflow-y-auto">
@@ -247,7 +282,7 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
   )
 }
 
-export default function ClientCriteriaList({ initialStandards, initialPrograms=[] }: { initialStandards: Standard[], initialPrograms?: any[] }) {
+export default function ClientCriteriaList({ initialStandards, initialPrograms=[], allEvidenceItems=[] }: { initialStandards: Standard[], initialPrograms?: any[], allEvidenceItems?: any[] }) {
   const [standards, setStandards] = useState(initialStandards)
   const [expandedStds, setExpandedStds] = useState<Record<string, boolean>>({})
   
@@ -579,6 +614,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                            openEditCrit={openEditCrit} 
                            handleDeleteCrit={handleDeleteCrit} 
                            allDepartments={allDepartments}
+                           allEvidenceItems={allEvidenceItems}
                         />
                       ))}
                     </div>

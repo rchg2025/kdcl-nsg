@@ -1,11 +1,13 @@
 import { getStandards } from "@/actions/standard"
 import { getPrograms } from "@/actions/category"
+import { getAllEvidenceItemsForSharing } from "@/actions/criterion"
 import ClientCriteriaList from "./ClientCriteriaList"
 
 export default async function CriteriaPage() {
-  const [standards, programs] = await Promise.all([
+  const [standards, programs, allEvidenceItems] = await Promise.all([
     getStandards(),
-    getPrograms()
+    getPrograms(),
+    getAllEvidenceItemsForSharing()
   ])
 
   return (
@@ -16,7 +18,7 @@ export default async function CriteriaPage() {
           <p className="text-slate-500 mt-1">Quản lý danh mục kiểm định chất lượng theo năm</p>
         </div>
       </div>
-      <ClientCriteriaList initialStandards={standards} initialPrograms={programs} />
+      <ClientCriteriaList initialStandards={standards} initialPrograms={programs} allEvidenceItems={allEvidenceItems} />
     </div>
   )
 }

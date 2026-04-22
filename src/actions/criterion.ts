@@ -57,12 +57,29 @@ export async function getEvidenceItems(criterionId: string) {
   await checkAdmin()
   return await prisma.evidenceItem.findMany({
     where: { criterionId },
-    include: { departments: true },
+    include: { 
+      departments: true,
+      sharedFrom: {
+        select: { name: true, criterion: { select: { name: true, standard: { select: { name: true, year: true } } } } }
+      }
+    },
     orderBy: { createdAt: 'desc' }
   })
 }
 
-export async function createEvidenceItem(data: { name: string; description?: string; criterionId: string; departmentIds?: string[] }) {
+export async function getAllEvidenceItemsForSharing() {
+  await checkAdmin()
+  return await prisma.evidenceItem.findMany({
+    include: {
+      criterion: {
+        select: { name: true, standard: { select: { name: true, year: true } } }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+}
+
+export async function createEvidenceItem(data: { name: string; description?: string; criterionId: string; departmentIds?: string[]; sharedFromId?: string }) {
   await checkAdmin()
   const dptData = data.departmentIds ? {
     departments: { connect: data.departmentIds.map(id => ({ id })) }
@@ -72,23 +89,47 @@ export async function createEvidenceItem(data: { name: string; description?: str
       name: data.name, 
       description: data.description, 
       criterionId: data.criterionId, 
+      sharedFromId: data.sharedFromId,
       ...dptData 
     },
     include: { departments: true }
   })
+  
+  if (data.sharedFromId) {
+    const approvedEvidences = await prisma.evidence.findMany({
+      where: { evidenceItemId: data.sharedFromId, status: "APPROVED" }
+    })
+    for (const ev of approvedEvidences) {
+      await prisma.evidence.create({
+        data: {
+          criterionId: data.criterionId,
+          evidenceItemId: newItem.id,
+          collaboratorId: ev.collaboratorId,
+          status: "APPROVED",
+          sharedFromId: ev.id,
+          content: ev.content,
+          fileUrl: ev.fileUrl,
+          reviewerId: ev.reviewerId,
+          reviewedAt: ev.reviewedAt
+        }
+      })
+    }
+  }
+
   await createLog("CREATE", "Mục Minh chứng (EvidenceItem)", `Tạo danh mục minh chứng: ${data.name}`)
   revalidatePath("/admin/criteria")
   revalidatePath("/supervisor/criteria")
   return newItem
 }
 
-export async function updateEvidenceItem(id: string, data: { name: string; description?: string; departmentIds?: string[] }) {
+export async function updateEvidenceItem(id: string, data: { name: string; description?: string; departmentIds?: string[]; sharedFromId?: string }) {
   await checkAdmin()
   const updatedItem = await prisma.evidenceItem.update({
     where: { id },
     data: {
       name: data.name,
       description: data.description,
+      sharedFromId: data.sharedFromId,
       ...(data.departmentIds ? {
         departments: {
           set: data.departmentIds.map(dId => ({ id: dId }))
@@ -97,6 +138,33 @@ export async function updateEvidenceItem(id: string, data: { name: string; descr
     },
     include: { departments: true }
   })
+
+  if (data.sharedFromId) {
+    const approvedEvidences = await prisma.evidence.findMany({
+      where: { evidenceItemId: data.sharedFromId, status: "APPROVED" }
+    })
+    for (const ev of approvedEvidences) {
+      const existing = await prisma.evidence.findFirst({
+        where: { evidenceItemId: id, sharedFromId: ev.id }
+      })
+      if (!existing) {
+        await prisma.evidence.create({
+          data: {
+            criterionId: updatedItem.criterionId,
+            evidenceItemId: updatedItem.id,
+            collaboratorId: ev.collaboratorId,
+            status: "APPROVED",
+            sharedFromId: ev.id,
+            content: ev.content,
+            fileUrl: ev.fileUrl,
+            reviewerId: ev.reviewerId,
+            reviewedAt: ev.reviewedAt
+          }
+        })
+      }
+    }
+  }
+
   await createLog("UPDATE", "Mục Minh chứng (EvidenceItem)", `Cập nhật danh mục: ${data.name}`)
   revalidatePath("/admin/criteria")
   revalidatePath("/supervisor/criteria")

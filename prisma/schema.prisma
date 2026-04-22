@@ -101,6 +101,10 @@ model EvidenceItem {
 
   evidences   Evidence[]
   departments Department[]
+
+  sharedFromId String?
+  sharedFrom   EvidenceItem?  @relation("SharedEvidenceItem", fields: [sharedFromId], references: [id])
+  sharedTo     EvidenceItem[] @relation("SharedEvidenceItem")
 }
 
 enum EvidenceStatus {
