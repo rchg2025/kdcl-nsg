@@ -72,7 +72,7 @@ export async function getAllEvidenceItemsForSharing() {
   return await prisma.evidenceItem.findMany({
     include: {
       criterion: {
-        select: { name: true, standard: { select: { name: true, year: true, type: true, programId: true } } }
+        select: { id: true, name: true, standard: { select: { id: true, name: true, year: true, type: true, programId: true } } }
       }
     },
     orderBy: { createdAt: 'desc' }
