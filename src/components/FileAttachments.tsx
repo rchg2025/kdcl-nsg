@@ -35,16 +35,16 @@ export default function FileAttachments({ fileStr }: { fileStr: string | null })
             href={f.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
+            className="flex flex-col p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg shrink-0 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                <FileText size={20} />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded shrink-0 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <FileText size={14} />
               </div>
               <div className="flex-1 min-w-0">
-                <h5 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={f.name}>{f.name}</h5>
+                <h5 className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 truncate" title={f.name}>{f.name}</h5>
               </div>
-              <ExternalLink size={16} className="text-slate-400 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ExternalLink size={12} className="text-slate-400 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </div>
           </a>
         ))}

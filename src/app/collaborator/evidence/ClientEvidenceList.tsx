@@ -453,11 +453,11 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{ev.criterion.standard.name} ({ev.criterion.standard.year})</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{ev.criterion.standard.name} ({ev.criterion.standard.year})</span>
                   </div>
-                  <h3 className="font-bold text-lg text-[var(--foreground)]">{ev.criterion.name}</h3>
+                  <h3 className="font-bold text-sm sm:text-base text-[var(--foreground)]">{ev.criterion.name}</h3>
                   {ev.evidenceItem && (
-                    <div className="inline-block mt-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-xs font-semibold">
+                    <div className="inline-block mt-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold">
                       Minh chứng: {ev.evidenceItem.name}
                     </div>
                   )}

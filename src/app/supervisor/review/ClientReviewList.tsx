@@ -280,7 +280,7 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
                 </div>
 
                 {ev.evidenceItem && (
-                  <div className="mb-3 inline-block px-2.5 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-xs font-bold shadow-sm">
+                  <div className="mb-3 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold shadow-sm">
                     Minh chứng: {ev.evidenceItem.name}
                   </div>
                 )}
