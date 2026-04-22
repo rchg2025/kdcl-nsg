@@ -182,6 +182,17 @@ export default function SharedEvidenceSelectorModal({
                     }}
                     onFocus={() => setShowProgramDropdown(true)}
                     onBlur={() => setTimeout(() => setShowProgramDropdown(false), 250)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const matches = availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase()));
+                        if (matches.length > 0) {
+                          setSelectedProgramId(matches[0].id);
+                          setSearchProgram(matches[0].name);
+                          setShowProgramDropdown(false);
+                        }
+                      }
+                    }}
                     placeholder="Gõ tên ngành học để tìm kiếm..."
                     className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
                       selectedProgramId 
@@ -233,6 +244,17 @@ export default function SharedEvidenceSelectorModal({
                   }}
                   onFocus={() => setShowStandardDropdown(true)}
                   onBlur={() => setTimeout(() => setShowStandardDropdown(false), 250)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const matches = availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase()));
+                      if (matches.length > 0) {
+                        setSelectedStandardId(matches[0].id);
+                        setSearchStandard(`${matches[0].year} - ${matches[0].name}`);
+                        setShowStandardDropdown(false);
+                      }
+                    }
+                  }}
                   placeholder="Gõ từ khóa để tìm tiêu chí..."
                   className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
                     selectedStandardId 
@@ -244,7 +266,10 @@ export default function SharedEvidenceSelectorModal({
                 {showStandardDropdown && (
                   <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                     {availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).length === 0 ? (
-                      <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chí</div>
+                      <div className="p-4 text-sm text-slate-500 text-center">
+                        <span className="text-amber-500 font-semibold mb-1 block">⚠ Không có tiêu chí nào có thể chọn</span>
+                        (Lý do: Chưa có "Danh mục minh chứng" nào được tạo cho tiêu chí này. Vui lòng tạo danh mục trước khi dùng chung)
+                      </div>
                     ) : (
                       availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).map(s => (
                         <div 
@@ -280,6 +305,17 @@ export default function SharedEvidenceSelectorModal({
                   }}
                   onFocus={() => setShowCriterionDropdown(true)}
                   onBlur={() => setTimeout(() => setShowCriterionDropdown(false), 250)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const matches = availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase()));
+                      if (matches.length > 0) {
+                        setSelectedCriterionId(matches[0].id);
+                        setSearchCriterion(matches[0].name);
+                        setShowCriterionDropdown(false);
+                      }
+                    }
+                  }}
                   placeholder={selectedStandardId ? "Gõ từ khóa để tìm tiêu chuẩn..." : "Vui lòng chọn tiêu chí trước"}
                   className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
                     selectedCriterionId 
@@ -292,7 +328,10 @@ export default function SharedEvidenceSelectorModal({
                 {showCriterionDropdown && selectedStandardId && (
                   <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                     {availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).length === 0 ? (
-                      <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy tiêu chuẩn</div>
+                      <div className="p-4 text-sm text-slate-500 text-center">
+                        <span className="text-amber-500 font-semibold mb-1 block">⚠ Không tìm thấy tiêu chuẩn</span>
+                        (Lý do: Chưa có danh mục minh chứng nào được tạo cho tiêu chuẩn này)
+                      </div>
                     ) : (
                       availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).map(c => (
                         <div 
@@ -328,6 +367,17 @@ export default function SharedEvidenceSelectorModal({
                 }}
                 onFocus={() => setShowItemDropdown(true)}
                 onBlur={() => setTimeout(() => setShowItemDropdown(false), 250)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const matches = availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase()));
+                    if (matches.length > 0) {
+                      setSelectedEvidenceItemId(matches[0].id);
+                      setSearchItem(matches[0].name);
+                      setShowItemDropdown(false);
+                    }
+                  }
+                }}
                 placeholder={selectedCriterionId ? "Gõ từ khóa để tìm phân loại/danh mục..." : "Vui lòng chọn tiêu chuẩn trước"}
                 className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
                   selectedEvidenceItemId 
