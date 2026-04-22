@@ -8,6 +8,7 @@ import FileAttachments from "@/components/FileAttachments"
 type EvidenceItem = {
   id: string
   name: string
+  sharedFromId?: string | null
 }
 
 type Evidence = {
