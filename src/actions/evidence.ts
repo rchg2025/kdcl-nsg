@@ -66,7 +66,7 @@ export async function updateEvidence(id: string, data: { content?: string; fileU
   const isAdmin = session?.user?.role === "ADMIN"
   const user = await prisma.user.findUnique({ where: { id: userId } })
 
-  const existing = await prisma.evidence.findUnique({ where: { id }, include: { collaborator: true, criterion: true } })
+  const existing = await prisma.evidence.findUnique({ where: { id }, include: { collaborator: true, criterion: true, sharedTo: true } })
   if (!existing) throw new Error("Not found")
 
   const isOwner = existing.collaboratorId === userId
@@ -84,6 +84,33 @@ export async function updateEvidence(id: string, data: { content?: string; fileU
       lastUpdaterId: userId
     }
   })
+  
+  if (data.fileUrl && existing.sharedTo && existing.sharedTo.length > 0) {
+    for (const child of existing.sharedTo) {
+      try {
+        const childFiles = child.fileUrl ? JSON.parse(child.fileUrl) : []
+        const parentFiles = JSON.parse(data.fileUrl)
+        if (Array.isArray(parentFiles)) {
+          const finalChildFiles = Array.isArray(childFiles) ? [...childFiles] : []
+          let changed = false
+          for (const pf of parentFiles) {
+            if (!finalChildFiles.some((cf: any) => cf.url === pf.url)) {
+              finalChildFiles.push(pf)
+              changed = true
+            }
+          }
+          if (changed) {
+            await prisma.evidence.update({
+              where: { id: child.id },
+              data: { fileUrl: JSON.stringify(finalChildFiles) }
+            })
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi đồng bộ file xuống minh chứng con", err)
+      }
+    }
+  }
   
   await createLog("UPDATE", "Minh chứng (Evidence)", `Cập nhật lại minh chứng cho Tiêu chuẩn: ${existing.criterion.name}`)
   
@@ -172,7 +199,7 @@ export async function getApprovedEvidenceForSync(sharedFromEvidenceItemId: strin
     orderBy: { updatedAt: 'desc' }
   })
   
-  return sourceEvidence ? { content: sourceEvidence.content, fileUrl: sourceEvidence.fileUrl } : null
+  return sourceEvidence ? { id: sourceEvidence.id, content: sourceEvidence.content, fileUrl: sourceEvidence.fileUrl } : null
 }
 
 export async function getAllCriteriaForDropdown() {

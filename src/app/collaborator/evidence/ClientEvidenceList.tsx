@@ -23,6 +23,7 @@ type Evidence = {
     standard: { name: string; year: number; type?: string; programId?: string | null; program?: { name: string } | null }
   }
   evidenceItem?: { id: string; name: string; sharedFromId: string | null } | null
+  sharedFrom?: { id: string } | null
   collaborator?: { name: string | null } | null
   reviewer?: { name: string | null; email: string | null } | null
   lastUpdater?: { name: string | null; email: string | null } | null
@@ -59,6 +60,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [newLinkName, setNewLinkName] = useState("")
   const [newLinkUrl, setNewLinkUrl] = useState("")
+  
+  const [syncedParentEvidenceId, setSyncedParentEvidenceId] = useState<string | null>(null)
   const [editingSharedFromId, setEditingSharedFromId] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [viewingSharedEvidence, setViewingSharedEvidence] = useState<Evidence["sharedFrom"] | null>(null)
@@ -210,9 +213,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
       }
       
       if (editingId) {
-        await updateEvidence(editingId, { content: content || undefined, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined })
+        await updateEvidence(editingId, { content: content || undefined, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined, sharedFromId: syncedParentEvidenceId || undefined })
       } else {
-        await createEvidence({ criterionId, content: content || undefined, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined })
+        await createEvidence({ criterionId, content: content || undefined, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined, sharedFromId: syncedParentEvidenceId || undefined })
       }
       window.location.reload()
     } catch (err: any) {
@@ -247,6 +250,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setSearchProgramName(ev.criterion.standard.program?.name || "")
     setContent(ev.content || "")
     setExistingFiles(parseFilesForForm(ev.fileUrl))
+    setSyncedParentEvidenceId(ev.sharedFrom?.id || null)
     setSelectedFiles([])
     setNewLinkName("")
     setNewLinkUrl("")
@@ -265,6 +269,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setSearchItem("")
     setContent("")
     setExistingFiles([])
+    setSyncedParentEvidenceId(null)
     setSelectedFiles([])
     setNewLinkName("")
     setNewLinkUrl("")
@@ -288,6 +293,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     try {
       const data = await getApprovedEvidenceForSync(effectiveSharedFromId)
       if (data) {
+        setSyncedParentEvidenceId(data.id)
         if (data.content) {
           setContent(prev => prev ? `${prev}\n\n[ĐỒNG BỘ TỪ DÙNG CHUNG]:\n${data.content}` : (data.content || ""))
         }
