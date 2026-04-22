@@ -138,7 +138,7 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
   const paginatedEvidences = filteredEvidences.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const departments = Array.from(new Set(evidences.map(ev => ev.collaborator?.department?.name).filter(Boolean))) as string[]
-  const availableYears = Array.from(new Set(evidences.map(ev => ev.criterion?.standard?.year).filter(Boolean))).sort((a,b) => Number(b) - Number(a)) as number[]
+  const listAvailableYears = Array.from(new Set(evidences.map(ev => ev.criterion?.standard?.year).filter(Boolean))).sort((a,b) => Number(b) - Number(a)) as number[]
 
   return (
     <div className="space-y-6">
@@ -165,7 +165,7 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Năm</label>
              <select value={filterYear} onChange={e => { setFilterYear(e.target.value); setCurrentPage(1); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
                <option value="ALL">Tất cả</option>
-               {availableYears.map(y => <option key={y} value={y.toString()}>{y}</option>)}
+               {listAvailableYears.map(y => <option key={y} value={y.toString()}>{y}</option>)}
              </select>
           </div>
           <div className="w-[180px]">
@@ -294,8 +294,16 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
 
                   {ev.sharedFrom && (
                     <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-3 inline-block">
-                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-xs">
-                        <Link2 size={14} /> Dùng chung từ: <span className="font-bold">{ev.sharedFrom.criterion.name}</span> ({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-xs">
+                          <Link2 size={14} /> Dùng chung từ: <span className="font-bold">{ev.sharedFrom.criterion.name}</span> ({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})
+                        </div>
+                        <button 
+                          onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
+                          className="text-[11px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-800/50 dark:hover:bg-indigo-700 dark:text-indigo-300 px-2 py-1 rounded font-bold transition-colors w-max"
+                        >
+                          Xem nội dung gốc
+                        </button>
                       </div>
                     </div>
                   )}
@@ -466,6 +474,49 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
                   <XCircle size={16} /> Xác nhận Không đạt
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shared Evidence View Modal */}
+      {viewingSharedEvidence && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-[700px] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Link2 size={20} className="text-indigo-500" />
+                Thông tin Minh chứng Dùng chung
+              </h3>
+            </div>
+            
+            <div className="p-6 max-h-[70vh] overflow-y-auto">
+              <div className="mb-4 text-sm text-slate-500">
+                Từ tiêu chuẩn: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.standard?.name} ({viewingSharedEvidence.criterion?.standard?.year})</strong>
+                <br />
+                Tiêu chí: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.name}</strong>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Nội dung báo cáo:</label>
+                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl text-sm whitespace-pre-wrap text-slate-700 dark:text-slate-300">
+                  {viewingSharedEvidence.content || "Chưa có nội dung mô tả"}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold mb-2">Tài liệu đính kèm:</label>
+                <FileAttachments fileStr={viewingSharedEvidence.fileUrl || null} />
+              </div>
+            </div>
+            
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button 
+                onClick={() => setViewingSharedEvidence(null)} 
+                className="px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>
