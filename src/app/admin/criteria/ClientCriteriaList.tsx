@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { createStandard, updateStandard, deleteStandard, cloneStandard } from "@/actions/standard"
 import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { getAllDepartmentsPublic } from "@/actions/category"
-import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon, CopyPlus } from "lucide-react"
+import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon, CopyPlus, Link2 } from "lucide-react"
+import SharedEvidenceSelectorModal from "./SharedEvidenceSelectorModal"
 
 type EvidenceItem = {
   id: string
@@ -41,7 +42,7 @@ type Standard = {
   _count: { criteria: number }
 }
 
-function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartments, allEvidenceItems }: any) {
+function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartments, allEvidenceItems, initialPrograms }: any) {
   const [items, setItems] = useState<EvidenceItem[]>(crit.items || [])
   const [isExpanded, setIsExpanded] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -55,6 +56,11 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
   const [editItemDesc, setEditItemDesc] = useState("")
   const [editItemDepts, setEditItemDepts] = useState<string[]>([])
   const [editItemSharedFrom, setEditItemSharedFrom] = useState("")
+  
+  const [isSharedModalOpen, setIsSharedModalOpen] = useState(false)
+  const [sharedModalTarget, setSharedModalTarget] = useState<"NEW" | "EDIT" | null>(null)
+  const [newItemSharedFromName, setNewItemSharedFromName] = useState("")
+  const [editItemSharedFromName, setEditItemSharedFromName] = useState("")
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,6 +74,7 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
       setNewItemDesc("")
       setNewItemDepts([])
       setNewItemSharedFrom("")
+      setNewItemSharedFromName("")
       setShowAddForm(false)
     } catch (err) {
       alert("Lỗi khi thêm danh mục minh chứng")
@@ -156,12 +163,25 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                     />
                     <div className="flex flex-col gap-1.5 mt-1 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
                       <span className="text-xs font-semibold text-slate-500">Dùng chung minh chứng từ mục (Tự động đồng bộ):</span>
-                      <select value={editItemSharedFrom} onChange={e => setEditItemSharedFrom(e.target.value)} className="w-full px-3 py-1.5 text-xs rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500 max-w-full">
-                        <option value="">-- Không dùng chung --</option>
-                        {allEvidenceItems?.filter((x: any) => x.id !== editingItemId).map((x: any) => (
-                          <option key={x.id} value={x.id}>{x.criterion.standard.name} ({x.criterion.standard.year}) - {x.criterion.name} - {x.name}</option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-2 mt-1">
+                        <button 
+                          type="button" 
+                          onClick={() => { setSharedModalTarget("EDIT"); setIsSharedModalOpen(true); }}
+                          className="px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 rounded-lg hover:bg-indigo-200 transition-colors flex items-center gap-1.5 shrink-0"
+                        >
+                          <Search size={14} /> Chọn từ danh sách...
+                        </button>
+                        {editItemSharedFrom ? (
+                          <div className="flex-1 flex items-center justify-between px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-xs">
+                            <span className="truncate text-indigo-700 dark:text-indigo-300 font-medium" title={editItemSharedFromName}>{editItemSharedFromName}</span>
+                            <button type="button" onClick={() => { setEditItemSharedFrom(""); setEditItemSharedFromName(""); }} className="text-red-500 hover:text-red-700 ml-2 shrink-0">Xóa</button>
+                          </div>
+                        ) : (
+                          <div className="flex-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-500 italic">
+                            -- Không dùng chung --
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-col gap-1.5 mt-1 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
                       <span className="text-xs font-semibold text-slate-500">Gán Đơn vị (Bỏ trống = Mọi người dùng chung)</span>
@@ -203,6 +223,11 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                           setEditItemDesc(item.description || "")
                           setEditItemDepts((item as any).departments?.map((d: any) => d.id) || [])
                           setEditItemSharedFrom(item.sharedFromId || "")
+                          if (item.sharedFrom) {
+                             setEditItemSharedFromName(`${item.sharedFrom.criterion?.standard?.name} (${item.sharedFrom.criterion?.standard?.year}) - ${item.sharedFrom.criterion?.name} - ${item.sharedFrom.name}`)
+                          } else {
+                             setEditItemSharedFromName("")
+                          }
                         }}
                         className="text-xs font-medium text-slate-400 hover:text-indigo-500 px-2 py-1 rounded hover:bg-indigo-50"
                       >
@@ -239,12 +264,25 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                 />
                 <div className="flex flex-col gap-1.5 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-white dark:bg-slate-900">
                   <span className="text-xs font-semibold text-slate-500">Dùng chung minh chứng từ mục (Tự động đồng bộ):</span>
-                  <select value={newItemSharedFrom} onChange={e => setNewItemSharedFrom(e.target.value)} className="w-full px-3 py-1.5 text-xs rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500 max-w-full">
-                    <option value="">-- Không dùng chung --</option>
-                    {allEvidenceItems?.map((x: any) => (
-                      <option key={x.id} value={x.id}>{x.criterion.standard.name} ({x.criterion.standard.year}) - {x.criterion.name} - {x.name}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2 mt-1">
+                    <button 
+                      type="button" 
+                      onClick={() => { setSharedModalTarget("NEW"); setIsSharedModalOpen(true); }}
+                      className="px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 rounded-lg hover:bg-indigo-200 transition-colors flex items-center gap-1.5 shrink-0"
+                    >
+                      <Search size={14} /> Chọn từ danh sách...
+                    </button>
+                    {newItemSharedFrom ? (
+                      <div className="flex-1 flex items-center justify-between px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-xs">
+                        <span className="truncate text-indigo-700 dark:text-indigo-300 font-medium" title={newItemSharedFromName}>{newItemSharedFromName}</span>
+                        <button type="button" onClick={() => { setNewItemSharedFrom(""); setNewItemSharedFromName(""); }} className="text-red-500 hover:text-red-700 ml-2 shrink-0">Xóa</button>
+                      </div>
+                    ) : (
+                      <div className="flex-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-500 italic">
+                        -- Không dùng chung --
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1.5 border border-slate-200 dark:border-slate-700 p-2 rounded-lg bg-white dark:bg-slate-900">
                   <span className="text-xs font-semibold text-slate-500">Gán Đơn vị (Bỏ trống = Mọi người dùng chung)</span>
@@ -278,6 +316,23 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
           </div>
         )}
       </div>
+      <SharedEvidenceSelectorModal 
+        isOpen={isSharedModalOpen}
+        onClose={() => setIsSharedModalOpen(false)}
+        allEvidenceItems={allEvidenceItems}
+        initialPrograms={initialPrograms}
+        excludeItemId={sharedModalTarget === "EDIT" ? editingItemId || undefined : undefined}
+        onSelect={(id, name) => {
+          if (sharedModalTarget === "NEW") {
+            setNewItemSharedFrom(id)
+            setNewItemSharedFromName(name)
+          } else if (sharedModalTarget === "EDIT") {
+            setEditItemSharedFrom(id)
+            setEditItemSharedFromName(name)
+          }
+          setIsSharedModalOpen(false)
+        }}
+      />
     </div>
   )
 }
@@ -615,6 +670,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                            handleDeleteCrit={handleDeleteCrit} 
                            allDepartments={allDepartments}
                            allEvidenceItems={allEvidenceItems}
+                           initialPrograms={initialPrograms}
                         />
                       ))}
                     </div>
