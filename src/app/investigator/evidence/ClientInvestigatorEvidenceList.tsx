@@ -191,9 +191,12 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
         ) : (
           paginatedEvidences.map((ev) => {
             return (
-            <div key={ev.id} className={`glass rounded-xl p-5 border-2 flex flex-col justify-between transition-all ${statusColors[ev.status]?.split(' ')[0]} ${statusColors[ev.status]?.split(' ')[3]}`}>
-              {/* Card Header */}
-              <div>
+            <div key={ev.id} className={`glass rounded-xl p-5 border-2 transition-all ${statusColors[ev.status]?.split(' ')[0]} ${statusColors[ev.status]?.split(' ')[3]}`}>
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Cột thông tin minh chứng */}
+                <div className="flex-1 flex flex-col">
+                  {/* Card Header */}
+                  <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     {ev.criterion.standard.type === "PROGRAM" ? (
@@ -252,11 +255,22 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
                       </div>
                     </div>
                   )}
+                  </div>
 
-                {/* Frame Đánh giá */}
-                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <h4 className="text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5 mb-3">
-                    <CheckSquare size={14} className="text-[var(--primary)]" /> Kế quả Đánh giá (Kiểm tra chéo)
+                  {/* Card Footer: Metadata moved inside left column */}
+                  <div className="mt-auto pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
+                    <div className="flex flex-col gap-1.5 text-[10px] font-medium text-slate-500">
+                      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                        <UserCircle size={14} className="text-slate-400" /> Nội dung chuẩn bị bởi: <strong>{ev.collaborator.name}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cột Đánh giá */}
+                <div className="w-full lg:w-96 bg-white dark:bg-[#0f172a] rounded-xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col">
+                  <h4 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2 mb-4">
+                    <CheckSquare size={16} className="text-[var(--primary)]" /> Kết quả đánh giá
                   </h4>
                   
                   {ev.evaluations && ev.evaluations.length > 0 && (
@@ -319,15 +333,6 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-              
-              {/* Card Footer: Metadata */}
-              <div className="mt-6 pt-4 border-t border-slate-200/50 dark:border-slate-700/50 flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
-                <div className="flex flex-col gap-1.5 text-[10px] font-medium text-slate-500">
-                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                    <UserCircle size={14} className="text-slate-400" /> Nội dung chuẩn bị bởi: <strong>{ev.collaborator.name}</strong>
-                  </div>
                 </div>
               </div>
             </div>
