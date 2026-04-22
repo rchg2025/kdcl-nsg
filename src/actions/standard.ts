@@ -37,6 +37,15 @@ export async function getStandards() {
               name: true,
               description: true,
               criterionId: true,
+              sharedFromId: true,
+              sharedFrom: {
+                select: {
+                  name: true,
+                  criterion: {
+                    select: { name: true, standard: { select: { name: true, year: true } } }
+                  }
+                }
+              },
               departments: { select: { id: true, name: true } }
             },
             orderBy: { createdAt: 'asc' }

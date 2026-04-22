@@ -21,7 +21,7 @@ type Evidence = {
     name: string
     standard: { name: string; year: number; type?: string; programId?: string | null; program?: { name: string } | null }
   }
-  evidenceItem?: { name: string } | null
+  evidenceItem?: { id: string; name: string; sharedFromId: string | null } | null
   collaborator?: { name: string | null } | null
   reviewer?: { name: string | null; email: string | null } | null
   lastUpdater?: { name: string | null; email: string | null } | null
