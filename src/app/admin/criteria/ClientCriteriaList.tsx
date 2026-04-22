@@ -172,9 +172,9 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                           <Search size={14} /> Chọn từ danh sách...
                         </button>
                         {editItemSharedFrom ? (
-                          <div className="flex-1 flex items-center justify-between px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-xs">
-                            <span className="truncate text-indigo-700 dark:text-indigo-300 font-medium" title={editItemSharedFromName}>{editItemSharedFromName}</span>
-                            <button type="button" onClick={() => { setEditItemSharedFrom(""); setEditItemSharedFromName(""); }} className="text-red-500 hover:text-red-700 ml-2 shrink-0">Xóa</button>
+                          <div className="flex-1 flex items-start justify-between px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-xs">
+                            <span className="text-indigo-700 dark:text-indigo-300 font-medium break-words whitespace-pre-wrap flex-1 pr-2" title={editItemSharedFromName}>{editItemSharedFromName}</span>
+                            <button type="button" onClick={() => { setEditItemSharedFrom(""); setEditItemSharedFromName(""); }} className="text-red-500 hover:text-red-700 ml-2 shrink-0 pt-0.5">Xóa</button>
                           </div>
                         ) : (
                           <div className="flex-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-500 italic">
@@ -273,9 +273,9 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                       <Search size={14} /> Chọn từ danh sách...
                     </button>
                     {newItemSharedFrom ? (
-                      <div className="flex-1 flex items-center justify-between px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-xs">
-                        <span className="truncate text-indigo-700 dark:text-indigo-300 font-medium" title={newItemSharedFromName}>{newItemSharedFromName}</span>
-                        <button type="button" onClick={() => { setNewItemSharedFrom(""); setNewItemSharedFromName(""); }} className="text-red-500 hover:text-red-700 ml-2 shrink-0">Xóa</button>
+                      <div className="flex-1 flex items-start justify-between px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg text-xs">
+                        <span className="text-indigo-700 dark:text-indigo-300 font-medium break-words whitespace-pre-wrap flex-1 pr-2" title={newItemSharedFromName}>{newItemSharedFromName}</span>
+                        <button type="button" onClick={() => { setNewItemSharedFrom(""); setNewItemSharedFromName(""); }} className="text-red-500 hover:text-red-700 ml-2 shrink-0 pt-0.5">Xóa</button>
                       </div>
                     ) : (
                       <div className="flex-1 px-3 py-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-500 italic">
