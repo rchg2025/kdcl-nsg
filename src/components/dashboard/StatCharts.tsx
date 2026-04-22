@@ -56,9 +56,9 @@ export default function StatCharts() {
             onChange={(e) => setSelectedYear(e.target.value)}
             className="w-full sm:w-auto px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 font-medium text-sm"
           >
-            <option value="all">Tất cả các năm học</option>
+            <option value="all">Tất cả các năm</option>
             {yearList.map(y => (
-              <option key={y} value={y.toString()}>Năm học {y}</option>
+              <option key={y} value={y.toString()}>Năm {y}</option>
             ))}
           </select>
         </div>
