@@ -247,6 +247,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setSearchCriterionName(ev.criterion.name)
     setSearchItem("")
     setSearchProgramName(ev.criterion.standard.program?.name || "")
+    setAccreditationType(ev.criterion.standard.type || "INSTITUTIONAL")
+    setSelectedProgramId(ev.criterion.standard.programId || "")
     setContent(ev.content || "")
     setExistingFiles(parseFilesForForm(ev.fileUrl))
     setSyncedParentEvidenceId(ev.sharedFrom?.id || null)
