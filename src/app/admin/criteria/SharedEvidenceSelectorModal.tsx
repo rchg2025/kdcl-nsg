@@ -181,10 +181,15 @@ export default function SharedEvidenceSelectorModal({
                       setShowProgramDropdown(true);
                     }}
                     onFocus={() => setShowProgramDropdown(true)}
-                    onBlur={() => setShowProgramDropdown(false)}
+                    onBlur={() => setTimeout(() => setShowProgramDropdown(false), 250)}
                     placeholder="Gõ tên ngành học để tìm kiếm..."
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
+                    className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
+                      selectedProgramId 
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-500/50' 
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]'
+                    }`}
                   />
+                  {selectedProgramId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                   {showProgramDropdown && (
                     <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                       {availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
@@ -193,8 +198,8 @@ export default function SharedEvidenceSelectorModal({
                         availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map(p => (
                           <div 
                             key={p.id} 
-                            onMouseDown={(e) => { 
-                              e.preventDefault();
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { 
                               setSelectedProgramId(p.id); 
                               setSearchProgram(p.name);
                               setShowProgramDropdown(false);
@@ -227,10 +232,15 @@ export default function SharedEvidenceSelectorModal({
                     setShowStandardDropdown(true);
                   }}
                   onFocus={() => setShowStandardDropdown(true)}
-                  onBlur={() => setShowStandardDropdown(false)}
+                  onBlur={() => setTimeout(() => setShowStandardDropdown(false), 250)}
                   placeholder="Gõ từ khóa để tìm tiêu chí..."
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm"
+                  className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
+                    selectedStandardId 
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-500/50' 
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]'
+                  }`}
                 />
+                {selectedStandardId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                 {showStandardDropdown && (
                   <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                     {availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).length === 0 ? (
@@ -239,8 +249,8 @@ export default function SharedEvidenceSelectorModal({
                       availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).map(s => (
                         <div 
                           key={s.id} 
-                          onMouseDown={(e) => { 
-                            e.preventDefault();
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { 
                             setSelectedStandardId(s.id); 
                             setSearchStandard(`${s.year} - ${s.name}`); 
                             setShowStandardDropdown(false);
@@ -269,11 +279,16 @@ export default function SharedEvidenceSelectorModal({
                     setShowCriterionDropdown(true);
                   }}
                   onFocus={() => setShowCriterionDropdown(true)}
-                  onBlur={() => setShowCriterionDropdown(false)}
+                  onBlur={() => setTimeout(() => setShowCriterionDropdown(false), 250)}
                   placeholder={selectedStandardId ? "Gõ từ khóa để tìm tiêu chuẩn..." : "Vui lòng chọn tiêu chí trước"}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
+                  className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
+                    selectedCriterionId 
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-500/50' 
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900'
+                  }`}
                   disabled={!selectedStandardId}
                 />
+                {selectedCriterionId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                 {showCriterionDropdown && selectedStandardId && (
                   <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                     {availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).length === 0 ? (
@@ -282,8 +297,8 @@ export default function SharedEvidenceSelectorModal({
                       availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).map(c => (
                         <div 
                           key={c.id} 
-                          onMouseDown={(e) => { 
-                            e.preventDefault();
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { 
                             setSelectedCriterionId(c.id); 
                             setSearchCriterion(c.name); 
                             setShowCriterionDropdown(false);
@@ -312,11 +327,16 @@ export default function SharedEvidenceSelectorModal({
                   setShowItemDropdown(true);
                 }}
                 onFocus={() => setShowItemDropdown(true)}
-                onBlur={() => setShowItemDropdown(false)}
+                onBlur={() => setTimeout(() => setShowItemDropdown(false), 250)}
                 placeholder={selectedCriterionId ? "Gõ từ khóa để tìm phân loại/danh mục..." : "Vui lòng chọn tiêu chuẩn trước"}
-                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] text-sm disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:cursor-not-allowed"
+                className={`w-full pr-10 pl-4 py-2.5 border rounded-xl outline-none text-sm transition-colors ${
+                  selectedEvidenceItemId 
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-500/50' 
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900'
+                }`}
                 disabled={!selectedCriterionId}
               />
+              {selectedEvidenceItemId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
               {showItemDropdown && selectedCriterionId && (
                 <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                   {availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).length === 0 ? (
@@ -325,8 +345,8 @@ export default function SharedEvidenceSelectorModal({
                     availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).map(i => (
                       <div 
                         key={i.id} 
-                        onMouseDown={(e) => { 
-                          e.preventDefault();
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => { 
                           setSelectedEvidenceItemId(i.id); 
                           setSearchItem(i.name); 
                           setShowItemDropdown(false);
