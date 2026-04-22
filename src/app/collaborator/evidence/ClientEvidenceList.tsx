@@ -288,7 +288,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
       const data = await getApprovedEvidenceForSync(effectiveSharedFromId)
       if (data) {
         if (data.content) {
-          setContent(prev => prev ? `${prev}\n\n[ĐỒNG BỘ TỪ DÙNG CHUNG]:\n${data.content}` : data.content)
+          setContent(prev => prev ? `${prev}\n\n[ĐỒNG BỘ TỪ DÙNG CHUNG]:\n${data.content}` : (data.content || ""))
         }
         if (data.fileUrl) {
           const syncedFiles = parseFilesForForm(data.fileUrl)
