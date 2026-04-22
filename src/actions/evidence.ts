@@ -168,7 +168,7 @@ export async function getApprovedEvidenceForSync(sharedFromEvidenceItemId: strin
   if (!session) throw new Error("Unauthorized")
   
   const sourceEvidence = await prisma.evidence.findFirst({
-    where: { evidenceItemId: sharedFromEvidenceItemId, status: "APPROVED" },
+    where: { evidenceItemId: sharedFromEvidenceItemId },
     orderBy: { updatedAt: 'desc' }
   })
   
