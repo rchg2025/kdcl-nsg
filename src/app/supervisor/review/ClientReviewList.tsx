@@ -251,7 +251,7 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 items-stretch">
         {filteredEvidences.length === 0 ? (
           <div className="col-span-full glass p-12 rounded-2xl flex flex-col items-center justify-center text-center">
             <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Không tìm thấy minh chứng nào</h3>
