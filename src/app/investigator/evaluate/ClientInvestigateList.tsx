@@ -204,27 +204,24 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
                   {/* Cột thông tin minh chứng */}
                   <div className="flex-1 space-y-4">
                     <div>
-                      <span className="text-xs font-bold px-2 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-md uppercase mb-2 inline-block">
+                      <span className="text-[10px] font-bold px-2 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-md uppercase mb-1 inline-block">
                         {criterion.standard.year} - {criterion.standard.name}
                       </span>
-                      <h3 className="font-bold text-xl text-[var(--foreground)] mt-1">{criterion.name}</h3>
+                      <h3 className="font-bold text-sm sm:text-base text-[var(--foreground)] mt-1">{criterion.name}</h3>
                     </div>
 
                     <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
-                      <h4 className="text-xs font-bold text-slate-500 flex justify-between uppercase mb-2">
+                      <h4 className="text-[11px] font-bold text-slate-500 flex flex-col sm:flex-row justify-between uppercase gap-2 mb-2">
                         <span>Báo cáo chung từ Cơ sở:</span>
-                        <span className="text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">Có {evidences.length} phần minh chứng</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-600 bg-slate-200/50 dark:bg-slate-700 px-2 py-0.5 rounded">Tổng: {evidences.length}</span>
+                          <span className="text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded">Đạt: {evidences.filter((ev: any) => ev.evaluations && ev.evaluations.length > 0 && ev.evaluations[ev.evaluations.length - 1].isApproved).length}</span>
+                          <span className="text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">K.Đạt: {evidences.filter((ev: any) => ev.evaluations && ev.evaluations.length > 0 && !ev.evaluations[ev.evaluations.length - 1].isApproved).length}</span>
+                        </div>
                       </h4>
                       <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-semibold italic">
                         {criterion.standard.description || repEv.content}
                       </p>
-                      
-                      <button 
-                        onClick={() => setModalCriterionId(cid)}
-                        className="mt-4 inline-flex items-center gap-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg text-[var(--primary)] font-semibold hover:shadow-md transition-shadow focus:ring-2 focus:ring-[var(--primary)]"
-                      >
-                        <Search size={16} /> Kiểm tra Hồ sơ Gốc
-                      </button>
                     </div>
                   </div>
 
