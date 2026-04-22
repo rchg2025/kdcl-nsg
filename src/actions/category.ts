@@ -92,18 +92,27 @@ export async function deletePosition(id: string) {
 // -- PROGRAMS --
 export async function getPrograms() {
   await verifyAdminOrSupervisor()
-  return await prisma.program.findMany({ include: { department: true }, orderBy: { name: 'asc' } })
+  return await prisma.program.findMany({ 
+    select: { id: true, name: true, departmentId: true, department: { select: { id: true, name: true } }, createdAt: true }, 
+    orderBy: { name: 'asc' } 
+  })
 }
 
 export async function getAllProgramsPublic() {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error("Unauthorized")
-  return await prisma.program.findMany({ include: { department: true }, orderBy: { name: 'asc' } })
+  return await prisma.program.findMany({ 
+    select: { id: true, name: true, departmentId: true, department: { select: { id: true, name: true } }, createdAt: true }, 
+    orderBy: { name: 'asc' } 
+  })
 }
 
 export async function createProgram(data: { name: string, departmentId: string }) {
   await verifyAdminOrSupervisor()
-  const val = await prisma.program.create({ data, include: { department: true } })
+  const val = await prisma.program.create({ 
+    data, 
+    select: { id: true, name: true, departmentId: true, department: { select: { id: true, name: true } }, createdAt: true } 
+  })
   await createLog("CREATE", "Đào tạo (Program)", `Tạo mới ngành: ${data.name}`)
   revalidatePath("/admin/categories")
   revalidatePath("/supervisor/categories")
@@ -112,7 +121,11 @@ export async function createProgram(data: { name: string, departmentId: string }
 
 export async function updateProgram(id: string, data: { name: string, departmentId: string }) {
   await verifyAdminOrSupervisor()
-  const val = await prisma.program.update({ where: { id }, data, include: { department: true } })
+  const val = await prisma.program.update({ 
+    where: { id }, 
+    data, 
+    select: { id: true, name: true, departmentId: true, department: { select: { id: true, name: true } }, createdAt: true } 
+  })
   await createLog("UPDATE", "Đào tạo (Program)", `Cập nhật ngành: ${data.name}`)
   revalidatePath("/admin/categories")
   revalidatePath("/supervisor/categories")
