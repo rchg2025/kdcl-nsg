@@ -85,29 +85,46 @@ export async function updateEvidence(id: string, data: { content?: string; fileU
     }
   })
   
-  if (data.fileUrl && existing.sharedTo && existing.sharedTo.length > 0) {
-    for (const child of existing.sharedTo) {
-      try {
-        const childFiles = child.fileUrl ? JSON.parse(child.fileUrl) : []
-        const parentFiles = JSON.parse(data.fileUrl)
-        if (Array.isArray(parentFiles)) {
-          const finalChildFiles = Array.isArray(childFiles) ? [...childFiles] : []
-          let changed = false
-          for (const pf of parentFiles) {
-            if (!finalChildFiles.some((cf: any) => cf.url === pf.url)) {
-              finalChildFiles.push(pf)
-              changed = true
+  if (data.fileUrl) {
+    let childrenToUpdate: any[] = []
+    if (existing.sharedTo && existing.sharedTo.length > 0) {
+      childrenToUpdate = [...existing.sharedTo]
+    }
+    if (existing.evidenceItemId) {
+      const itemChildren = await prisma.evidence.findMany({
+        where: { evidenceItem: { sharedFromId: existing.evidenceItemId } }
+      })
+      for (const c of itemChildren) {
+        if (!childrenToUpdate.some(child => child.id === c.id)) {
+          childrenToUpdate.push(c)
+        }
+      }
+    }
+
+    if (childrenToUpdate.length > 0) {
+      for (const child of childrenToUpdate) {
+        try {
+          const childFiles = child.fileUrl ? JSON.parse(child.fileUrl) : []
+          const parentFiles = JSON.parse(data.fileUrl)
+          if (Array.isArray(parentFiles)) {
+            const finalChildFiles = Array.isArray(childFiles) ? [...childFiles] : []
+            let changed = false
+            for (const pf of parentFiles) {
+              if (!finalChildFiles.some((cf: any) => cf.url === pf.url)) {
+                finalChildFiles.push(pf)
+                changed = true
+              }
+            }
+            if (changed) {
+              await prisma.evidence.update({
+                where: { id: child.id },
+                data: { fileUrl: JSON.stringify(finalChildFiles) }
+              })
             }
           }
-          if (changed) {
-            await prisma.evidence.update({
-              where: { id: child.id },
-              data: { fileUrl: JSON.stringify(finalChildFiles) }
-            })
-          }
+        } catch (err) {
+          console.error("Lỗi đồng bộ file xuống minh chứng con", err)
         }
-      } catch (err) {
-        console.error("Lỗi đồng bộ file xuống minh chứng con", err)
       }
     }
   }

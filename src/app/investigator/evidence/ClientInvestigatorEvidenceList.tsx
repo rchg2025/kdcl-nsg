@@ -217,7 +217,7 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
 
                 {ev.evidenceItem && (
                   <div className="mb-3 inline-block px-2.5 py-1 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-xs font-bold shadow-sm">
-                    {ev.evidenceItem.name}
+                    Minh chứng: {ev.evidenceItem.name}
                   </div>
                 )}
                 

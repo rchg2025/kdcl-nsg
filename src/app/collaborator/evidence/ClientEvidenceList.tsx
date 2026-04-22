@@ -458,7 +458,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                   <h3 className="font-bold text-lg text-[var(--foreground)]">{ev.criterion.name}</h3>
                   {ev.evidenceItem && (
                     <div className="inline-block mt-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-xs font-semibold">
-                      Phân loại: {ev.evidenceItem.name}
+                      Minh chứng: {ev.evidenceItem.name}
                     </div>
                   )}
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
