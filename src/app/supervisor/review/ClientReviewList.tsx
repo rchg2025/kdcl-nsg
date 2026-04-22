@@ -294,17 +294,18 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
                   <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
 
                   {ev.sharedFrom && (
-                    <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-3 inline-block">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-xs">
-                          <Link2 size={14} /> Dùng chung từ: <span className="font-bold">{ev.sharedFrom.criterion.name}</span> ({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})
+                    <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-2 px-3 inline-block">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium text-[11px]">
+                          <Link2 size={12} /> Dùng chung từ: <strong className="font-bold">{ev.sharedFrom.criterion.name}</strong> 
+                          <span className="opacity-70">({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})</span>
+                          <button 
+                            onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
+                            className="ml-2 flex items-center gap-1 text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 underline underline-offset-2 font-bold"
+                          >
+                            <Search size={10} /> Xem gốc
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
-                          className="text-[11px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 dark:bg-indigo-800/50 dark:hover:bg-indigo-700 dark:text-indigo-300 px-2 py-1 rounded font-bold transition-colors w-max"
-                        >
-                          Xem nội dung gốc
-                        </button>
                       </div>
                     </div>
                   )}
