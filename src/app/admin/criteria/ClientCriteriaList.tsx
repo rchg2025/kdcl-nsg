@@ -149,7 +149,17 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                     <input 
                       type="text" 
                       value={editItemName}
-                      onChange={e => setEditItemName(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setEditItemName(val);
+                        if (val.trim()) {
+                          const match = allEvidenceItems.find((i: any) => i.id !== editingItemId && i.name.toLowerCase() === val.trim().toLowerCase());
+                          if (match) {
+                            setEditItemSharedFrom(match.id);
+                            setEditItemSharedFromName(`${match.criterion.standard.name} (${match.criterion.standard.year}) - ${match.criterion.name} - ${match.name}`);
+                          }
+                        }
+                      }}
                       placeholder="Tên danh mục minh chứng..."
                       className="w-full px-3 py-1.5 text-sm rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500"
                       required
@@ -250,7 +260,17 @@ function CriterionRow({ crit, idx, openEditCrit, handleDeleteCrit, allDepartment
                 <input 
                   type="text" 
                   value={newItemName}
-                  onChange={e => setNewItemName(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setNewItemName(val);
+                    if (val.trim()) {
+                      const match = allEvidenceItems.find((i: any) => i.name.toLowerCase() === val.trim().toLowerCase());
+                      if (match) {
+                        setNewItemSharedFrom(match.id);
+                        setNewItemSharedFromName(`${match.criterion.standard.name} (${match.criterion.standard.year}) - ${match.criterion.name} - ${match.name}`);
+                      }
+                    }
+                  }}
                   placeholder="Tên danh mục minh chứng (vd: Quyết định, Báo cáo...)"
                   className="w-full px-3 py-2 text-sm rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 outline-none focus:border-indigo-500"
                   required

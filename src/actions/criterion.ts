@@ -92,7 +92,17 @@ export async function createEvidenceItem(data: { name: string; description?: str
       sharedFromId: data.sharedFromId,
       ...dptData 
     },
-    include: { departments: true }
+    include: { 
+      departments: true,
+      sharedFrom: {
+        select: {
+          name: true,
+          criterion: {
+            select: { name: true, standard: { select: { name: true, year: true } } }
+          }
+        }
+      }
+    }
   })
   
   if (data.sharedFromId) {
@@ -136,7 +146,17 @@ export async function updateEvidenceItem(id: string, data: { name: string; descr
         }
       } : {})
     },
-    include: { departments: true }
+    include: { 
+      departments: true,
+      sharedFrom: {
+        select: {
+          name: true,
+          criterion: {
+            select: { name: true, standard: { select: { name: true, year: true } } }
+          }
+        }
+      }
+    }
   })
 
   if (data.sharedFromId) {
