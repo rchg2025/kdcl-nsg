@@ -123,7 +123,7 @@ export async function getCollaboratorEvidences() {
           }
         }
       },
-      evidenceItem: { select: { name: true } },
+      evidenceItem: { select: { id: true, name: true, sharedFromId: true } },
       reviewer: { select: { name: true, email: true } },
       lastUpdater: { select: { name: true, email: true } },
       sharedFrom: {
@@ -161,6 +161,18 @@ export async function getApprovedEvidencesForSharing() {
     },
     orderBy: { createdAt: 'desc' }
   })
+}
+
+export async function getApprovedEvidenceForSync(sharedFromEvidenceItemId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error("Unauthorized")
+  
+  const sourceEvidence = await prisma.evidence.findFirst({
+    where: { evidenceItemId: sharedFromEvidenceItemId, status: "APPROVED" },
+    orderBy: { updatedAt: 'desc' }
+  })
+  
+  return sourceEvidence ? { content: sourceEvidence.content, fileUrl: sourceEvidence.fileUrl } : null
 }
 
 export async function getAllCriteriaForDropdown() {
@@ -214,7 +226,14 @@ export async function getAllCriteriaForDropdown() {
       }, 
       items: { 
         ...itemsFilter,
-        select: { id: true, name: true },
+        select: { 
+          id: true, 
+          name: true,
+          sharedFromId: true,
+          sharedFrom: {
+            select: { name: true, criterion: { select: { name: true, standard: { select: { name: true, year: true } } } } }
+          }
+        },
         orderBy: { createdAt: 'asc' } 
       } 
     },

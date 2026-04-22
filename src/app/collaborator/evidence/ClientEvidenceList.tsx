@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createEvidence, updateEvidence } from "@/actions/evidence"
+import { createEvidence, updateEvidence, getApprovedEvidenceForSync } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter, Link2 } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
 
@@ -58,6 +58,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [newLinkName, setNewLinkName] = useState("")
   const [newLinkUrl, setNewLinkUrl] = useState("")
+  const [editingSharedFromId, setEditingSharedFromId] = useState<string | null>(null)
+  const [isSyncing, setIsSyncing] = useState(false)
   
   
   
@@ -233,7 +235,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const openEditModal = (ev: Evidence) => {
     setEditingId(ev.id)
     setCriterionId(ev.criterion.name) // Not editable, just display
-    setEvidenceItemId("") // Prevent selection change on edit for simplicity
+    setEvidenceItemId(ev.evidenceItem?.id || "") 
+    setEditingSharedFromId(ev.evidenceItem?.sharedFromId || null)
     setSelectedYear(ev.criterion.standard.year || "")
     setSelectedStandardKey(`${ev.criterion.standard.year}-${ev.criterion.standard.name}`)
     setSearchStandardName(`${ev.criterion.standard.year} - ${ev.criterion.standard.name}`)
@@ -252,6 +255,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setEditingId(null)
     setCriterionId("")
     setEvidenceItemId("")
+    setEditingSharedFromId(null)
     setSelectedYear("")
     setSelectedStandardKey("")
     setSearchStandardName("")
@@ -272,6 +276,41 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const selectedCriterionData = criteriaList.find(c => c.id === criterionId)
   const availableItems = selectedCriterionData?.items || []
   const filteredItems = availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase()))
+  
+  const selectedEvidenceItemData = availableItems.find(i => i.id === evidenceItemId)
+  const effectiveSharedFromId = editingId ? editingSharedFromId : selectedEvidenceItemData?.sharedFromId
+
+  const handleSyncSharedEvidence = async () => {
+    if (!effectiveSharedFromId) return;
+    setIsSyncing(true)
+    try {
+      const data = await getApprovedEvidenceForSync(effectiveSharedFromId)
+      if (data) {
+        if (data.content) {
+          setContent(prev => prev ? `${prev}\n\n[ĐỒNG BỘ TỪ DÙNG CHUNG]:\n${data.content}` : data.content)
+        }
+        if (data.fileUrl) {
+          const syncedFiles = parseFilesForForm(data.fileUrl)
+          setExistingFiles(prev => {
+            const newFiles = [...prev]
+            syncedFiles.forEach(f => {
+               if (!newFiles.some(existing => existing.url === f.url)) {
+                 newFiles.push(f)
+               }
+            })
+            return newFiles
+          })
+        }
+        alert("Đã đồng bộ dữ liệu thành công! Bạn có thể xem lại nội dung và file đính kèm bên dưới, sau đó bấm Submit để lưu.")
+      } else {
+        alert("Không tìm thấy minh chứng nào đã được duyệt từ danh mục gốc để đồng bộ.")
+      }
+    } catch (err: any) {
+      alert("Lỗi đồng bộ: " + err.message)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   const StatusIcon = ({ status }: { status: string }) => {
     switch (status) {
@@ -711,8 +750,19 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                 </div>
               )}
 
-              <div className="flex items-center justify-between mt-4 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 mb-2 gap-2">
                 <label className="block text-sm font-semibold">Nội dung giải trình / báo cáo</label>
+                {effectiveSharedFromId && (
+                  <button 
+                    type="button"
+                    onClick={handleSyncSharedEvidence}
+                    disabled={isSyncing}
+                    className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-200 transition-colors flex items-center gap-1.5 shrink-0"
+                  >
+                    {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+                    Đồng bộ Dữ liệu Dùng chung
+                  </button>
+                )}
               </div>
 
               <div>
