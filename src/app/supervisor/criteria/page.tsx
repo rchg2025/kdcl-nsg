@@ -1,11 +1,13 @@
 import { getStandards } from "@/actions/standard"
 import { getAllProgramsPublic } from "@/actions/category"
+import { getAllEvidenceItemsForSharing } from "@/actions/criterion"
 import ClientCriteriaList from "@/app/admin/criteria/ClientCriteriaList"
 
 export default async function SupervisorCriteriaPage() {
-  const [standards, programs] = await Promise.all([
+  const [standards, programs, allEvidenceItems] = await Promise.all([
     getStandards(),
-    getAllProgramsPublic()
+    getAllProgramsPublic(),
+    getAllEvidenceItemsForSharing()
   ])
 
   return (
@@ -16,7 +18,7 @@ export default async function SupervisorCriteriaPage() {
           <p className="text-slate-500 mt-1">Giám sát viên cập nhật sửa đổi danh mục kiểm định</p>
         </div>
       </div>
-      <ClientCriteriaList initialStandards={standards} initialPrograms={programs} />
+      <ClientCriteriaList initialStandards={standards} initialPrograms={programs} allEvidenceItems={allEvidenceItems} />
     </div>
   )
 }
