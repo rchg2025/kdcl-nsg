@@ -34,6 +34,17 @@ export async function getInvestigatorEvidences() {
         }
       },
       evidenceItem: { select: { name: true } },
+      sharedFrom: {
+        select: {
+          id: true,
+          content: true,
+          fileUrl: true,
+          criterion: {
+            select: { name: true, standard: { select: { name: true, year: true } } }
+          }
+        }
+      },
+      _count: { select: { sharedTo: true } },
       evaluations: {
         select: {
           id: true,

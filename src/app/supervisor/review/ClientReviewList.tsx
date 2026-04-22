@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { updateEvidenceStatus, deleteEvidenceAsAdmin } from "@/actions/supervisor"
-import { Loader2, CheckCircle2, Clock, AlertCircle, FileText, UserCircle, XCircle, Edit2, Search, Filter, Calendar } from "lucide-react"
+import { Loader2, CheckCircle2, Clock, AlertCircle, FileText, UserCircle, XCircle, Edit2, Search, Filter, Calendar, Link2 } from "lucide-react"
 import { EvidenceStatus } from "@prisma/client"
 import FileAttachments from "@/components/FileAttachments"
 
@@ -286,11 +286,26 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
                 
                 <div className="bg-white dark:bg-[#0f172a]/70 p-3 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-sm min-h-[80px]">
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-4">
-                    {ev.content || "Chưa có nội dung mô tả"}
+                    {ev.content || ev.sharedFrom?.content || "Chưa có nội dung mô tả"}
                   </p>
                 </div>
 
-                  <FileAttachments fileStr={ev.fileUrl} />
+                  <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
+
+                  {ev.sharedFrom && (
+                    <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-3 inline-block">
+                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-xs">
+                        <Link2 size={14} /> Dùng chung từ: <span className="font-bold">{ev.sharedFrom.criterion.name}</span> ({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})
+                      </div>
+                    </div>
+                  )}
+                  {ev._count && ev._count.sharedTo > 0 && (
+                    <div className="mt-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-3 inline-block">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
+                        <Link2 size={14} /> Đang được dùng chung cho <strong className="text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn khác
+                      </div>
+                    </div>
+                  )}
 
                 {ev.evaluations && ev.evaluations.filter((e: any) => !e.isApproved).length > 0 && (
                   <div className="mt-3 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-3 shadow-sm">

@@ -132,6 +132,10 @@ model Evidence {
   lastUpdater    User?     @relation("UpdaterEvidence", fields: [lastUpdaterId], references: [id])
 
   evaluations    Evaluation[]
+
+  sharedFromId   String?
+  sharedFrom     Evidence?  @relation("SharedEvidence", fields: [sharedFromId], references: [id])
+  sharedTo       Evidence[] @relation("SharedEvidence")
 }
 
 model Evaluation {

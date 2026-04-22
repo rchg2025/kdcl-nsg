@@ -37,7 +37,7 @@ async function checkCollaborator() {
   return session.user.id
 }
 
-export async function createEvidence(data: { criterionId: string; content: string; fileUrl?: string; evidenceItemId?: string }) {
+export async function createEvidence(data: { criterionId: string; content?: string; fileUrl?: string; evidenceItemId?: string; sharedFromId?: string }) {
   const userId = await checkCollaborator()
   
   const newEvidence = await prisma.evidence.create({
@@ -58,7 +58,7 @@ export async function createEvidence(data: { criterionId: string; content: strin
   return newEvidence
 }
 
-export async function updateEvidence(id: string, data: { content: string; fileUrl?: string; evidenceItemId?: string }) {
+export async function updateEvidence(id: string, data: { content?: string; fileUrl?: string; evidenceItemId?: string; sharedFromId?: string }) {
   const userId = await checkCollaborator()
   
   // Verify ownership and status
@@ -125,7 +125,39 @@ export async function getCollaboratorEvidences() {
       },
       evidenceItem: { select: { name: true } },
       reviewer: { select: { name: true, email: true } },
-      lastUpdater: { select: { name: true, email: true } }
+      lastUpdater: { select: { name: true, email: true } },
+      sharedFrom: {
+        select: {
+          id: true,
+          content: true,
+          fileUrl: true,
+          criterion: {
+            select: { name: true, standard: { select: { name: true, year: true } } }
+          }
+        }
+      },
+      _count: { select: { sharedTo: true } }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+}
+
+export async function getApprovedEvidencesForSharing() {
+  const userId = await checkCollaborator()
+  return await prisma.evidence.findMany({
+    where: { status: "APPROVED", collaboratorId: userId },
+    select: {
+      id: true,
+      content: true,
+      fileUrl: true,
+      criterion: {
+        select: {
+          name: true,
+          standard: {
+            select: { name: true, year: true }
+          }
+        }
+      }
     },
     orderBy: { createdAt: 'desc' }
   })

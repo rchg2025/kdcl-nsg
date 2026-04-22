@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { createEvidence, updateEvidence } from "@/actions/evidence"
-import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter } from "lucide-react"
+import { createEvidence, updateEvidence, getApprovedEvidencesForSharing } from "@/actions/evidence"
+import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter, Link2 } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
 
 type EvidenceItem = {
@@ -27,6 +27,13 @@ type Evidence = {
   lastUpdater?: { name: string | null; email: string | null } | null
   reviewedAt?: string | Date | null
   updatedAt?: string | Date | null
+  sharedFrom?: {
+    id: string
+    content: string | null
+    fileUrl: string | null
+    criterion: { name: string, standard: { name: string, year: number } }
+  } | null
+  _count?: { sharedTo: number }
 }
 
 type FileLink = { name: string, url: string }
@@ -51,6 +58,13 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [newLinkName, setNewLinkName] = useState("")
   const [newLinkUrl, setNewLinkUrl] = useState("")
+  
+  const [sharedFromId, setSharedFromId] = useState<string | null>(null)
+  const [sharedFromInfo, setSharedFromInfo] = useState<{name: string, criterion: string} | null>(null)
+  const [showSharedModal, setShowSharedModal] = useState(false)
+  const [sharedEvidences, setSharedEvidences] = useState<any[]>([])
+  const [loadingShared, setLoadingShared] = useState(false)
+  const [searchShared, setSearchShared] = useState("")
   
   const [selectedYear, setSelectedYear] = useState<number | "">("")
   const availableYears = Array.from(new Set(criteriaList.map(c => c.standard.year))).sort((a, b) => b - a)
@@ -197,9 +211,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
       }
       
       if (editingId) {
-        await updateEvidence(editingId, { content, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined })
+        await updateEvidence(editingId, { content: content || undefined, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined, sharedFromId: sharedFromId || undefined })
       } else {
-        await createEvidence({ criterionId, content, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined })
+        await createEvidence({ criterionId, content: content || undefined, fileUrl: finalFileUrl, evidenceItemId: evidenceItemId || undefined, sharedFromId: sharedFromId || undefined })
       }
       window.location.reload()
     } catch (err: any) {
@@ -236,6 +250,15 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setSelectedFiles([])
     setNewLinkName("")
     setNewLinkUrl("")
+    setSharedFromId(ev.sharedFrom?.id || null)
+    if (ev.sharedFrom) {
+      setSharedFromInfo({
+        name: ev.sharedFrom.criterion.standard.name,
+        criterion: ev.sharedFrom.criterion.name
+      })
+    } else {
+      setSharedFromInfo(null)
+    }
     setIsModalOpen(true)
   }
 
@@ -256,7 +279,22 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setAccreditationType("INSTITUTIONAL")
     setSelectedProgramId("")
     setSearchProgramName("")
+    setSharedFromId(null)
+    setSharedFromInfo(null)
     setIsModalOpen(true)
+  }
+  
+  const handleOpenSharedModal = async () => {
+    setShowSharedModal(true)
+    setLoadingShared(true)
+    try {
+      const data = await getApprovedEvidencesForSharing()
+      setSharedEvidences(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingShared(false)
+    }
   }
   
   const selectedCriterionData = criteriaList.find(c => c.id === criterionId)
@@ -406,9 +444,24 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                     </div>
                   )}
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
-                    {ev.content || "Không có nội dung mô tả"}
+                    {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
                   </p>
-                  <FileAttachments fileStr={ev.fileUrl} />
+                  <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
+                  
+                  {ev.sharedFrom && (
+                    <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl p-3 inline-block">
+                      <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-xs">
+                        <Link2 size={14} /> Dùng chung từ: <span className="font-bold">{ev.sharedFrom.criterion.name}</span> ({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})
+                      </div>
+                    </div>
+                  )}
+                  {ev._count && ev._count.sharedTo > 0 && (
+                    <div className="mt-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-3 inline-block">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
+                        <Link2 size={14} /> Đang được dùng chung cho <strong className="text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn khác
+                      </div>
+                    </div>
+                  )}
                   {ev.status === "REJECTED" && ev.rejectReason && (
                     <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
                       <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-xs mb-1">
@@ -686,14 +739,37 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                 </div>
               )}
 
+              <div className="flex items-center justify-between mt-4 mb-2">
+                <label className="block text-sm font-semibold">Nội dung giải trình / báo cáo</label>
+                <button
+                  type="button"
+                  onClick={handleOpenSharedModal}
+                  className="text-xs font-bold bg-indigo-100 text-[var(--primary)] px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-indigo-200 transition-colors"
+                >
+                  <Link2 size={14} /> Chọn Minh chứng Dùng chung
+                </button>
+              </div>
+              
+              {sharedFromId && sharedFromInfo && (
+                <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 p-3 rounded-xl mb-4 flex justify-between items-center">
+                  <div className="text-sm text-indigo-700 dark:text-indigo-300">
+                    <span className="font-semibold flex items-center gap-2"><Link2 size={16}/> Đang dùng chung minh chứng từ:</span>
+                    <div className="mt-1 ml-6">{sharedFromInfo.criterion} ({sharedFromInfo.name})</div>
+                    <div className="mt-1 ml-6 text-xs text-slate-500">* Sẽ sử dụng nội dung và tệp đính kèm của minh chứng gốc nếu bạn để trống.</div>
+                  </div>
+                  <button type="button" onClick={() => {setSharedFromId(null); setSharedFromInfo(null)}} className="p-2 bg-white dark:bg-slate-800 rounded-lg text-red-500 hover:bg-red-50 shadow-sm border border-slate-200">
+                    Bỏ chọn
+                  </button>
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-semibold mb-2">Nội dung giải trình / báo cáo</label>
                 <textarea 
                   value={content}
                   onChange={e => setContent(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] min-h-[100px]"
-                  placeholder="Nhập nội dung báo cáo minh chứng..."
-                  required
+                  placeholder={sharedFromId ? "Nội dung ghi đè (tùy chọn)..." : "Nhập nội dung báo cáo minh chứng..."}
+                  required={!sharedFromId}
                 />
               </div>
 
@@ -800,6 +876,64 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showSharedModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-[800px] max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <h3 className="text-lg font-bold flex items-center gap-2"><Link2 size={20} className="text-[var(--primary)]" /> Chọn Minh chứng Dùng chung</h3>
+              <button onClick={() => setShowSharedModal(false)} className="text-slate-400 hover:text-slate-600">Đóng</button>
+            </div>
+            
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  value={searchShared} 
+                  onChange={e => setSearchShared(e.target.value)} 
+                  placeholder="Tìm kiếm nội dung, tiêu chí..." 
+                  className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[var(--primary)] text-sm" 
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-900/50">
+              {loadingShared ? (
+                <div className="flex justify-center py-12"><Loader2 className="animate-spin text-indigo-500" size={32} /></div>
+              ) : sharedEvidences.filter((e:any) => 
+                  e.content?.toLowerCase().includes(searchShared.toLowerCase()) || 
+                  e.criterion.name.toLowerCase().includes(searchShared.toLowerCase()) ||
+                  e.criterion.standard.name.toLowerCase().includes(searchShared.toLowerCase())
+                ).length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-sm">Không có minh chứng nào phù hợp.</div>
+              ) : (
+                <div className="space-y-3">
+                  {sharedEvidences.filter((e:any) => 
+                    e.content?.toLowerCase().includes(searchShared.toLowerCase()) || 
+                    e.criterion.name.toLowerCase().includes(searchShared.toLowerCase()) ||
+                    e.criterion.standard.name.toLowerCase().includes(searchShared.toLowerCase())
+                  ).map((ev: any) => (
+                    <div key={ev.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-[var(--primary)] transition-colors cursor-pointer" onClick={() => {
+                      setSharedFromId(ev.id)
+                      setSharedFromInfo({
+                        name: `${ev.criterion.standard.name} (${ev.criterion.standard.year})`,
+                        criterion: ev.criterion.name
+                      })
+                      setShowSharedModal(false)
+                    }}>
+                      <div className="text-xs font-bold text-[var(--primary)] mb-1">{ev.criterion.standard.name} ({ev.criterion.standard.year})</div>
+                      <div className="font-semibold text-sm mb-2 text-[var(--foreground)]">{ev.criterion.name}</div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg">{ev.content || "Không có nội dung"}</p>
+                      <div className="mt-3 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded inline-block">Đã phê duyệt</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
