@@ -28,6 +28,8 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
   const [year, setYear] = useState<string>("")
   const [type, setType] = useState<string>("INSTITUTIONAL")
   const [programId, setProgramId] = useState<string>("")
+  const [searchProgramName, setSearchProgramName] = useState("Tất cả CTĐT")
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
 
@@ -221,7 +223,10 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
           value={type}
           onChange={(e) => {
             setType(e.target.value)
-            if (e.target.value !== "PROGRAM") setProgramId("")
+            if (e.target.value !== "PROGRAM") {
+              setProgramId("")
+              setSearchProgramName("Tất cả CTĐT")
+            }
           }}
           className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
         >
@@ -230,16 +235,54 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
           <option value="PROGRAM">Chương trình đào tạo</option>
         </select>
         {type === "PROGRAM" && (
-          <select
-            value={programId}
-            onChange={(e) => setProgramId(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none min-w-[200px]"
-          >
-            <option value="">Tất cả CTĐT</option>
-            {programs.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          <div className="relative min-w-[250px]">
+            <input
+              type="text"
+              value={searchProgramName}
+              onChange={(e) => {
+                setSearchProgramName(e.target.value)
+                setProgramId("")
+                setShowProgramDropdown(true)
+              }}
+              onFocus={() => setShowProgramDropdown(true)}
+              onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+              placeholder="Tra cứu tên CTĐT..."
+            />
+            {showProgramDropdown && (
+              <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
+                {programs.filter(p => p.name.toLowerCase().includes(searchProgramName.toLowerCase()) || searchProgramName === "Tất cả CTĐT").length === 0 ? (
+                  <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy</div>
+                ) : (
+                  <>
+                    <div 
+                      onClick={() => {
+                        setProgramId("");
+                        setSearchProgramName("Tất cả CTĐT");
+                        setShowProgramDropdown(false);
+                      }}
+                      className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${!programId ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                    >
+                      Tất cả CTĐT
+                    </div>
+                    {programs.filter(p => searchProgramName === "Tất cả CTĐT" || p.name.toLowerCase().includes(searchProgramName.toLowerCase())).map(p => (
+                      <div 
+                        key={p.id} 
+                        onClick={() => {
+                          setProgramId(p.id);
+                          setSearchProgramName(p.name);
+                          setShowProgramDropdown(false);
+                        }}
+                        className={`p-3 text-sm cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${programId === p.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-[var(--primary)] font-semibold' : ''}`}
+                      >
+                        {p.name}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
