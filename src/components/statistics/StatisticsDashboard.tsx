@@ -30,6 +30,7 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
   const [programId, setProgramId] = useState<string>("")
   const [searchProgramName, setSearchProgramName] = useState("Tất cả CTĐT")
   const [showProgramDropdown, setShowProgramDropdown] = useState(false)
+  const [filterStatus, setFilterStatus] = useState("ALL")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
 
@@ -57,6 +58,10 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
     fetchData()
     setCurrentPage(1)
   }, [year, type, programId])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterStatus])
 
   // Aggregations
   const stats = useMemo(() => {
@@ -121,20 +126,27 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
 
   const flattenedItems = useMemo(() => {
     const items: any[] = []
+    const seenCriteria = new Set<string>()
     data.forEach(standard => {
       standard.criteria.forEach((criterion: any) => {
-        criterion.items.forEach((item: any, idx: number) => {
-          items.push({
-            standard,
-            criterion,
-            item,
-            isFirstInCriterion: idx === 0
-          })
+        criterion.items.forEach((item: any) => {
+          const evidence = item.evidences?.[0]
+          const statusKey = evidence ? evidence.status : "UNSUBMITTED"
+
+          if (filterStatus === "ALL" || filterStatus === statusKey) {
+            items.push({
+              standard,
+              criterion,
+              item,
+              isFirstInCriterion: !seenCriteria.has(criterion.id)
+            })
+            seenCriteria.add(criterion.id)
+          }
         })
       })
     })
     return items
-  }, [data])
+  }, [data, filterStatus])
 
   const totalPages = Math.ceil(flattenedItems.length / itemsPerPage)
   const currentItems = flattenedItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -386,8 +398,20 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
 
           {/* Detailed List */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h3 className="font-bold text-slate-800 dark:text-white">Chi tiết trạng thái minh chứng</h3>
+              <select 
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--primary)] outline-none"
+              >
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="UNSUBMITTED">Chưa nộp</option>
+                <option value="PENDING">Đã nộp</option>
+                <option value="REVIEWING">Chờ duyệt</option>
+                <option value="APPROVED">Đạt</option>
+                <option value="REJECTED">Không đạt</option>
+              </select>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
