@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { createStandard, updateStandard, deleteStandard, cloneStandard } from "@/actions/standard"
 import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { getAllDepartmentsPublic } from "@/actions/category"
-import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon, CopyPlus, Link2 } from "lucide-react"
+import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon, CopyPlus, Link2, Copy, Check } from "lucide-react"
 import SharedEvidenceSelectorModal from "./SharedEvidenceSelectorModal"
 
 type EvidenceItem = {
@@ -373,6 +373,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   const [isCritModalOpen, setIsCritModalOpen] = useState(false)
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false)
   const [globalSearchQuery, setGlobalSearchQuery] = useState("")
+  const [copiedId, setCopiedId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   
   // Edit state
@@ -926,6 +927,18 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                       {res.type}
                     </span>
                     <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{res.name}</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigator.clipboard.writeText(res.name)
+                        setCopiedId(`${res.id}-${idx}`)
+                        setTimeout(() => setCopiedId(null), 2000)
+                      }}
+                      className="ml-auto p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                      title="Sao chép tiêu đề"
+                    >
+                      {copiedId === `${res.id}-${idx}` ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                    </button>
                   </div>
                   <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate">
                     <Folder size={12} className="shrink-0" />
