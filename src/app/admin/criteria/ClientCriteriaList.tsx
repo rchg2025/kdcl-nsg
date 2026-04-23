@@ -371,6 +371,8 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   // Modals state
   const [isStdModalOpen, setIsStdModalOpen] = useState(false)
   const [isCritModalOpen, setIsCritModalOpen] = useState(false)
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false)
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
   
   // Edit state
@@ -408,12 +410,34 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
   }
 
   const filteredStandards = standards.filter(s => {
-    const matchName = !searchName || s.name.toLowerCase().includes(searchName.toLowerCase())
+    const term = searchName.toLowerCase()
+    const matchName = !searchName || 
+      s.name.toLowerCase().includes(term) ||
+      s.criteria.some(c => 
+        c.name.toLowerCase().includes(term) || 
+        c.items.some(i => i.name.toLowerCase().includes(term))
+      )
     const matchYear = !searchYear || s.year.toString() === searchYear
     const matchType = filterType === "ALL" || s.type === filterType
     const matchProgram = filterType !== "PROGRAM" || filterProgramId === "ALL" || s.programId === filterProgramId
     return matchName && matchYear && matchType && matchProgram
   })
+
+  const globalSearchResults = React.useMemo(() => {
+    if (!globalSearchQuery.trim()) return []
+    const q = globalSearchQuery.toLowerCase()
+    const results: any[] = []
+    standards.forEach(s => {
+      if (s.name.toLowerCase().includes(q)) results.push({ type: 'Tiêu chí', path: s.name, name: s.name, id: s.id, parentStdId: s.id })
+      s.criteria.forEach(c => {
+        if (c.name.toLowerCase().includes(q)) results.push({ type: 'Tiêu chuẩn', path: `${s.name} > ${c.name}`, name: c.name, id: c.id, parentStdId: s.id })
+        c.items.forEach(i => {
+          if (i.name.toLowerCase().includes(q)) results.push({ type: 'Minh chứng', path: `${s.name} > ${c.name} > ${i.name}`, name: i.name, id: i.id, parentStdId: s.id })
+        })
+      })
+    })
+    return results.slice(0, 50)
+  }, [globalSearchQuery, standards])
 
   // Reset page when filter changes
   const handleFilterChange = (setter: any, val: string) => {
@@ -609,6 +633,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
         </div>
 
         <div className="flex w-full xl:w-auto justify-start xl:justify-end gap-3 shrink-0 mt-4 xl:mt-0">
+
           <button 
             onClick={openCreateStd}
             className="flex-1 xl:flex-none justify-center bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm"
@@ -862,6 +887,63 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
         </div>
       )}
 
+      {/* Global Search Modal */}
+      {isGlobalSearchOpen && (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center pt-[10vh] px-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsGlobalSearchOpen(false)}>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-[800px] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+              <Search className="text-slate-400" />
+              <input 
+                autoFocus
+                type="text"
+                placeholder="Nhập tên tiêu chí, tiêu chuẩn hoặc minh chứng để tìm..."
+                value={globalSearchQuery}
+                onChange={e => setGlobalSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-none outline-none text-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+              />
+              <button onClick={() => setIsGlobalSearchOpen(false)} className="px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Đóng (ESC)</button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-2 bg-slate-50/50 dark:bg-slate-900">
+              {globalSearchQuery && globalSearchResults.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">Không tìm thấy kết quả nào.</div>
+              ) : globalSearchResults.map((res: any, idx: number) => (
+                <div key={`${res.id}-${idx}`} 
+                  className="p-3 hover:bg-white dark:hover:bg-slate-800/80 rounded-xl cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700 mb-1 transition-all"
+                  onClick={() => {
+                    setExpandedStds(prev => ({ ...prev, [res.parentStdId]: true }))
+                    setIsGlobalSearchOpen(false)
+                    setTimeout(() => {
+                      setSearchName(res.name)
+                      setFilterType("ALL")
+                      setFilterProgramId("ALL")
+                      setSearchYear("")
+                      setPage(1)
+                    }, 100)
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.type === 'Tiêu chí' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : res.type === 'Tiêu chuẩn' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
+                      {res.type}
+                    </span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{res.name}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 flex items-center gap-1.5 truncate">
+                    <Folder size={12} className="shrink-0" />
+                    <span className="truncate">{res.path}</span>
+                  </div>
+                </div>
+              ))}
+              {!globalSearchQuery && (
+                <div className="p-12 text-center text-slate-400 text-sm flex flex-col items-center justify-center gap-2">
+                  <Search size={32} className="opacity-50" />
+                  Gõ từ khóa để tra cứu mọi dữ liệu kiểm định.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Nhân Bản */}
       {isCloneModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -940,6 +1022,15 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
           </div>
         </div>
       )}
+      
+      {/* Nút Tra Cứu Floating */}
+      <button
+        onClick={() => setIsGlobalSearchOpen(true)}
+        className="fixed bottom-8 right-8 z-[45] bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-110 active:scale-95 transition-all flex items-center justify-center group border border-indigo-500"
+        title="Tra cứu nhanh"
+      >
+        <Search size={24} />
+      </button>
     </div>
   )
 }
