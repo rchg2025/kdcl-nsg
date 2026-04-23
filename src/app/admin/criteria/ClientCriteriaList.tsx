@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createStandard, updateStandard, deleteStandard, cloneStandard } from "@/actions/standard"
 import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { getAllDepartmentsPublic } from "@/actions/category"
@@ -423,7 +423,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
     return matchName && matchYear && matchType && matchProgram
   })
 
-  const globalSearchResults = React.useMemo(() => {
+  const globalSearchResults = useMemo(() => {
     if (!globalSearchQuery.trim()) return []
     const q = globalSearchQuery.toLowerCase()
     const results: any[] = []
