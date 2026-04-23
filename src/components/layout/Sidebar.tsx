@@ -59,7 +59,7 @@ export const supervisorMenu: MenuItem[] = [
 export const collaboratorMenu: MenuItem[] = [
   { title: "Tổng quan", href: "/collaborator", icon: LayoutDashboard },
   { title: "Thống kê", href: "/collaborator/statistics", icon: BarChart },
-  { title: "Cập nhật minh chứng", href: "/collaborator/evidence", icon: FileText },
+  { title: "Nộp minh chứng", href: "/collaborator/evidence", icon: FileText },
   { title: "Trò chuyện", href: "/messages", icon: MessageSquare },
 ]
 

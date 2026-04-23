@@ -28,6 +28,8 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
   const [year, setYear] = useState<string>("")
   const [type, setType] = useState<string>("INSTITUTIONAL")
   const [programId, setProgramId] = useState<string>("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   const fetchData = async () => {
     setLoading(true)
@@ -51,6 +53,7 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
 
   useEffect(() => {
     fetchData()
+    setCurrentPage(1)
   }, [year, type, programId])
 
   // Aggregations
@@ -113,6 +116,26 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
       "Chưa nộp": unsubmitted
     }
   })
+
+  const flattenedItems = useMemo(() => {
+    const items: any[] = []
+    data.forEach(standard => {
+      standard.criteria.forEach((criterion: any) => {
+        criterion.items.forEach((item: any, idx: number) => {
+          items.push({
+            standard,
+            criterion,
+            item,
+            isFirstInCriterion: idx === 0
+          })
+        })
+      })
+    })
+    return items
+  }, [data])
+
+  const totalPages = Math.ceil(flattenedItems.length / itemsPerPage)
+  const currentItems = flattenedItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleExportExcel = () => {
     const excelData: any[] = []
@@ -331,60 +354,58 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
                     <th className="px-4 py-3">Tên minh chứng</th>
                     <th className="px-4 py-3">Trạng thái</th>
                     <th className="px-4 py-3">Người nộp</th>
-                    {role === "COLLABORATOR" && <th className="px-4 py-3 text-right">Thao tác</th>}
+                    <th className="px-4 py-3 text-right">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {data.map((standard) => (
-                    standard.criteria.map((criterion: any) => (
-                      criterion.items.map((item: any, i: number) => {
-                        const evidence = item.evidences?.[0]
-                        const statusKey = evidence ? evidence.status : "UNSUBMITTED"
-                        return (
-                          <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td className="px-4 py-3">
-                              {i === 0 ? (
-                                <div>
-                                  <div className="font-semibold text-slate-700 dark:text-slate-300">{standard.name}</div>
-                                  <div className="text-slate-500">{criterion.name}</div>
-                                </div>
-                              ) : (
-                                <div className="text-slate-500">{criterion.name}</div>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{item.name}</td>
-                            <td className="px-4 py-3">
-                              <span 
-                                className="px-2.5 py-1 text-xs font-semibold rounded-full"
-                                style={{ 
-                                  backgroundColor: `${STATUS_COLORS[statusKey]}20`, 
-                                  color: STATUS_COLORS[statusKey] 
-                                }}
-                              >
-                                {STATUS_LABELS[statusKey]}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-slate-500">{evidence?.collaborator?.name || "-"}</td>
-                            {role === "COLLABORATOR" && (
-                              <td className="px-4 py-3 text-right">
-                                {statusKey === "UNSUBMITTED" || statusKey === "REJECTED" ? (
-                                  <Link 
-                                    href="/collaborator/evidence"
-                                    className="inline-flex text-xs items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors font-medium"
-                                  >
-                                    Nộp ngay
-                                  </Link>
-                                ) : (
-                                  <span className="text-xs text-slate-400">Đã nộp</span>
-                                )}
-                              </td>
-                            )}
-                          </tr>
-                        )
-                      })
-                    ))
-                  ))}
-                  {data.length === 0 && (
+                  {currentItems.map(({ standard, criterion, item, isFirstInCriterion }, index) => {
+                    const evidence = item.evidences?.[0]
+                    const statusKey = evidence ? evidence.status : "UNSUBMITTED"
+                    const showNames = isFirstInCriterion || index === 0;
+                    
+                    const evidenceLink = role === "SUPERVISOR" ? "/supervisor/evidence" : "/collaborator/evidence";
+
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="px-4 py-3">
+                          {showNames ? (
+                            <div>
+                              <div className="font-semibold text-slate-700 dark:text-slate-300">{standard.name}</div>
+                              <div className="text-slate-500">{criterion.name}</div>
+                            </div>
+                          ) : (
+                            <div className="text-slate-500">{criterion.name}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{item.name}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span 
+                            className="px-2.5 py-1 text-xs font-semibold rounded-full"
+                            style={{ 
+                              backgroundColor: `${STATUS_COLORS[statusKey]}20`, 
+                              color: STATUS_COLORS[statusKey] 
+                            }}
+                          >
+                            {STATUS_LABELS[statusKey]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">{evidence?.collaborator?.name || "-"}</td>
+                        <td className="px-4 py-3 text-right">
+                          {statusKey === "UNSUBMITTED" || statusKey === "REJECTED" ? (
+                            <Link 
+                              href={evidenceLink}
+                              className="inline-flex text-xs items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors font-medium whitespace-nowrap"
+                            >
+                              Nộp ngay
+                            </Link>
+                          ) : (
+                            <span className="text-xs text-slate-400 whitespace-nowrap">Đã nộp</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {flattenedItems.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-slate-500">Không có dữ liệu phù hợp</td>
                     </tr>
@@ -392,6 +413,30 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
                 </tbody>
               </table>
             </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-sm text-slate-500">
+                  Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, flattenedItems.length)} trong số {flattenedItems.length} minh chứng
+                </span>
+                <div className="flex gap-1">
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  >
+                    Trước
+                  </button>
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 text-sm border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
