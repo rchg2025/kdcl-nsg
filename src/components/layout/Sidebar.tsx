@@ -20,7 +20,9 @@ import {
   MessageSquare,
   Clock,
   Bell,
-  Search
+  Search,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 
@@ -90,6 +92,7 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
   const [notifications, setNotifications] = useState<NotifItem[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   useEffect(() => {
     const handleToggle = () => setIsOpen(prev => !prev)
@@ -173,16 +176,18 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
           onClick={() => setIsOpen(false)}
         />
       )}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-[100dvh] text-slate-300 transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
-      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 shrink-0">
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-64'} bg-slate-900 border-r border-slate-800 flex flex-col h-[100dvh] text-slate-300 transform transition-all duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
+      <div className={`flex items-center border-b border-slate-800 shrink-0 transition-all duration-300 ${isCollapsed ? 'flex-col py-4 gap-4 h-auto' : 'h-16 justify-between px-6'}`}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white shadow-lg">
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex shrink-0 items-center justify-center text-white shadow-lg">
             <ShieldCheck size={20} />
           </div>
-          <div>
-            <span className="text-white font-bold text-sm block">KDCL - NSG</span>
-            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">{role}</span>
-          </div>
+          {!isCollapsed && (
+            <div>
+              <span className="text-white font-bold text-sm block whitespace-nowrap">KDCL - NSG</span>
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest whitespace-nowrap">{role}</span>
+            </div>
+          )}
         </div>
         
         {/* Notification Bell */}
@@ -245,23 +250,24 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
             <Link 
               key={item.href} 
               href={item.href}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
+              title={isCollapsed ? item.title : undefined}
+              className={`relative flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 ${
                 isActive 
                   ? 'bg-[var(--primary)] text-white shadow-md shadow-indigo-500/20' 
                   : 'hover:bg-slate-800 hover:text-white'
-              }`}
+              } ${isCollapsed ? 'justify-center' : ''}`}
             >
               <div className="flex items-center gap-3">
-                <Icon size={18} className={isActive ? "text-white" : "text-slate-400"} />
-                <span className="text-sm font-medium">{item.title}</span>
+                <Icon size={18} className={`shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
+                {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">{item.title}</span>}
               </div>
-              {item.href === "/messages" && unreadCount > 0 && (
-                <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
+              {!isCollapsed && item.href === "/messages" && unreadCount > 0 && (
+                <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in shrink-0">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </div>
               )}
-              {item.href === "/supervisor/review" && (
-                <div className="flex gap-1">
+              {!isCollapsed && item.href === "/supervisor/review" && (
+                <div className="flex gap-1 shrink-0">
                   {rejectedEvalCount > 0 && (
                     <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in" title="Đánh giá Không Đạt">
                       {rejectedEvalCount > 99 ? '99+' : rejectedEvalCount}
@@ -274,25 +280,38 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
                   )}
                 </div>
               )}
+              {isCollapsed && ((item.href === "/messages" && unreadCount > 0) || (item.href === "/supervisor/review" && (rejectedEvalCount > 0 || pendingEvidenceCount > 0))) && (
+                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 shadow-sm animate-in zoom-in" />
+              )}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-800 space-y-2 shrink-0">
+      <div className="p-4 border-t border-slate-800 flex flex-col gap-2 shrink-0 items-center">
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={`flex items-center gap-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white ${isCollapsed ? 'justify-center px-0 w-12' : 'px-3 w-full'}`}
+          title={isCollapsed ? "Mở rộng" : "Thu gọn sidebar"}
+        >
+          {isCollapsed ? <PanelLeftOpen size={18} className="shrink-0" /> : <PanelLeftClose size={18} className="shrink-0" />}
+          {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">Thu gọn</span>}
+        </button>
         <Link 
           href="/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white w-full"
+          className={`flex items-center gap-3 py-2.5 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white ${isCollapsed ? 'justify-center px-0 w-12' : 'px-3 w-full'}`}
+          title={isCollapsed ? "Hồ sơ cá nhân" : undefined}
         >
-          <Settings size={18} />
-          <span className="text-sm font-medium">Hồ sơ cá nhân</span>
+          <Settings size={18} className="shrink-0" />
+          {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">Hồ sơ cá nhân</span>}
         </Link>
         <button 
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-rose-500 hover:bg-rose-500 hover:text-white w-full"
+          className={`flex items-center gap-3 py-2.5 rounded-xl transition-all duration-200 text-rose-500 hover:bg-rose-500 hover:text-white ${isCollapsed ? 'justify-center px-0 w-12' : 'px-3 w-full'}`}
+          title={isCollapsed ? "Đăng xuất" : undefined}
         >
-          <LogOut size={18} />
-          <span className="text-sm font-medium">Đăng xuất</span>
+          <LogOut size={18} className="shrink-0" />
+          {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">Đăng xuất</span>}
         </button>
       </div>
     </aside>

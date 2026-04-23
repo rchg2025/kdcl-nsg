@@ -351,7 +351,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
           className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
         >
           <Plus size={18} />
-          Báo cáo Minh chứng
+          Nộp minh chứng
         </button>
       </div>
 
