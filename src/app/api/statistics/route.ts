@@ -71,21 +71,32 @@ export async function GET(request: Request) {
     const standards = await prisma.standard.findMany({
       where: standardsWhere,
       orderBy: [{ year: 'desc' }, { name: 'asc' }],
-      include: {
+      select: {
+        id: true,
+        name: true,
+        year: true,
+        type: true,
         program: { select: { name: true } },
         criteria: {
           where: criteriaWhere,
           orderBy: { name: 'asc' },
-          include: {
+          select: {
+            id: true,
+            name: true,
             items: {
               where: itemsWhere,
               orderBy: { createdAt: 'asc' },
-              include: {
+              select: {
+                id: true,
+                name: true,
                 evidences: {
                   where: evidenceWhere,
                   orderBy: { createdAt: 'desc' },
                   take: 1,
-                  include: {
+                  select: {
+                    id: true,
+                    status: true,
+                    createdAt: true,
                     collaborator: { select: { name: true } },
                     reviewer: { select: { name: true } }
                   }
