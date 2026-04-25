@@ -343,10 +343,10 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const effectiveSharedFromId = editingId ? editingSharedFromId : selectedEvidenceItemData?.sharedFromId
 
   const handleSyncSharedEvidence = async () => {
-    if (!effectiveSharedFromId) return;
+    if (!effectiveSharedFromId && !selectedEvidenceItemData) return;
     setIsSyncing(true)
     try {
-      const data = await getApprovedEvidenceForSync(effectiveSharedFromId)
+      const data = await getApprovedEvidenceForSync(effectiveSharedFromId, selectedEvidenceItemData?.name)
       if (data) {
         setSyncedParentEvidenceId(data.id)
         if (data.content) {
@@ -824,7 +824,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 mb-2 gap-2">
                 <label className="block text-sm font-semibold">Nội dung giải trình / báo cáo</label>
-                {effectiveSharedFromId && (
+                {(effectiveSharedFromId || selectedEvidenceItemData) && (
                   <button 
                     type="button"
                     onClick={handleSyncSharedEvidence}

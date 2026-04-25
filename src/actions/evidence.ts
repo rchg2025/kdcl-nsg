@@ -207,14 +207,25 @@ export async function getApprovedEvidencesForSharing() {
   })
 }
 
-export async function getApprovedEvidenceForSync(sharedFromEvidenceItemId: string) {
+export async function getApprovedEvidenceForSync(sharedFromEvidenceItemId?: string | null, itemName?: string) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error("Unauthorized")
   
-  const sourceEvidence = await prisma.evidence.findFirst({
-    where: { evidenceItemId: sharedFromEvidenceItemId },
-    orderBy: { updatedAt: 'desc' }
-  })
+  let sourceEvidence = null;
+
+  if (sharedFromEvidenceItemId) {
+    sourceEvidence = await prisma.evidence.findFirst({
+      where: { evidenceItemId: sharedFromEvidenceItemId },
+      orderBy: { updatedAt: 'desc' }
+    })
+  }
+
+  if (!sourceEvidence && itemName) {
+    sourceEvidence = await prisma.evidence.findFirst({
+      where: { evidenceItem: { name: itemName } },
+      orderBy: { updatedAt: 'desc' }
+    })
+  }
   
   return sourceEvidence ? { id: sourceEvidence.id, content: sourceEvidence.content, fileUrl: sourceEvidence.fileUrl } : null
 }
