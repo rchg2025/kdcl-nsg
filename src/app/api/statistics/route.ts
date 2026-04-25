@@ -76,7 +76,8 @@ export async function GET(request: Request) {
         name: true,
         year: true,
         type: true,
-        program: { select: { name: true } },
+        programId: true,
+        program: { select: { id: true, name: true } },
         criteria: {
           where: criteriaWhere,
           orderBy: { name: 'asc' },

@@ -431,7 +431,7 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
                     const showNames = isFirstInCriterion || index === 0;
                     
                     const baseUrl = role === "SUPERVISOR" ? "/supervisor/evidence" : "/collaborator/evidence";
-                    const evidenceLink = `${baseUrl}?action=create&standardId=${standard.id}&criterionId=${criterion.id}&itemId=${item.id}&type=${standard.type || 'INSTITUTIONAL'}&programId=${standard.programId || ''}&year=${standard.year || ''}`;
+                    const evidenceLink = `${baseUrl}?action=create&standardId=${standard.id}&criterionId=${criterion.id}&itemId=${item.id}&type=${standard.type || 'INSTITUTIONAL'}&programId=${standard.program?.id || standard.programId || ''}&year=${standard.year || ''}`;
 
                     return (
                       <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
