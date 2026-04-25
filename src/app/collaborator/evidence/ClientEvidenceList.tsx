@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { createEvidence, updateEvidence, getApprovedEvidenceForSync } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter, Link2 } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
@@ -97,6 +98,59 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
 
   const listAvailableYears = Array.from(new Set(evidences.map(ev => ev.criterion?.standard?.year).filter(Boolean))).sort((a,b) => Number(b) - Number(a)) as number[]
 
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      const sType = searchParams.get('type') || 'INSTITUTIONAL'
+      const sProgramId = searchParams.get('programId') || ''
+      const sYear = searchParams.get('year') || ''
+      const sStandardId = searchParams.get('standardId')
+      const sCriterionId = searchParams.get('criterionId')
+      const sItemId = searchParams.get('itemId')
+
+      setAccreditationType(sType)
+      setSelectedProgramId(sProgramId)
+      if (sYear) setSelectedYear(Number(sYear))
+
+      const targetCriterion = criteriaList.find(c => c.id === sCriterionId)
+      if (targetCriterion) {
+        setSelectedStandardKey(`${targetCriterion.standard.year}-${targetCriterion.standard.name}`)
+        setSearchStandardName(`${targetCriterion.standard.year} - ${targetCriterion.standard.name}`)
+        setCriterionId(targetCriterion.id)
+        setSearchCriterionName(targetCriterion.name)
+
+        if (sItemId) {
+          const targetItem = targetCriterion.items.find(i => i.id === sItemId)
+          if (targetItem) {
+            setEvidenceItemId(targetItem.id)
+            setSearchItem(targetItem.name)
+          }
+        }
+      }
+      
+      // Also update searchProgramName if it's a program
+      if (sType === 'PROGRAM' && sProgramId && programs) {
+        const prog = programs.find((p: any) => p.id === sProgramId)
+        if (prog) {
+          setSearchProgramName(prog.name)
+        }
+      }
+
+      setIsModalOpen(true)
+      
+      // Clean up the URL to prevent re-triggering if the user closes and does something else
+      const url = new URL(window.location.href)
+      url.searchParams.delete('action')
+      url.searchParams.delete('standardId')
+      url.searchParams.delete('criterionId')
+      url.searchParams.delete('itemId')
+      url.searchParams.delete('type')
+      url.searchParams.delete('programId')
+      url.searchParams.delete('year')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams, criteriaList, programs])
 
   const filteredEvidencesList = evidences.filter(ev => {
     let match = true;

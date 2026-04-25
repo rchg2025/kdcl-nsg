@@ -430,7 +430,8 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
                     const statusKey = evidence ? evidence.status : "UNSUBMITTED"
                     const showNames = isFirstInCriterion || index === 0;
                     
-                    const evidenceLink = role === "SUPERVISOR" ? "/supervisor/evidence" : "/collaborator/evidence";
+                    const baseUrl = role === "SUPERVISOR" ? "/supervisor/evidence" : "/collaborator/evidence";
+                    const evidenceLink = `${baseUrl}?action=create&standardId=${standard.id}&criterionId=${criterion.id}&itemId=${item.id}&type=${standard.type || 'INSTITUTIONAL'}&programId=${standard.programId || ''}&year=${standard.year || ''}`;
 
                     return (
                       <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">

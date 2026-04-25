@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { getCollaboratorEvidences, getAllCriteriaForDropdown } from "@/actions/evidence"
 import { getAllProgramsPublic } from "@/actions/category"
 import ClientEvidenceList from "./ClientEvidenceList"
@@ -18,7 +19,9 @@ export default async function EvidencePage() {
         </div>
       </div>
       
-      <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} programs={programs} />
+      <Suspense fallback={<div>Đang tải...</div>}>
+        <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} programs={programs} />
+      </Suspense>
     </div>
   )
 }
