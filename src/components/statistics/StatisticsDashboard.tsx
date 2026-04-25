@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { FileDown, Filter, Loader2, ArrowRight, FolderTree, FileText, FileCheck } from "lucide-react"
+import { FileDown, Filter, Loader2, ArrowRight, FolderTree, FileText, FileCheck, Search } from "lucide-react"
 import * as XLSX from "xlsx"
 import Link from "next/link"
 
@@ -459,16 +459,29 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
                         </td>
                         <td className="px-4 py-3 text-slate-500">{evidence?.collaborator?.name || "-"}</td>
                         <td className="px-4 py-3 text-right">
-                          {statusKey === "UNSUBMITTED" || statusKey === "REJECTED" ? (
-                            <Link 
-                              href={evidenceLink}
-                              className="inline-flex text-xs items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors font-medium whitespace-nowrap"
-                            >
-                              Nộp ngay
-                            </Link>
-                          ) : (
-                            <span className="text-xs text-slate-400 whitespace-nowrap">Đã nộp</span>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            {statusKey === "UNSUBMITTED" || statusKey === "REJECTED" ? (
+                              <Link 
+                                href={evidenceLink}
+                                className="inline-flex text-xs items-center gap-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors font-medium whitespace-nowrap"
+                              >
+                                Nộp ngay
+                              </Link>
+                            ) : null}
+                            
+                            {evidence ? (
+                              <Link 
+                                href={`${baseUrl}#ev-${evidence.id}`}
+                                className="inline-flex text-xs items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium whitespace-nowrap"
+                              >
+                                <Search size={14} /> Tra cứu nhanh
+                              </Link>
+                            ) : (
+                               statusKey !== "UNSUBMITTED" && statusKey !== "REJECTED" && (
+                                  <span className="text-xs text-slate-400 whitespace-nowrap">Đã nộp</span>
+                               )
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
