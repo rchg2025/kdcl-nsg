@@ -245,24 +245,21 @@ export async function getAllCriteriaForDropdown() {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
     
     if (user?.departmentId) {
+      const deptMatch = {
+        OR: [
+          { departments: { none: {} } },
+          { departments: { some: { id: user.departmentId } } }
+        ]
+      }
+
       itemsFilter = {
         where: {
           OR: [
-            {
-              sharedFromId: null,
-              OR: [
-                { departments: { none: {} } },
-                { departments: { some: { id: user.departmentId } } }
-              ]
-            },
-            {
-              sharedFrom: {
-                OR: [
-                  { departments: { none: {} } },
-                  { departments: { some: { id: user.departmentId } } }
-                ]
-              }
-            }
+            { sharedFromId: null, ...deptMatch },
+            { sharedFrom: { sharedFromId: null, ...deptMatch } },
+            { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } },
+            { sharedFrom: { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } } },
+            { sharedFrom: { sharedFrom: { sharedFrom: { sharedFrom: { ...deptMatch } } } } }
           ]
         }
       }

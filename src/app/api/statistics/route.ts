@@ -37,23 +37,20 @@ export async function GET(request: Request) {
       const allowedCriterionIds = permissions.map(p => p.resourceId)
 
       if (user?.departmentId) {
+        const deptMatch = {
+          OR: [
+            { departments: { none: {} } },
+            { departments: { some: { id: user.departmentId } } }
+          ]
+        }
+
         itemsWhere = {
           OR: [
-            {
-              sharedFromId: null,
-              OR: [
-                { departments: { none: {} } },
-                { departments: { some: { id: user.departmentId } } }
-              ]
-            },
-            {
-              sharedFrom: {
-                OR: [
-                  { departments: { none: {} } },
-                  { departments: { some: { id: user.departmentId } } }
-                ]
-              }
-            }
+            { sharedFromId: null, ...deptMatch },
+            { sharedFrom: { sharedFromId: null, ...deptMatch } },
+            { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } },
+            { sharedFrom: { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } } },
+            { sharedFrom: { sharedFrom: { sharedFrom: { sharedFrom: { ...deptMatch } } } } }
           ]
         }
         
