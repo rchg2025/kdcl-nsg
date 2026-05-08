@@ -2,86 +2,162 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 async function main() {
-  // Find the collaborator user phamminh@nsg.edu.vn
   const user = await prisma.user.findUnique({
     where: { email: 'phamminh@nsg.edu.vn' },
-    select: { id: true, name: true, email: true, role: true, departmentId: true, department: { select: { name: true } } }
+    select: { id: true, name: true, departmentId: true, department: { select: { name: true } } }
   })
   console.log('=== USER ===')
   console.log(JSON.stringify(user, null, 2))
 
-  if (!user) {
-    console.log('User not found!')
-    return
-  }
-
-  // Query 1: Dashboard approach - direct evidence query with collaborator.departmentId
-  const dashboardEvidences = await prisma.evidence.findMany({
-    where: user.departmentId
-      ? { collaborator: { departmentId: user.departmentId } }
-      : { collaboratorId: user.id },
-    select: { id: true, status: true, collaborator: { select: { name: true } } }
-  })
-  console.log('\n=== DASHBOARD QUERY (collaborator.departmentId) ===')
-  console.log('Total evidences found:', dashboardEvidences.length)
-  if (dashboardEvidences.length > 0) {
-    console.log('Sample:', JSON.stringify(dashboardEvidences.slice(0, 3), null, 2))
-  }
-
-  // Query 2: Statistics approach - through items/evidences
-  const statsEvidences = await prisma.evidence.findMany({
-    where: { collaborator: { departmentId: user.departmentId } },
-    select: { id: true, status: true, collaboratorId: true, collaborator: { select: { name: true, departmentId: true } } }
-  })
-  console.log('\n=== STATS QUERY (same filter) ===')
-  console.log('Total evidences found:', statsEvidences.length)
-
-  // Query 3: All evidence for this user directly  
-  const userEvidences = await prisma.evidence.findMany({
-    where: { collaboratorId: user.id },
-    select: { id: true, status: true }
-  })
-  console.log('\n=== USER DIRECT EVIDENCE ===')
-  console.log('Evidences by this user:', userEvidences.length)
+  const deptId = user.departmentId
   
-  // Query 4: All users in same department
-  const deptUsers = await prisma.user.findMany({
-    where: { departmentId: user.departmentId },
-    select: { id: true, name: true, email: true, role: true }
+  // 1. Check user permissions
+  const permissions = await prisma.userPermission.findMany({
+    where: { userId: user.id, permissionType: 'CRITERION' }
   })
-  console.log('\n=== USERS IN SAME DEPARTMENT ===')
-  console.log(JSON.stringify(deptUsers, null, 2))
-
-  // Query 5: All evidence from all users in same department
-  const allDeptEvidence = await prisma.evidence.findMany({
-    where: {
-      collaborator: { departmentId: user.departmentId }
-    },
-    select: { id: true, status: true, collaboratorId: true }
-  })
-  console.log('\n=== ALL EVIDENCE IN DEPARTMENT ===')
-  console.log('Total:', allDeptEvidence.length)
-  const byStatus = {}
-  allDeptEvidence.forEach(e => {
-    byStatus[e.status] = (byStatus[e.status] || 0) + 1
-  })
-  console.log('By status:', byStatus)
-
-  // Query 6: Check if there are evidence items assigned to this department
-  const deptItems = await prisma.evidenceItem.findMany({
-    where: { departments: { some: { id: user.departmentId } } },
-    select: { id: true, name: true, evidences: { select: { id: true, status: true, collaboratorId: true }, take: 5 } }
-  })
-  console.log('\n=== EVIDENCE ITEMS ASSIGNED TO DEPARTMENT ===')
-  console.log('Items count:', deptItems.length)
-  let totalEvidencesFromItems = 0
-  deptItems.forEach(item => {
-    totalEvidencesFromItems += item.evidences.length
-  })
-  console.log('Total evidences from these items:', totalEvidencesFromItems)
-  if (deptItems.length > 0) {
-    console.log('Sample item:', JSON.stringify(deptItems[0], null, 2))
+  console.log('\n=== USER PERMISSIONS (CRITERION) ===')
+  console.log('Count:', permissions.length)
+  if (permissions.length > 0) {
+    console.log(JSON.stringify(permissions, null, 2))
   }
+
+  // 2. Items directly assigned to department
+  const directItems = await prisma.evidenceItem.findMany({
+    where: { departments: { some: { id: deptId } } },
+    select: { 
+      id: true, name: true, sharedFromId: true,
+      criterion: { select: { name: true, standard: { select: { name: true, year: true } } } },
+      departments: { select: { name: true } }
+    }
+  })
+  console.log('\n=== ITEMS DIRECTLY ASSIGNED TO DEPARTMENT ===')
+  console.log('Count:', directItems.length)
+  directItems.forEach(item => {
+    console.log(`  - [${item.criterion.standard.year}] ${item.criterion.standard.name} > ${item.criterion.name} > ${item.name}`)
+    console.log(`    Depts: ${item.departments.map(d => d.name).join(', ')} | sharedFromId: ${item.sharedFromId}`)
+  })
+
+  // 3. Items where sharedFrom is assigned to department (1 level deep)
+  const sharedLevel1 = await prisma.evidenceItem.findMany({
+    where: { sharedFrom: { departments: { some: { id: deptId } } } },
+    select: { 
+      id: true, name: true, sharedFromId: true,
+      criterion: { select: { name: true, standard: { select: { name: true, year: true } } } },
+      departments: { select: { name: true } },
+      sharedFrom: { select: { name: true, departments: { select: { name: true } } } }
+    }
+  })
+  console.log('\n=== ITEMS VIA sharedFrom (1 level) ===')
+  console.log('Count:', sharedLevel1.length)
+  sharedLevel1.forEach(item => {
+    console.log(`  - [${item.criterion.standard.year}] ${item.criterion.name} > ${item.name}`)
+    console.log(`    Own depts: ${item.departments.map(d => d.name).join(', ') || 'none'} | sharedFrom: ${item.sharedFrom?.name} (depts: ${item.sharedFrom?.departments.map(d => d.name).join(', ')})`)
+  })
+
+  // 4. Items with NO department (available to everyone)
+  const noDeptItems = await prisma.evidenceItem.findMany({
+    where: { 
+      departments: { none: {} },
+      sharedFromId: null  // root items with no dept
+    },
+    select: { 
+      id: true, name: true,
+      criterion: { select: { name: true, standard: { select: { name: true, year: true } } } }
+    },
+    take: 10
+  })
+  console.log('\n=== ROOT ITEMS WITH NO DEPARTMENT (sample) ===')
+  console.log('Count:', noDeptItems.length)
+  noDeptItems.forEach(item => {
+    console.log(`  - [${item.criterion.standard.year}] ${item.criterion.name} > ${item.name}`)
+  })
+
+  // 5. Simulate the statistics page query
+  const hasDept = {
+    OR: [
+      { departments: { some: { id: deptId } } },
+      { sharedFrom: { departments: { some: { id: deptId } } } },
+      { sharedFrom: { sharedFrom: { departments: { some: { id: deptId } } } } },
+      { sharedFrom: { sharedFrom: { sharedFrom: { departments: { some: { id: deptId } } } } } },
+      { sharedFrom: { sharedFrom: { sharedFrom: { sharedFrom: { departments: { some: { id: deptId } } } } } } }
+    ]
+  }
+
+  const getNoDeptCondition = (levels) => {
+    if (levels === 0) return { departments: { none: {} } }
+    return {
+      departments: { none: {} },
+      OR: [
+        { sharedFromId: null },
+        { sharedFrom: getNoDeptCondition(levels - 1) }
+      ]
+    }
+  }
+
+  const itemsWhere = {
+    OR: [hasDept, getNoDeptCondition(5)]
+  }
+
+  const allowedCriterionIds = permissions.map(p => p.resourceId)
+  
+  const criteriaWhere = {
+    OR: [
+      { id: { in: allowedCriterionIds } },
+      { items: { some: itemsWhere } }
+    ]
+  }
+
+  const standards = await prisma.standard.findMany({
+    orderBy: [{ year: 'desc' }, { name: 'asc' }],
+    select: {
+      id: true, name: true, year: true, type: true,
+      criteria: {
+        where: criteriaWhere,
+        orderBy: { name: 'asc' },
+        select: {
+          id: true, name: true,
+          items: {
+            where: itemsWhere,
+            orderBy: { createdAt: 'asc' },
+            select: {
+              id: true, name: true,
+              departments: { select: { id: true, name: true } },
+              evidences: {
+                where: { collaborator: { departmentId: deptId } },
+                take: 1,
+                select: { id: true, status: true }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  // Filter like the statistics API does
+  const result = standards.map(s => ({
+    ...s,
+    criteria: s.criteria.map(c => ({
+      ...c,
+      items: c.items || []
+    })).filter(c => c.items.length > 0)
+  })).filter(s => s.criteria.length > 0)
+
+  console.log('\n=== SIMULATED STATISTICS PAGE RESULT ===')
+  let totalItems = 0
+  result.forEach(std => {
+    console.log(`\n[${std.year}] ${std.name} (${std.type})`)
+    std.criteria.forEach(c => {
+      console.log(`  Criterion: ${c.name} (${c.items.length} items)`)
+      c.items.forEach(item => {
+        totalItems++
+        const depts = item.departments.map(d => d.name).join(', ') || 'Không có đơn vị'
+        const hasEvidence = item.evidences.length > 0 ? `✓ ${item.evidences[0].status}` : '✗ Chưa nộp'
+        console.log(`    - ${item.name} | Đơn vị: ${depts} | ${hasEvidence}`)
+      })
+    })
+  })
+  console.log(`\nTOTAL ITEMS shown on statistics page: ${totalItems}`)
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
