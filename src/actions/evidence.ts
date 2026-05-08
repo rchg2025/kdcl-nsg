@@ -245,21 +245,32 @@ export async function getAllCriteriaForDropdown() {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
     
     if (user?.departmentId) {
-      const deptMatch = {
+      const hasDept = {
         OR: [
-          { departments: { none: {} } },
-          { departments: { some: { id: user.departmentId } } }
+          { departments: { some: { id: user.departmentId } } },
+          { sharedFrom: { departments: { some: { id: user.departmentId } } } },
+          { sharedFrom: { sharedFrom: { departments: { some: { id: user.departmentId } } } } },
+          { sharedFrom: { sharedFrom: { sharedFrom: { departments: { some: { id: user.departmentId } } } } } },
+          { sharedFrom: { sharedFrom: { sharedFrom: { sharedFrom: { departments: { some: { id: user.departmentId } } } } } } }
         ]
+      }
+
+      const getNoDeptCondition = (levels: number): any => {
+        if (levels === 0) return { departments: { none: {} } }
+        return {
+          departments: { none: {} },
+          OR: [
+            { sharedFromId: null },
+            { sharedFrom: getNoDeptCondition(levels - 1) }
+          ]
+        }
       }
 
       itemsFilter = {
         where: {
           OR: [
-            { sharedFromId: null, ...deptMatch },
-            { sharedFrom: { sharedFromId: null, ...deptMatch } },
-            { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } },
-            { sharedFrom: { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } } },
-            { sharedFrom: { sharedFrom: { sharedFrom: { sharedFrom: { ...deptMatch } } } } }
+            hasDept,
+            getNoDeptCondition(5)
           ]
         }
       }

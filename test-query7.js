@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client')
+const fs = require('fs')
 const prisma = new PrismaClient()
 
 async function main() {
@@ -9,8 +10,9 @@ async function main() {
     ]
   }
 
-  const itemsFilter = {
+  const items = await prisma.evidenceItem.findMany({
     where: {
+      name: { contains: "1.1.18" },
       OR: [
         { sharedFromId: null, ...deptMatch },
         { sharedFrom: { sharedFromId: null, ...deptMatch } },
@@ -18,18 +20,11 @@ async function main() {
         { sharedFrom: { sharedFrom: { sharedFrom: { sharedFromId: null, ...deptMatch } } } },
         { sharedFrom: { sharedFrom: { sharedFrom: { sharedFrom: { ...deptMatch } } } } }
       ]
-    }
-  }
-
-  const items = await prisma.evidenceItem.findMany({
-    where: {
-      name: { contains: "1.1.18" },
-      ...itemsFilter.where
     },
-    include: { departments: true }
+    include: { departments: true, sharedFrom: { include: { departments: true } } }
   })
   
-  console.log("Items matched:", items.length)
+  fs.writeFileSync('output.json', JSON.stringify(items, null, 2))
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
