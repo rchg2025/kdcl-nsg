@@ -234,8 +234,8 @@ export async function getAllCriteriaForDropdown() {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error("Unauthorized")
   
-  let whereClause = {}
-  let itemsFilter = {}
+  let whereClause: any = {}
+  let itemsFilter: any = {}
   
   if (!["ADMIN", "SUPERVISOR"].includes(session.user.role as string)) {
     const permissions = await prisma.userPermission.findMany({
@@ -244,29 +244,42 @@ export async function getAllCriteriaForDropdown() {
     const allowedIds = permissions.map(p => p.resourceId)
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
     
-    whereClause = {
-      OR: [
-        { id: { in: allowedIds } },
-        ...(user?.departmentId ? [{
-          items: {
-            some: {
-              departments: {
-                some: { id: user.departmentId }
-              }
-            }
-          }
-        }] : [])
-      ]
-    }
-
     if (user?.departmentId) {
       itemsFilter = {
         where: {
           OR: [
-            { departments: { none: {} } },
-            { departments: { some: { id: user.departmentId } } }
+            {
+              sharedFromId: null,
+              OR: [
+                { departments: { none: {} } },
+                { departments: { some: { id: user.departmentId } } }
+              ]
+            },
+            {
+              sharedFrom: {
+                OR: [
+                  { departments: { none: {} } },
+                  { departments: { some: { id: user.departmentId } } }
+                ]
+              }
+            }
           ]
         }
+      }
+      
+      whereClause = {
+        OR: [
+          { id: { in: allowedIds } },
+          {
+            items: {
+              some: itemsFilter.where
+            }
+          }
+        ]
+      }
+    } else {
+      whereClause = {
+        id: { in: allowedIds }
       }
     }
   }

@@ -36,32 +36,45 @@ export async function GET(request: Request) {
       })
       const allowedCriterionIds = permissions.map(p => p.resourceId)
 
-      criteriaWhere = {
-        OR: [
-          { id: { in: allowedCriterionIds } },
-          ...(user?.departmentId ? [{
-            items: {
-              some: {
-                departments: {
-                  some: { id: user.departmentId }
-                }
-              }
-            }
-          }] : [])
-        ]
-      }
-
       if (user?.departmentId) {
         itemsWhere = {
           OR: [
-            { departments: { none: {} } },
-            { departments: { some: { id: user.departmentId } } }
+            {
+              sharedFromId: null,
+              OR: [
+                { departments: { none: {} } },
+                { departments: { some: { id: user.departmentId } } }
+              ]
+            },
+            {
+              sharedFrom: {
+                OR: [
+                  { departments: { none: {} } },
+                  { departments: { some: { id: user.departmentId } } }
+                ]
+              }
+            }
           ]
         }
+        
+        criteriaWhere = {
+          OR: [
+            { id: { in: allowedCriterionIds } },
+            {
+              items: {
+                some: itemsWhere
+              }
+            }
+          ]
+        }
+        
         evidenceWhere = {
           collaborator: { departmentId: user.departmentId }
         }
       } else {
+        criteriaWhere = {
+          id: { in: allowedCriterionIds }
+        }
         evidenceWhere = {
           collaboratorId: userId
         }
