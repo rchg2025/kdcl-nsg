@@ -43,7 +43,7 @@ export default function StatisticsDashboard({ role, programs = [] }: { role: str
       if (type) params.append("type", type)
       if (type === "PROGRAM" && programId) params.append("programId", programId)
 
-      const res = await fetch(`/api/statistics?${params.toString()}`)
+      const res = await fetch(`/api/statistics?${params.toString()}`, { cache: 'no-store' })
       if (res.ok) {
         const json = await res.json()
         setData(json)
