@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { getDashboardStats } from "@/actions/dashboard"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts"
-import { Loader2, TrendingUp, AlertTriangle, CheckCircle2, ListTodo } from "lucide-react"
+import { Loader2, TrendingUp, AlertTriangle, CheckCircle2, ListTodo, FileX2 } from "lucide-react"
 import DetailedSupervisorStats from "./DetailedSupervisorStats"
 
 export default function StatCharts() {
@@ -37,6 +37,9 @@ export default function StatCharts() {
 
   if (!data) return null
 
+  const isCollaborator = data.userRole === "COLLABORATOR"
+  const isInvestigator = data.userRole === "INVESTIGATOR"
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -65,32 +68,60 @@ export default function StatCharts() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-         <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
-            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center"><ListTodo size={24} /></div>
-            <div><p className="text-sm font-medium text-slate-500">Tổng số minh chứng</p><p className="text-2xl font-bold text-slate-800 dark:text-white">{data.summary.total}</p></div>
-         </div>
-         <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
-            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center relative shrink-0"><CheckCircle2 size={24} /></div>
-            <div className="relative"><p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 leading-tight">{data.userRole === "INVESTIGATOR" ? "ĐTV Đã đánh giá Đạt" : "Đã phê duyệt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.userRole === "INVESTIGATOR" ? data.summary.invApprovedCount : data.summary.approved}</p></div>
-         </div>
-         <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
-            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center relative shrink-0"><Loader2 size={24} /></div>
-            <div className="relative"><p className="text-sm font-medium text-amber-600 dark:text-amber-400 leading-tight">{data.userRole === "INVESTIGATOR" ? "Đang chờ ĐTV" : "Đang chờ duyệt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.userRole === "INVESTIGATOR" ? data.summary.invPendingCount : data.summary.pending}</p></div>
-         </div>
-         <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-red-200 dark:border-red-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
-            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center relative shrink-0"><AlertTriangle size={24} /></div>
-            <div className="relative"><p className="text-sm font-medium text-red-600 dark:text-red-400 leading-tight">{data.userRole === "INVESTIGATOR" ? "ĐTV Đã phân Không đạt" : "Bị không đạt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.userRole === "INVESTIGATOR" ? data.summary.invRejectedCount : data.summary.rejected}</p></div>
-         </div>
-      </div>
+      {isCollaborator ? (
+        /* === COLLABORATOR Summary Cards === */
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+              <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center"><ListTodo size={24} /></div>
+              <div><p className="text-sm font-medium text-slate-500">Tổng mục được giao</p><p className="text-2xl font-bold text-slate-800 dark:text-white">{data.summary.assignedItems || 0}</p></div>
+           </div>
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
+              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center relative shrink-0"><CheckCircle2 size={24} /></div>
+              <div className="relative"><p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 leading-tight">Đã duyệt</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.summary.approved}</p></div>
+           </div>
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
+              <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center relative shrink-0"><Loader2 size={24} /></div>
+              <div className="relative"><p className="text-sm font-medium text-amber-600 dark:text-amber-400 leading-tight">Đang chờ duyệt</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.summary.pending}</p></div>
+           </div>
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-300 dark:border-slate-600 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-slate-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
+              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-full flex items-center justify-center relative shrink-0"><FileX2 size={24} /></div>
+              <div className="relative"><p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-tight">Chưa nộp</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{data.summary.notSubmitted || 0}</p></div>
+           </div>
+        </div>
+      ) : (
+        /* === ADMIN / SUPERVISOR / INVESTIGATOR Summary Cards === */
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
+              <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center"><ListTodo size={24} /></div>
+              <div><p className="text-sm font-medium text-slate-500">Tổng số minh chứng</p><p className="text-2xl font-bold text-slate-800 dark:text-white">{data.summary.total}</p></div>
+           </div>
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
+              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center relative shrink-0"><CheckCircle2 size={24} /></div>
+              <div className="relative"><p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 leading-tight">{isInvestigator ? "ĐTV Đã đánh giá Đạt" : "Đã phê duyệt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{isInvestigator ? data.summary.invApprovedCount : data.summary.approved}</p></div>
+           </div>
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-amber-200 dark:border-amber-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
+              <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center relative shrink-0"><Loader2 size={24} /></div>
+              <div className="relative"><p className="text-sm font-medium text-amber-600 dark:text-amber-400 leading-tight">{isInvestigator ? "Đang chờ ĐTV" : "Đang chờ duyệt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{isInvestigator ? data.summary.invPendingCount : data.summary.pending}</p></div>
+           </div>
+           <div className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl border border-red-200 dark:border-red-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full -mr-4 -mt-4 blur-xl"></div>
+              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center relative shrink-0"><AlertTriangle size={24} /></div>
+              <div className="relative"><p className="text-sm font-medium text-red-600 dark:text-red-400 leading-tight">{isInvestigator ? "ĐTV Đã phân Không đạt" : "Bị không đạt"}</p><p className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{isInvestigator ? data.summary.invRejectedCount : data.summary.rejected}</p></div>
+           </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pie Chart */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">Tỷ lệ Trạng thái Minh chứng</h3>
+          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">
+            {isCollaborator ? "Tiến độ nộp Minh chứng" : "Tỷ lệ Trạng thái Minh chứng"}
+          </h3>
           <div className="h-[300px]">
              {data.statusData.length > 0 ? (
                <ResponsiveContainer width="100%" height="100%">
@@ -119,9 +150,11 @@ export default function StatCharts() {
           </div>
         </div>
 
-        {/* Bar Chart - Department Stats */}
+        {/* Bar Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">Thống kê số lượng theo Đơn vị</h3>
+          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">
+            {isCollaborator ? "Tiến độ nộp theo Tiêu chí" : "Thống kê số lượng theo Đơn vị"}
+          </h3>
           <div className="h-[300px]">
              {data.departmentData && data.departmentData.length > 0 ? (
                <ResponsiveContainer width="100%" height="100%">
@@ -131,9 +164,18 @@ export default function StatCharts() {
                    <YAxis tickLine={false} axisLine={false} tick={{fontSize: 12}} />
                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} />
                    <Legend />
-                   <Bar dataKey="approved" name="Đã duyệt" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                   <Bar dataKey="pending" name="Chờ duyệt" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
-                   <Bar dataKey="rejected" name="Không đạt" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                   {isCollaborator ? (
+                     <>
+                       <Bar dataKey="approved" name="Đã nộp" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
+                       <Bar dataKey="pending" name="Chưa nộp" stackId="a" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                     </>
+                   ) : (
+                     <>
+                       <Bar dataKey="approved" name={isInvestigator ? "ĐTV Đạt" : "Đã duyệt"} stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
+                       <Bar dataKey="pending" name={isInvestigator ? "Chờ ĐTV" : "Chờ duyệt"} stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
+                       <Bar dataKey="rejected" name={isInvestigator ? "ĐTV Không đạt" : "Không đạt"} stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                     </>
+                   )}
                  </BarChart>
                </ResponsiveContainer>
              ) : (
