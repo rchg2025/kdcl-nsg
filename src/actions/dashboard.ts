@@ -44,6 +44,12 @@ export async function getDashboardStats(year?: number, type?: string) {
         select: {
           id: true,
           status: true,
+          collaborator: {
+            select: {
+              name: true,
+              department: { select: { id: true, name: true } }
+            }
+          },
           criterion: {
             select: {
               id: true,
@@ -118,13 +124,29 @@ export async function getDashboardStats(year?: number, type?: string) {
         pending: data.total - data.approved
       }))
 
+      // 4. Department-based statistics
+      const deptMap: Record<string, { name: string, total: number, approved: number, pending: number, rejected: number }> = {}
+      evidences.forEach((ev: any) => {
+        const deptName = ev.collaborator?.department?.name || "Chưa phân đơn vị"
+        const deptId = ev.collaborator?.department?.id || "unknown"
+        if (!deptMap[deptId]) {
+          deptMap[deptId] = { name: deptName, total: 0, approved: 0, pending: 0, rejected: 0 }
+        }
+        deptMap[deptId].total += 1
+        if (ev.status === "APPROVED") deptMap[deptId].approved += 1
+        else if (ev.status === "REJECTED") deptMap[deptId].rejected += 1
+        else deptMap[deptId].pending += 1
+      })
+
+      const departmentData = Object.values(deptMap).sort((a, b) => b.total - a.total)
+
       const availableYears = await prisma.standard.findMany({
         select: { year: true },
         distinct: ["year"],
         orderBy: { year: "desc" }
       })
 
-      // 4. Detailed Data for the Data Table
+      // 5. Detailed Data for the Data Table
       const criterionMap: Record<string, any> = {}
       evidences.forEach((ev: any) => {
         const cid = ev.criterion.id
@@ -176,6 +198,7 @@ export async function getDashboardStats(year?: number, type?: string) {
         summary: { total, approved, rejected, pending, invApprovedCount, invRejectedCount, invPendingCount },
         statusData,
         standardData,
+        departmentData,
         detailedStats,
         availableYears: availableYears.map(y => y.year)
       }

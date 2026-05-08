@@ -119,20 +119,21 @@ export default function StatCharts() {
           </div>
         </div>
 
-        {/* Bar Chart */}
+        {/* Bar Chart - Department Stats */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">Phân bố & Tỉ lệ duyệt theo Tiêu chí</h3>
+          <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-6 text-center">Thống kê số lượng theo Đơn vị</h3>
           <div className="h-[300px]">
-             {data.standardData.length > 0 ? (
+             {data.departmentData && data.departmentData.length > 0 ? (
                <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={data.standardData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                 <BarChart data={data.departmentData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                   <XAxis dataKey="name" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
+                   <XAxis dataKey="name" tick={{fontSize: 11}} tickLine={false} axisLine={false} interval={0} angle={-15} textAnchor="end" height={60} />
                    <YAxis tickLine={false} axisLine={false} tick={{fontSize: 12}} />
                    <RechartsTooltip cursor={{fill: '#f1f5f9', opacity: 0.5}} />
                    <Legend />
                    <Bar dataKey="approved" name="Đã duyệt" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                   <Bar dataKey="pending" name="Chưa duyệt/Không đạt" stackId="a" fill="#fbd38d" radius={[4, 4, 0, 0]} />
+                   <Bar dataKey="pending" name="Chờ duyệt" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
+                   <Bar dataKey="rejected" name="Không đạt" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
                  </BarChart>
                </ResponsiveContainer>
              ) : (
