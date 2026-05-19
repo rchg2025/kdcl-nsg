@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import { createEvidence, updateEvidence, getApprovedEvidenceForSync } from "@/actions/evidence"
+import { createEvidence, updateEvidence, getApprovedEvidenceForSync, getAllCriteriaForDropdown } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter, Link2 } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
 
@@ -47,13 +47,15 @@ type CriterionDropdown = {
   items: EvidenceItem[]
 }
 
-export default function ClientEvidenceList({ initialEvidences, criteriaList, programs=[] }: { initialEvidences: any[], criteriaList: CriterionDropdown[], programs?: any[] }) {
+export default function ClientEvidenceList({ initialEvidences, programs=[] }: { initialEvidences: any[], programs?: any[] }) {
   const [evidences, setEvidences] = useState<Evidence[]>(initialEvidences)
+  const [criteriaList, setCriteriaList] = useState<CriterionDropdown[]>([])
+  const [isLoadingCriteria, setIsLoadingCriteria] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   
-  const [criterionId, setCriterionId] = useState(criteriaList[0]?.id || "")
+  const [criterionId, setCriterionId] = useState("")
   const [evidenceItemId, setEvidenceItemId] = useState("")
   const [content, setContent] = useState("")
   const [existingFiles, setExistingFiles] = useState<FileLink[]>([])
@@ -70,6 +72,21 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   
   const [selectedYear, setSelectedYear] = useState<number | "">("")
   const availableYears = Array.from(new Set(criteriaList.map(c => c.standard.year))).sort((a, b) => b - a)
+
+  const loadCriteriaIfNeeded = async () => {
+    if (criteriaList.length > 0) return criteriaList;
+    setIsLoadingCriteria(true);
+    try {
+      const data = await getAllCriteriaForDropdown();
+      setCriteriaList(data);
+      return data;
+    } catch (err) {
+      console.error(err);
+      return [];
+    } finally {
+      setIsLoadingCriteria(false);
+    }
+  };
 
   const [selectedStandardKey, setSelectedStandardKey] = useState("")
   const [searchStandardName, setSearchStandardName] = useState("")
@@ -104,56 +121,59 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    if (searchParams.get('action') === 'create') {
-      const sType = searchParams.get('type') || 'INSTITUTIONAL'
-      const sProgramId = searchParams.get('programId') || ''
-      const sYear = searchParams.get('year') || ''
-      const sStandardId = searchParams.get('standardId')
-      const sCriterionId = searchParams.get('criterionId')
-      const sItemId = searchParams.get('itemId')
+    const handleAction = async () => {
+      if (searchParams.get('action') === 'create') {
+        const sType = searchParams.get('type') || 'INSTITUTIONAL'
+        const sProgramId = searchParams.get('programId') || ''
+        const sYear = searchParams.get('year') || ''
+        const sStandardId = searchParams.get('standardId')
+        const sCriterionId = searchParams.get('criterionId')
+        const sItemId = searchParams.get('itemId')
 
-      setAccreditationType(sType)
-      setSelectedProgramId(sProgramId)
-      if (sYear) setSelectedYear(Number(sYear))
+        setAccreditationType(sType)
+        setSelectedProgramId(sProgramId)
+        if (sYear) setSelectedYear(Number(sYear))
 
-      const targetCriterion = criteriaList.find(c => c.id === sCriterionId)
-      if (targetCriterion) {
-        setSelectedStandardKey(`${targetCriterion.standard.year}-${targetCriterion.standard.name}`)
-        setSearchStandardName(`${targetCriterion.standard.year} - ${targetCriterion.standard.name}`)
-        setCriterionId(targetCriterion.id)
-        setSearchCriterionName(targetCriterion.name)
+        const loadedCriteria = await loadCriteriaIfNeeded()
 
-        if (sItemId) {
-          const targetItem = targetCriterion.items.find(i => i.id === sItemId)
-          if (targetItem) {
-            setEvidenceItemId(targetItem.id)
-            setSearchItem(targetItem.name)
+        const targetCriterion = loadedCriteria.find(c => c.id === sCriterionId)
+        if (targetCriterion) {
+          setSelectedStandardKey(`${targetCriterion.standard.year}-${targetCriterion.standard.name}`)
+          setSearchStandardName(`${targetCriterion.standard.year} - ${targetCriterion.standard.name}`)
+          setCriterionId(targetCriterion.id)
+          setSearchCriterionName(targetCriterion.name)
+
+          if (sItemId) {
+            const targetItem = targetCriterion.items.find(i => i.id === sItemId)
+            if (targetItem) {
+              setEvidenceItemId(targetItem.id)
+              setSearchItem(targetItem.name)
+            }
           }
         }
-      }
-      
-      // Also update searchProgramName if it's a program
-      if (sType === 'PROGRAM' && sProgramId && programs) {
-        const prog = programs.find((p: any) => p.id === sProgramId)
-        if (prog) {
-          setSearchProgramName(prog.name)
+        
+        if (sType === 'PROGRAM' && sProgramId && programs) {
+          const prog = programs.find((p: any) => p.id === sProgramId)
+          if (prog) {
+            setSearchProgramName(prog.name)
+          }
         }
-      }
 
-      setIsModalOpen(true)
-      
-      // Clean up the URL to prevent re-triggering if the user closes and does something else
-      const url = new URL(window.location.href)
-      url.searchParams.delete('action')
-      url.searchParams.delete('standardId')
-      url.searchParams.delete('criterionId')
-      url.searchParams.delete('itemId')
-      url.searchParams.delete('type')
-      url.searchParams.delete('programId')
-      url.searchParams.delete('year')
-      window.history.replaceState({}, '', url.toString())
-    }
-  }, [searchParams, criteriaList, programs])
+        setIsModalOpen(true)
+        
+        const url = new URL(window.location.href)
+        url.searchParams.delete('action')
+        url.searchParams.delete('standardId')
+        url.searchParams.delete('criterionId')
+        url.searchParams.delete('itemId')
+        url.searchParams.delete('type')
+        url.searchParams.delete('programId')
+        url.searchParams.delete('year')
+        window.history.replaceState({}, '', url.toString())
+      }
+    };
+    handleAction();
+  }, [searchParams, programs])
 
   const filteredEvidencesList = evidences.filter(ev => {
     let match = true;
@@ -303,7 +323,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     }
   }
 
-  const openEditModal = (ev: Evidence) => {
+  const openEditModal = async (ev: Evidence) => {
+    await loadCriteriaIfNeeded()
     setEditingId(ev.id)
     setCriterionId(ev.criterion.name) // Not editable, just display
     setEvidenceItemId(ev.evidenceItem?.id || "") 
@@ -325,7 +346,8 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     setIsModalOpen(true)
   }
 
-  const openCreateModal = () => {
+  const openCreateModal = async () => {
+    await loadCriteriaIfNeeded()
     setEditingId(null)
     setCriterionId("")
     setEvidenceItemId("")
@@ -415,10 +437,11 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
       <div className="flex justify-end mb-6">
         <button 
           onClick={openCreateModal}
-          className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20"
+          disabled={isLoadingCriteria}
+          className="bg-[var(--primary)] text-white px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors shadow-md shadow-indigo-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <Plus size={18} />
-          Nộp minh chứng
+          {isLoadingCriteria ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+          {isLoadingCriteria ? "Đang tải dữ liệu..." : "Nộp minh chứng"}
         </button>
       </div>
 

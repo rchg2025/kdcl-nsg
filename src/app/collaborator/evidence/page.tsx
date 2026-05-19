@@ -1,12 +1,11 @@
 import { Suspense } from "react"
-import { getCollaboratorEvidences, getAllCriteriaForDropdown } from "@/actions/evidence"
+import { getCollaboratorEvidences } from "@/actions/evidence"
 import { getAllProgramsPublic } from "@/actions/category"
 import ClientEvidenceList from "./ClientEvidenceList"
 
 export default async function EvidencePage() {
-  const [evidences, criteriaList, programs] = await Promise.all([
+  const [evidences, programs] = await Promise.all([
     getCollaboratorEvidences(),
-    getAllCriteriaForDropdown(),
     getAllProgramsPublic()
   ])
 
@@ -20,7 +19,7 @@ export default async function EvidencePage() {
       </div>
       
       <Suspense fallback={<div>Đang tải...</div>}>
-        <ClientEvidenceList initialEvidences={evidences} criteriaList={criteriaList} programs={programs} />
+        <ClientEvidenceList initialEvidences={evidences} programs={programs} />
       </Suspense>
     </div>
   )
