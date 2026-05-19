@@ -96,6 +96,9 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
   const [searchEvProgramName, setSearchEvProgramName] = useState("")
   const [showEvProgramDropdown, setShowEvProgramDropdown] = useState(false)
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
   const listAvailableYears = Array.from(new Set(evidences.map(ev => ev.criterion?.standard?.year).filter(Boolean))).sort((a,b) => Number(b) - Number(a)) as number[]
 
   const searchParams = useSearchParams()
@@ -176,6 +179,16 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
     }
     return match;
   });
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchEv, filterEvYear, filterEvStatus, filterEvType, filterEvProgramId])
+
+  const totalPages = Math.ceil(filteredEvidencesList.length / itemsPerPage)
+  const paginatedEvidencesList = filteredEvidencesList.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   const baseFilteredCriteria = criteriaList.filter(c => {
     if (selectedYear !== "" && c.standard.year !== selectedYear) return false
@@ -504,7 +517,7 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
             <p className="text-slate-500 text-sm mt-1 max-w-sm">Bạn chưa tải lên hay báo cáo minh chứng nào.</p>
           </div>
         ) : (
-          filteredEvidencesList.map((ev) => (
+          paginatedEvidencesList.map((ev) => (
             <div key={ev.id} id={`ev-${ev.id}`} className="glass rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
@@ -591,6 +604,42 @@ export default function ClientEvidenceList({ initialEvidences, criteriaList, pro
           ))
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
+          >
+            Trước
+          </button>
+          
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+                  currentPage === page 
+                    ? 'bg-[var(--primary)] text-white' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
+          >
+            Sau
+          </button>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">

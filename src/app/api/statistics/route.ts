@@ -144,10 +144,6 @@ export async function GET(request: Request) {
       })).filter(s => s.criteria.length > 0)
     }
 
-    // Debug logging for production
-    const totalItems = result.reduce((sum: number, s: any) => sum + s.criteria.reduce((s2: number, c: any) => s2 + (c.items?.length || 0), 0), 0)
-    console.log(`[STATS-API] user=${userId} role=${role} type=${typeStr || 'ALL'} year=${yearStr || 'ALL'} standards=${result.length} totalItems=${totalItems}`)
-
     return NextResponse.json(result)
   } catch (error: any) {
     console.error("Statistics API Error:", error)

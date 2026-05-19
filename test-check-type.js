@@ -4,75 +4,17 @@ const p = new PrismaClient()
 async function main() {
   const u = await p.user.findUnique({
     where: { email: 'phamminh@nsg.edu.vn' },
-    select: { id: true, departmentId: true, department: { select: { name: true } } }
+    select: { id: true, departmentId: true }
   })
-  console.log('User dept:', u.department?.name, '| ID:', u.departmentId)
-
   const deptId = u.departmentId
 
-  // Count all standards by type
-  const allStandards = await p.standard.findMany({
-    select: { id: true, name: true, type: true, year: true, _count: { select: { criteria: true } } }
+  // Check permissions
+  const perms = await p.userPermission.findMany({
+    where: { userId: u.id, permissionType: 'CRITERION' }
   })
-  console.log('\n=== ALL STANDARDS IN DB ===')
-  allStandards.forEach(s => {
-    console.log(`  [${s.year}][${s.type}] ${s.name} (${s._count.criteria} criteria)`)
-  })
+  console.log('User permissions:', perms.length)
 
-  // Check INSTITUTIONAL items with NO department (these match getNoDeptCondition)
-  const instItemsNoDept = await p.evidenceItem.findMany({
-    where: {
-      departments: { none: {} },
-      criterion: { standard: { type: 'INSTITUTIONAL' } }
-    },
-    select: {
-      id: true, name: true, sharedFromId: true,
-      criterion: { select: { name: true, standard: { select: { name: true, year: true, type: true } } } },
-      sharedFrom: { select: { name: true, departments: { select: { name: true } } } }
-    }
-  })
-  console.log('\n=== INSTITUTIONAL ITEMS WITH NO DEPARTMENT ===')
-  console.log('Count:', instItemsNoDept.length)
-  instItemsNoDept.forEach(i => {
-    const sf = i.sharedFrom ? `sharedFrom: ${i.sharedFrom.name} (depts: ${i.sharedFrom.departments.map(d => d.name).join(', ') || 'none'})` : 'ROOT'
-    console.log(`  - ${i.name} | ${sf}`)
-    console.log(`    Standard: [${i.criterion.standard.year}] ${i.criterion.standard.name}`)
-  })
-
-  // Check INSTITUTIONAL items assigned to this department
-  const instItemsDept = await p.evidenceItem.findMany({
-    where: {
-      departments: { some: { id: deptId } },
-      criterion: { standard: { type: 'INSTITUTIONAL' } }
-    },
-    select: { id: true, name: true }
-  })
-  console.log('\n=== INSTITUTIONAL ITEMS ASSIGNED TO THIS DEPT ===')
-  console.log('Count:', instItemsDept.length)
-  instItemsDept.forEach(i => console.log(`  - ${i.name}`))
-
-  // Check INSTITUTIONAL items via sharedFrom chain to this department
-  const instItemsShared = await p.evidenceItem.findMany({
-    where: {
-      criterion: { standard: { type: 'INSTITUTIONAL' } },
-      OR: [
-        { sharedFrom: { departments: { some: { id: deptId } } } },
-        { sharedFrom: { sharedFrom: { departments: { some: { id: deptId } } } } },
-      ]
-    },
-    select: {
-      id: true, name: true,
-      criterion: { select: { name: true, standard: { select: { name: true } } } },
-      sharedFrom: { select: { name: true, departments: { select: { name: true } } } }
-    }
-  })
-  console.log('\n=== INSTITUTIONAL ITEMS VIA SHAREDFROM TO THIS DEPT ===')
-  console.log('Count:', instItemsShared.length)
-  instItemsShared.forEach(i => {
-    console.log(`  - ${i.name} | sharedFrom: ${i.sharedFrom?.name} (${i.sharedFrom?.departments.map(d => d.name).join(', ')})`)
-  })
-
-  // Now simulate EXACTLY what the API does for "all types" (no type filter)
+  // Build same query as statistics API
   const hasDept = {
     OR: [
       { departments: { some: { id: deptId } } },
@@ -95,39 +37,117 @@ async function main() {
   }
 
   const itemsWhere = { OR: [hasDept, getNoDeptCondition(5)] }
-
-  // Count how many items match itemsWhere for each type
-  const matchingItemsAll = await p.evidenceItem.count({ where: itemsWhere })
-  const matchingItemsInst = await p.evidenceItem.count({ 
-    where: { ...itemsWhere, criterion: { standard: { type: 'INSTITUTIONAL' } } } 
-  })
-  const matchingItemsProg = await p.evidenceItem.count({ 
-    where: { ...itemsWhere, criterion: { standard: { type: 'PROGRAM' } } } 
-  })
-  
-  console.log('\n=== ITEMS MATCHING itemsWhere (what API returns) ===')
-  console.log('ALL types:', matchingItemsAll)
-  console.log('INSTITUTIONAL:', matchingItemsInst)
-  console.log('PROGRAM:', matchingItemsProg)
-
-  // List the INSTITUTIONAL ones
-  if (matchingItemsInst > 0) {
-    const instMatches = await p.evidenceItem.findMany({
-      where: { ...itemsWhere, criterion: { standard: { type: 'INSTITUTIONAL' } } },
-      select: { 
-        id: true, name: true,
-        departments: { select: { name: true } },
-        sharedFromId: true,
-        criterion: { select: { name: true, standard: { select: { name: true, year: true } } } }
-      }
-    })
-    console.log('\nINSTITUTIONAL items details:')
-    instMatches.forEach(i => {
-      const depts = i.departments.map(d => d.name).join(', ') || 'NONE'
-      console.log(`  - ${i.name} | depts: ${depts} | shared: ${i.sharedFromId ? 'yes' : 'no'}`)
-      console.log(`    Standard: [${i.criterion.standard.year}] ${i.criterion.standard.name}`)
-    })
+  const allowedIds = perms.map(pr => pr.resourceId)
+  const criteriaWhere = {
+    OR: [
+      { id: { in: allowedIds } },
+      { items: { some: itemsWhere } }
+    ]
   }
+
+  // Query WITHOUT type filter (all types)
+  const stds = await p.standard.findMany({
+    orderBy: [{ year: 'desc' }, { name: 'asc' }],
+    select: {
+      id: true, name: true, year: true, type: true,
+      criteria: {
+        where: criteriaWhere,
+        select: {
+          id: true, name: true,
+          items: {
+            where: itemsWhere,
+            select: { id: true, name: true }
+          }
+        }
+      }
+    }
+  })
+
+  // Apply same filter as API
+  const result = stds.map(s => ({
+    ...s,
+    criteria: s.criteria.filter(c => c.items.length > 0)
+  })).filter(s => s.criteria.length > 0)
+
+  let totalItems = 0
+  console.log('\n=== ALL TYPES (no filter) ===')
+  result.forEach(s => {
+    const itemCount = s.criteria.reduce((sum, c) => sum + c.items.length, 0)
+    totalItems += itemCount
+    console.log(`  [${s.year}][${s.type}] ${s.name} → ${s.criteria.length} criteria, ${itemCount} items`)
+  })
+  console.log('TOTAL items (all types):', totalItems)
+
+  // Query WITH INSTITUTIONAL filter  
+  const stdsInst = await p.standard.findMany({
+    where: { type: 'INSTITUTIONAL' },
+    orderBy: [{ year: 'desc' }, { name: 'asc' }],
+    select: {
+      id: true, name: true, year: true, type: true,
+      criteria: {
+        where: criteriaWhere,
+        select: {
+          id: true, name: true,
+          items: {
+            where: itemsWhere,
+            select: { id: true, name: true }
+          }
+        }
+      }
+    }
+  })
+
+  const resultInst = stdsInst.map(s => ({
+    ...s,
+    criteria: s.criteria.filter(c => c.items.length > 0)
+  })).filter(s => s.criteria.length > 0)
+
+  let totalInst = 0
+  console.log('\n=== INSTITUTIONAL ONLY ===')
+  resultInst.forEach(s => {
+    const itemCount = s.criteria.reduce((sum, c) => sum + c.items.length, 0)
+    totalInst += itemCount
+    console.log(`  [${s.year}][${s.type}] ${s.name} → ${s.criteria.length} criteria, ${itemCount} items`)
+    s.criteria.forEach(c => {
+      c.items.forEach(i => {
+        console.log(`    - ${i.name}`)
+      })
+    })
+  })
+  console.log('TOTAL items (INSTITUTIONAL):', totalInst)
+
+  // Query WITH PROGRAM filter  
+  const stdsProg = await p.standard.findMany({
+    where: { type: 'PROGRAM' },
+    orderBy: [{ year: 'desc' }, { name: 'asc' }],
+    select: {
+      id: true, name: true, year: true, type: true,
+      criteria: {
+        where: criteriaWhere,
+        select: {
+          id: true, name: true,
+          items: {
+            where: itemsWhere,
+            select: { id: true, name: true }
+          }
+        }
+      }
+    }
+  })
+
+  const resultProg = stdsProg.map(s => ({
+    ...s,
+    criteria: s.criteria.filter(c => c.items.length > 0)
+  })).filter(s => s.criteria.length > 0)
+
+  let totalProg = 0
+  console.log('\n=== PROGRAM ONLY ===')
+  resultProg.forEach(s => {
+    const itemCount = s.criteria.reduce((sum, c) => sum + c.items.length, 0)
+    totalProg += itemCount
+    console.log(`  [${s.year}][${s.type}] ${s.name} → ${s.criteria.length} criteria, ${itemCount} items`)
+  })
+  console.log('TOTAL items (PROGRAM):', totalProg)
 }
 
 main().catch(console.error).finally(() => p.$disconnect())
