@@ -5,6 +5,7 @@ import { createStandard, updateStandard, deleteStandard, cloneStandard } from "@
 import { createCriterion, updateCriterion, deleteCriterion } from "@/actions/criterion"
 import { getAllDepartmentsPublic } from "@/actions/category"
 import { Plus, Folder, Trash2, Edit, ChevronDown, ChevronRight, Loader2, ListTodo, Search, Filter, ChevronLeft, ChevronRight as ChevronRightIcon, CopyPlus, Link2, Copy, Check } from "lucide-react"
+import { smartSearch } from "@/lib/utils"
 import SharedEvidenceSelectorModal from "./SharedEvidenceSelectorModal"
 
 type EvidenceItem = {
@@ -410,34 +411,45 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
     setExpandedStds(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  const filteredStandards = standards.filter(s => {
-    const term = searchName.toLowerCase()
-    const matchName = !searchName || 
-      s.name.toLowerCase().includes(term) ||
-      s.criteria.some(c => 
-        c.name.toLowerCase().includes(term) || 
-        c.items.some(i => i.name.toLowerCase().includes(term))
-      )
-    const matchYear = !searchYear || s.year.toString() === searchYear
-    const matchType = filterType === "ALL" || s.type === filterType
-    const matchProgram = filterType !== "PROGRAM" || filterProgramId === "ALL" || s.programId === filterProgramId
-    return matchName && matchYear && matchType && matchProgram
-  })
+  const filteredStandards = useMemo(() => {
+    let result = standards.map(s => {
+      const matchYear = !searchYear || s.year.toString() === searchYear
+      const matchType = filterType === "ALL" || s.type === filterType
+      const matchProgram = filterType !== "PROGRAM" || filterProgramId === "ALL" || s.programId === filterProgramId
+      if (!(matchYear && matchType && matchProgram)) return { standard: s, score: 0 }
+
+      let scoreName = 100
+      if (searchName) {
+        const sScore = smartSearch(s.name, searchName)
+        const cScores = s.criteria.map(c => {
+          const itemScores = c.items.map(i => smartSearch(i.name, searchName))
+          return Math.max(smartSearch(c.name, searchName), itemScores.length > 0 ? Math.max(...itemScores) : 0)
+        })
+        scoreName = Math.max(sScore, cScores.length > 0 ? Math.max(...cScores) : 0)
+      }
+      return { standard: s, score: scoreName }
+    }).filter(item => item.score > 0)
+    
+    result.sort((a, b) => b.score - a.score)
+    return result.map(item => item.standard)
+  }, [standards, searchName, searchYear, filterType, filterProgramId])
 
   const globalSearchResults = useMemo(() => {
     if (!globalSearchQuery.trim()) return []
-    const q = globalSearchQuery.toLowerCase()
     const results: any[] = []
     standards.forEach(s => {
-      if (s.name.toLowerCase().includes(q)) results.push({ type: 'Tiêu chí', path: s.name, name: s.name, id: s.id, parentStdId: s.id })
+      const sScore = smartSearch(s.name, globalSearchQuery)
+      if (sScore > 0) results.push({ type: 'Tiêu chuẩn', path: s.name, name: s.name, id: s.id, parentStdId: s.id, score: sScore })
       s.criteria.forEach(c => {
-        if (c.name.toLowerCase().includes(q)) results.push({ type: 'Tiêu chuẩn', path: `${s.name} > ${c.name}`, name: c.name, id: c.id, parentStdId: s.id })
+        const cScore = smartSearch(c.name, globalSearchQuery)
+        if (cScore > 0) results.push({ type: 'Tiêu chí', path: `${s.name} > ${c.name}`, name: c.name, id: c.id, parentStdId: s.id, score: cScore })
         c.items.forEach(i => {
-          if (i.name.toLowerCase().includes(q)) results.push({ type: 'Minh chứng', path: `${s.name} > ${c.name} > ${i.name}`, name: i.name, id: i.id, parentStdId: s.id })
+          const iScore = smartSearch(i.name, globalSearchQuery)
+          if (iScore > 0) results.push({ type: 'Mốc chuẩn', path: `${s.name} > ${c.name} > ${i.name}`, name: i.name, id: i.id, parentStdId: s.id, score: iScore })
         })
       })
     })
-    return results.slice(0, 50)
+    return results.sort((a, b) => b.score - a.score).slice(0, 50)
   }, [globalSearchQuery, standards])
 
   // Reset page when filter changes
@@ -823,10 +835,12 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                       />
                       {showProgramDropdown && (
                         <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                          {initialPrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
-                             <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành phù hợp</div>
+                          {initialPrograms.filter(p => smartSearch(p.name, searchProgram) > 0).length === 0 ? (
+                             <div className="px-4 py-3 text-sm text-slate-500 italic text-center">Không tìm thấy</div>
                           ) : (
-                             initialPrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map((p: any) => (
+                             initialPrograms.filter(p => smartSearch(p.name, searchProgram) > 0)
+                              .sort((a, b) => smartSearch(b.name, searchProgram) - smartSearch(a.name, searchProgram))
+                              .map((p: any) => (
                                <div 
                                  key={p.id}
                                  onClick={() => {
@@ -1004,10 +1018,12 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                       />
                       {showCloneProgramDropdown && (
                         <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                          {initialPrograms.filter((p:any) => p.name.toLowerCase().includes(searchCloneProgram.toLowerCase())).length === 0 ? (
-                             <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy</div>
+                          {initialPrograms.filter((p:any) => smartSearch(p.name, searchCloneProgram) > 0).length === 0 ? (
+                            <div className="px-4 py-3 text-sm text-slate-500 italic text-center">Không tìm thấy</div>
                           ) : (
-                             initialPrograms.filter((p:any) => p.name.toLowerCase().includes(searchCloneProgram.toLowerCase())).map((p: any) => (
+                             initialPrograms.filter((p:any) => smartSearch(p.name, searchCloneProgram) > 0)
+                              .sort((a, b) => smartSearch(b.name, searchCloneProgram) - smartSearch(a.name, searchCloneProgram))
+                              .map((p: any) => (
                                <div 
                                  key={p.id}
                                  onClick={() => {

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { CheckCircle2, Clock, AlertCircle, FileText, UserCircle, Search, Filter, CheckSquare, XSquare, Loader2, XCircle, Link2 } from "lucide-react"
 import { evaluateEvidence } from "@/actions/investigator"
 import FileAttachments from "@/components/FileAttachments"
+import { smartSearch } from "@/lib/utils"
 
 export default function ClientInvestigatorEvidenceList({ initialEvidences, programs = [] }: { initialEvidences: any[], programs?: any[] }) {
   // Filter & Pagination States
@@ -51,14 +52,8 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
   const availableYears = Array.from(new Set(initialEvidences.map(ev => ev.criterion.standard.year)))
 
   // --- FILTERING ---
-  const filteredEvidences = initialEvidences.filter(ev => {
+  const filteredEvidences = initialEvidences.map(ev => {
     let match = true
-    if (searchUser) {
-      match = match && ev.collaborator?.name?.toLowerCase().includes(searchUser.toLowerCase())
-    }
-    if (searchKeyword) {
-      match = match && ev.criterion.standard.name.toLowerCase().includes(searchKeyword.toLowerCase())
-    }
     if (filterYear !== "ALL") {
       match = match && ev.criterion.standard.year.toString() === filterYear
     }
@@ -68,8 +63,19 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
     if (filterType === "PROGRAM" && filterProgramId) {
       match = match && ev.criterion.standard.programId === filterProgramId
     }
-    return match
-  })
+    if (!match) return { ev, score: 0 }
+
+    let score = 100
+    if (searchUser) {
+      score = Math.min(score, smartSearch(ev.collaborator?.name, searchUser))
+    }
+    if (searchKeyword && score > 0) {
+      score = Math.min(score, smartSearch(ev.criterion.standard.name, searchKeyword))
+    }
+    return { ev, score }
+  }).filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.ev)
 
   // --- PAGINATION ---
   const totalPages = Math.max(1, Math.ceil(filteredEvidences.length / itemsPerPage))
@@ -158,10 +164,12 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
               />
               {showProgramDropdown && (
                 <div className="absolute z-10 w-[300px] right-0 mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                  {programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).length === 0 ? (
+                  {programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0).length === 0 ? (
                     <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                   ) : (
-                    programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).map((p:any) => (
+                    programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0)
+                      .sort((a, b) => smartSearch(b.name, searchProgramName) - smartSearch(a.name, searchProgramName))
+                      .map((p:any) => (
                       <div 
                         key={p.id} 
                         onClick={() => {

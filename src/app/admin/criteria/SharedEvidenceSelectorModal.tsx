@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { Search, X, Check, Link2 } from "lucide-react"
+import { smartSearch } from "@/lib/utils"
 
 type SharedEvidenceSelectorModalProps = {
   isOpen: boolean
@@ -185,7 +186,8 @@ export default function SharedEvidenceSelectorModal({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        const matches = availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase()));
+                        const matches = availablePrograms.filter(p => smartSearch(p.name, searchProgram) > 0)
+                          .sort((a, b) => smartSearch(b.name, searchProgram) - smartSearch(a.name, searchProgram));
                         if (matches.length > 0) {
                           setSelectedProgramId(matches[0].id);
                           setSearchProgram(matches[0].name);
@@ -203,10 +205,12 @@ export default function SharedEvidenceSelectorModal({
                   {selectedProgramId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                   {showProgramDropdown && (
                     <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                      {availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).length === 0 ? (
+                      {availablePrograms.filter(p => smartSearch(p.name, searchProgram) > 0).length === 0 ? (
                         <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                       ) : (
-                        availablePrograms.filter(p => p.name.toLowerCase().includes(searchProgram.toLowerCase())).map(p => (
+                        availablePrograms.filter(p => smartSearch(p.name, searchProgram) > 0)
+                          .sort((a, b) => smartSearch(b.name, searchProgram) - smartSearch(a.name, searchProgram))
+                          .map(p => (
                           <div 
                             key={p.id} 
                             onMouseDown={(e) => e.preventDefault()}
@@ -247,7 +251,8 @@ export default function SharedEvidenceSelectorModal({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      const matches = availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase()));
+                      const matches = availableStandards.filter(s => smartSearch(s.name, searchStandard) > 0)
+                        .sort((a, b) => smartSearch(b.name, searchStandard) - smartSearch(a.name, searchStandard));
                       if (matches.length > 0) {
                         setSelectedStandardId(matches[0].id);
                         setSearchStandard(`${matches[0].year} - ${matches[0].name}`);
@@ -265,13 +270,15 @@ export default function SharedEvidenceSelectorModal({
                 {selectedStandardId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                 {showStandardDropdown && (
                   <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                    {availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).length === 0 ? (
+                    {availableStandards.filter(s => smartSearch(s.name, searchStandard) > 0).length === 0 ? (
                       <div className="p-4 text-sm text-slate-500 text-center">
                         <span className="text-amber-500 font-semibold mb-1 block">⚠ Không có tiêu chí nào có thể chọn</span>
                         (Lý do: Chưa có "Danh mục minh chứng" nào được tạo cho tiêu chí này. Vui lòng tạo danh mục trước khi dùng chung)
                       </div>
                     ) : (
-                      availableStandards.filter(s => s.name.toLowerCase().includes(searchStandard.toLowerCase())).map(s => (
+                      availableStandards.filter(s => smartSearch(s.name, searchStandard) > 0)
+                        .sort((a, b) => smartSearch(b.name, searchStandard) - smartSearch(a.name, searchStandard))
+                        .map(s => (
                         <div 
                           key={s.id} 
                           onMouseDown={(e) => e.preventDefault()}
@@ -308,7 +315,8 @@ export default function SharedEvidenceSelectorModal({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      const matches = availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase()));
+                      const matches = availableCriteria.filter(c => smartSearch(c.name, searchCriterion) > 0)
+                        .sort((a, b) => smartSearch(b.name, searchCriterion) - smartSearch(a.name, searchCriterion));
                       if (matches.length > 0) {
                         setSelectedCriterionId(matches[0].id);
                         setSearchCriterion(matches[0].name);
@@ -327,13 +335,15 @@ export default function SharedEvidenceSelectorModal({
                 {selectedCriterionId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                 {showCriterionDropdown && selectedStandardId && (
                   <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                    {availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).length === 0 ? (
+                    {availableCriteria.filter(c => smartSearch(c.name, searchCriterion) > 0).length === 0 ? (
                       <div className="p-4 text-sm text-slate-500 text-center">
                         <span className="text-amber-500 font-semibold mb-1 block">⚠ Không tìm thấy tiêu chuẩn</span>
                         (Lý do: Chưa có danh mục minh chứng nào được tạo cho tiêu chuẩn này)
                       </div>
                     ) : (
-                      availableCriteria.filter(c => c.name.toLowerCase().includes(searchCriterion.toLowerCase())).map(c => (
+                      availableCriteria.filter(c => smartSearch(c.name, searchCriterion) > 0)
+                        .sort((a, b) => smartSearch(b.name, searchCriterion) - smartSearch(a.name, searchCriterion))
+                        .map(c => (
                         <div 
                           key={c.id} 
                           onMouseDown={(e) => e.preventDefault()}
@@ -370,7 +380,8 @@ export default function SharedEvidenceSelectorModal({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    const matches = availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase()));
+                    const matches = availableItems.filter(i => smartSearch(i.name, searchItem) > 0)
+                      .sort((a, b) => smartSearch(b.name, searchItem) - smartSearch(a.name, searchItem));
                     if (matches.length > 0) {
                       setSelectedEvidenceItemId(matches[0].id);
                       setSearchItem(matches[0].name);
@@ -389,10 +400,12 @@ export default function SharedEvidenceSelectorModal({
               {selectedEvidenceItemId && <Check size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
               {showItemDropdown && selectedCriterionId && (
                 <div className="absolute z-[110] w-full mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                  {availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).length === 0 ? (
+                  {availableItems.filter(i => smartSearch(i.name, searchItem) > 0).length === 0 ? (
                     <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy danh mục phù hợp</div>
                   ) : (
-                    availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase())).map(i => (
+                    availableItems.filter(i => smartSearch(i.name, searchItem) > 0)
+                      .sort((a, b) => smartSearch(b.name, searchItem) - smartSearch(a.name, searchItem))
+                      .map(i => (
                       <div 
                         key={i.id} 
                         onMouseDown={(e) => e.preventDefault()}

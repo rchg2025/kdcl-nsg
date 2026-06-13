@@ -4,6 +4,7 @@ import { useState } from "react"
 import { updateEvidenceStatus, deleteEvidenceAsAdmin } from "@/actions/supervisor"
 import { Loader2, CheckCircle2, Clock, AlertCircle, FileText, UserCircle, XCircle, Edit2, Search, Filter, Calendar, Link2 } from "lucide-react"
 import { EvidenceStatus } from "@prisma/client"
+import { smartSearch } from "@/lib/utils"
 import FileAttachments from "@/components/FileAttachments"
 
 export default function ClientReviewList({ initialEvidences, programs = [], isAdmin = false }: { initialEvidences: any[], programs?: any[], isAdmin?: boolean }) {
@@ -96,18 +97,8 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
   }
 
   // --- FILTERING ---
-  const filteredEvidences = evidences.filter(ev => {
+  const filteredEvidences = evidences.map(ev => {
     let match = true
-    if (searchUser) {
-      const q = searchUser.toLowerCase()
-      const nameMatch = ev.collaborator?.name?.toLowerCase().includes(q)
-      const emailMatch = ev.collaborator?.email?.toLowerCase().includes(q)
-      const criterionMatch = ev.criterion?.name?.toLowerCase().includes(q)
-      const stdMatch = ev.criterion?.standard?.name?.toLowerCase().includes(q)
-      const itemMatch = ev.evidenceItem?.name?.toLowerCase().includes(q)
-      
-      match = match && (nameMatch || emailMatch || criterionMatch || stdMatch || itemMatch)
-    }
     if (searchDepartment !== "ALL") {
       match = match && ev.collaborator?.department?.name === searchDepartment
     }
@@ -131,8 +122,22 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
       endD.setHours(23, 59, 59, 999)
       match = match && new Date(ev.createdAt) <= endD
     }
-    return match
-  })
+    if (!match) return { ev, score: 0 }
+
+    let score = 100
+    if (searchUser) {
+      score = Math.max(
+        smartSearch(ev.collaborator?.name, searchUser),
+        smartSearch(ev.collaborator?.email, searchUser),
+        smartSearch(ev.criterion?.name, searchUser),
+        smartSearch(ev.criterion?.standard?.name, searchUser),
+        smartSearch(ev.evidenceItem?.name, searchUser)
+      )
+    }
+    return { ev, score }
+  }).filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.ev)
 
   // --- PAGINATION ---
   const totalPages = Math.max(1, Math.ceil(filteredEvidences.length / itemsPerPage))
@@ -206,10 +211,12 @@ export default function ClientReviewList({ initialEvidences, programs = [], isAd
               />
               {showProgramDropdown && (
                 <div className="absolute z-10 w-[300px] left-0 mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                  {programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).length === 0 ? (
+                  {programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0).length === 0 ? (
                     <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                   ) : (
-                    programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).map((p:any) => (
+                    programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0)
+                      .sort((a, b) => smartSearch(b.name, searchProgramName) - smartSearch(a.name, searchProgramName))
+                      .map((p:any) => (
                       <div 
                         key={p.id} 
                         onClick={() => {

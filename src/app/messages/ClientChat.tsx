@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { getMessages, sendMessage, startDirectConversation, getConversations, createGroupConversation, markAsRead, deleteConversation } from "@/actions/chat"
-import { Search, Send, Users, Circle, Plus, X, Upload, File as FileIcon, Trash2, ShieldCheck, Home, Loader2, MessageSquare } from "lucide-react"
-import { getDirectImageUrl } from "@/lib/utils"
+import { Plus, Send, X, Users, MessageSquare, ArrowLeft, MoreVertical, Image as ImageIcon, FileText, Download, Check, CheckCheck, Loader2, Home } from "lucide-react"
+import { getDirectImageUrl, smartSearch } from "@/lib/utils"
 import Link from "next/link"
 
 function playNotification() {
@@ -267,7 +267,18 @@ export default function ClientChat({ currentUserId, initialConversations, users 
     return diff < 120000 // 2 minutes
   }
 
-  const filteredUsers = users.filter((u: any) => u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()))
+  const filteredUsers = useMemo(() => {
+    let result = users.map((u: any) => {
+      let scoreName = 100
+      if (search) {
+        scoreName = Math.max(smartSearch(u.name, search), smartSearch(u.email, search))
+      }
+      return { user: u, score: scoreName }
+    }).filter(item => item.score > 0)
+    
+    result.sort((a, b) => b.score - a.score)
+    return result.map(item => item.user)
+  }, [users, search])
   
   // Find current active conversation name safely
   const currentConvData = conversations.find((c: any) => c.id === activeConv)

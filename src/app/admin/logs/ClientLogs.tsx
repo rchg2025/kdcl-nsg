@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { deleteSystemLogs } from "@/actions/log"
 import { Clock, ShieldAlert, FileText, UserPlus, FileEdit, Trash2, CheckCircle2, Search, Download, ChevronLeft, ChevronRight, CalendarDays, Users, Filter, Loader2 } from "lucide-react"
+import { smartSearch } from "@/lib/utils"
 
 type LogItem = {
   id: string
@@ -53,10 +54,11 @@ export default function ClientLogs({ logs }: { logs: LogItem[] }) {
     let result = logs
 
     if (filterKeyword) {
-      const lower = filterKeyword.toLowerCase()
       result = result.filter(l => 
-        l.user?.email?.toLowerCase().includes(lower) || 
-        l.user?.name?.toLowerCase().includes(lower)
+        Math.max(
+          smartSearch(l.user?.email, filterKeyword),
+          smartSearch(l.user?.name, filterKeyword)
+        ) > 0
       )
     }
 

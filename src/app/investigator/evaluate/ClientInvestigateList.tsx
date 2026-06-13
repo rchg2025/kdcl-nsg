@@ -4,6 +4,7 @@ import { useState } from "react"
 import { evaluateEvidence } from "@/actions/investigator"
 import { Loader2, Search, CheckSquare, XSquare, FileText, Filter, XCircle, AlertCircle } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
+import { smartSearch } from "@/lib/utils"
 
 export default function ClientInvestigateList({ initialEvidences, programs = [] }: { initialEvidences: any[], programs?: {id: string; name: string}[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
@@ -40,7 +41,7 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
   // Danh sách năm
   const availableYears = Array.from(new Set(initialEvidences.map(ev => ev.criterion.standard.year)))
 
-  const filteredEvidences = initialEvidences.filter(ev => {
+  const filteredEvidences = initialEvidences.map(ev => {
     let match = true
     if (filterYear !== "ALL") {
       match = match && ev.criterion.standard.year.toString() === filterYear
@@ -51,11 +52,16 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
     if (filterType === "PROGRAM" && filterProgramId) {
       match = match && ev.criterion.standard.programId === filterProgramId
     }
+    if (!match) return { ev, score: 0 }
+
+    let score = 100
     if (searchKeyword) {
-      match = match && ev.criterion.standard.name.toLowerCase().includes(searchKeyword.toLowerCase())
+      score = smartSearch(ev.criterion.standard.name, searchKeyword)
     }
-    return match;
-  })
+    return { ev, score }
+  }).filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.ev)
 
   const pendingEvaluationCount = initialEvidences.filter(ev => 
     !ev.evaluations || ev.evaluations.length === 0 || !ev.evaluations[ev.evaluations.length - 1].isApproved
@@ -162,10 +168,12 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
               />
               {showProgramDropdown && (
                 <div className="absolute z-10 w-[300px] right-0 mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-                  {programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).length === 0 ? (
+                  {programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0).length === 0 ? (
                     <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                   ) : (
-                    programs.filter((p:any) => p.name.toLowerCase().includes(searchProgramName.toLowerCase())).map((p:any) => (
+                    programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0)
+                      .sort((a, b) => smartSearch(b.name, searchProgramName) - smartSearch(a.name, searchProgramName))
+                      .map((p:any) => (
                       <div 
                         key={p.id} 
                         onClick={() => {

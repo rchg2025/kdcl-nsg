@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { createUser, deleteUser, updateUser, toggleUserActive } from "@/actions/user"
-import { getDirectImageUrl } from "@/lib/utils"
+import { getDirectImageUrl, smartSearch } from "@/lib/utils"
 import { Plus, Trash2, Edit2, Loader2, KeyRound, Search, Filter, ChevronLeft, ChevronRight, Power, PowerOff } from "lucide-react"
 import Link from "next/link"
 
@@ -65,11 +65,21 @@ export default function ClientUserList({ initialUsers, departments, positions }:
     setIsModalOpen(true)
   }
 
-  const filteredUsers = users.filter(u => {
-    const matchName = !searchName || (u.name?.toLowerCase().includes(searchName.toLowerCase()) || u.email?.toLowerCase().includes(searchName.toLowerCase()))
-    const matchUnit = !searchUnit || u.departmentId === searchUnit
-    return matchName && matchUnit
-  })
+  const filteredUsers = useMemo(() => {
+    let result = users.map(u => {
+      const matchUnit = !searchUnit || u.departmentId === searchUnit
+      if (!matchUnit) return { user: u, score: 0 }
+      
+      const scoreName = searchName 
+        ? Math.max(smartSearch(u.name, searchName), smartSearch(u.email, searchName))
+        : 100
+      
+      return { user: u, score: scoreName }
+    }).filter(item => item.score > 0)
+
+    result.sort((a, b) => b.score - a.score)
+    return result.map(item => item.user)
+  }, [users, searchName, searchUnit])
 
   // Reset page when filter changes
   const handleFilterChange = (setter: any, val: string) => {

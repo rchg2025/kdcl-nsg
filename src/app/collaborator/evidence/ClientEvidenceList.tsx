@@ -175,30 +175,38 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
     handleAction();
   }, [searchParams, programs])
 
-  const filteredEvidencesList = evidences.filter(ev => {
-    let match = true;
-    if (searchEv) {
-       const q = searchEv.toLowerCase();
-       const criterionMatch = ev.criterion?.name?.toLowerCase().includes(q) ?? false;
-       const stdMatch = ev.criterion?.standard?.name?.toLowerCase().includes(q) ?? false;
-       const contentMatch = ev.content?.toLowerCase().includes(q) ?? false;
-       const itemMatch = ev.evidenceItem?.name?.toLowerCase().includes(q) ?? false;
-       match = match && (criterionMatch || stdMatch || contentMatch || itemMatch);
-    }
-    if (filterEvYear !== "ALL") {
-       match = match && ev.criterion?.standard?.year?.toString() === filterEvYear;
-    }
-    if (filterEvStatus !== "ALL") {
-       match = match && ev.status === filterEvStatus;
-    }
-    if (filterEvType !== "ALL") {
-       match = match && ev.criterion?.standard?.type === filterEvType;
-    }
-    if (filterEvType === "PROGRAM" && filterEvProgramId) {
-       match = match && ev.criterion?.standard?.programId === filterEvProgramId;
-    }
-    return match;
-  });
+  const filteredEvidencesList = useMemo(() => {
+    let result = evidences.map(ev => {
+      let match = true;
+      if (filterEvYear !== "ALL") {
+        match = match && ev.criterion?.standard?.year?.toString() === filterEvYear;
+      }
+      if (filterEvStatus !== "ALL") {
+        match = match && ev.status === filterEvStatus;
+      }
+      if (filterEvType !== "ALL") {
+        match = match && ev.criterion?.standard?.type === filterEvType;
+      }
+      if (filterEvType === "PROGRAM" && filterEvProgramId) {
+        match = match && ev.criterion?.standard?.programId === filterEvProgramId;
+      }
+      if (!match) return { ev, score: 0 };
+
+      let score = 100;
+      if (searchEv) {
+        score = Math.max(
+          smartSearch(ev.criterion?.name, searchEv),
+          smartSearch(ev.criterion?.standard?.name, searchEv),
+          smartSearch(ev.content, searchEv),
+          smartSearch(ev.evidenceItem?.name, searchEv)
+        );
+      }
+      return { ev, score };
+    }).filter(item => item.score > 0);
+
+    result.sort((a, b) => b.score - a.score);
+    return result.map(item => item.ev);
+  }, [evidences, searchEv, filterEvYear, filterEvStatus, filterEvType, filterEvProgramId]);
 
   useEffect(() => {
     setCurrentPage(1)
@@ -232,8 +240,8 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
   )
 
   const filteredStandards = availableStandards.filter(s => 
-    `${s.year} - ${s.name}`.toLowerCase().includes(searchStandardName.toLowerCase())
-  )
+    smartSearch(`${s.year} - ${s.name}`, searchStandardName) > 0
+  ).sort((a, b) => smartSearch(`${b.year} - ${b.name}`, searchStandardName) - smartSearch(`${a.year} - ${a.name}`, searchStandardName))
 
   // Filtered criteria based on selected standard for the 2nd dropdown
   const availableCriteriaForStandard = baseFilteredCriteria.filter(c => 
@@ -241,8 +249,8 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
   )
 
   const filteredCriteria = availableCriteriaForStandard.filter(c => 
-    c.name.toLowerCase().includes(searchCriterionName.toLowerCase())
-  )
+    smartSearch(c.name, searchCriterionName) > 0
+  ).sort((a, b) => smartSearch(b.name, searchCriterionName) - smartSearch(a.name, searchCriterionName))
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -372,7 +380,8 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
   
   const selectedCriterionData = criteriaList.find(c => c.id === criterionId)
   const availableItems = selectedCriterionData?.items || []
-  const filteredItems = availableItems.filter(i => i.name.toLowerCase().includes(searchItem.toLowerCase()))
+  const filteredItems = availableItems.filter(i => smartSearch(i.name, searchItem) > 0)
+    .sort((a, b) => smartSearch(b.name, searchItem) - smartSearch(a.name, searchItem))
   
   const selectedEvidenceItemData = availableItems.find(i => i.id === evidenceItemId)
   const effectiveSharedFromId = editingId ? editingSharedFromId : selectedEvidenceItemData?.sharedFromId
