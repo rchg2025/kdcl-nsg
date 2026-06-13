@@ -19,6 +19,7 @@ type UserInfo = {
   department?: Department | null
   position?: Position | null
   isActive: boolean
+  avatar: string | null
   createdAt: Date
 }
 
