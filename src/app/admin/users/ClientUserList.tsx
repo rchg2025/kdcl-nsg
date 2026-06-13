@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { createUser, deleteUser, updateUser, toggleUserActive } from "@/actions/user"
+import { getDirectImageUrl } from "@/lib/utils"
 import { Plus, Trash2, Edit2, Loader2, KeyRound, Search, Filter, ChevronLeft, ChevronRight, Power, PowerOff } from "lucide-react"
 import Link from "next/link"
 
@@ -188,8 +189,12 @@ export default function ClientUserList({ initialUsers, departments, positions }:
               <tr key={user.id} className="group">
                 <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-l-2xl border-y border-l border-slate-100 dark:border-slate-800 shadow-sm relative">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold relative ${user.isActive ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' : 'bg-red-50 dark:bg-red-900/20 text-red-400'}`}>
-                      {user.name?.[0] || user.email?.[0]?.toUpperCase()}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold relative overflow-hidden ${user.isActive ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' : 'bg-red-50 dark:bg-red-900/20 text-red-400'}`}>
+                      {user.avatar ? (
+                        <img src={getDirectImageUrl(user.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        user.name?.[0] || user.email?.[0]?.toUpperCase()
+                      )}
                       {!user.isActive && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></div>}
                     </div>
                     <div>

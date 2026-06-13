@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 import { getMessages, sendMessage, startDirectConversation, getConversations, createGroupConversation, markAsRead, deleteConversation } from "@/actions/chat"
-import { Search, Send, Circle, MessageSquare, Users, Plus, X, User as UserIcon, Home, Trash2, Loader2 } from "lucide-react"
+import { Search, Send, Users, Circle, Plus, X, Upload, File as FileIcon, Trash2, ShieldCheck } from "lucide-react"
+import { getDirectImageUrl } from "@/lib/utils"
 import Link from "next/link"
 
 function playNotification() {
@@ -335,8 +336,12 @@ export default function ClientChat({ currentUserId, initialConversations, users 
                     className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer group transition-colors relative pr-8 ${activeConv === conv.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'hover:bg-slate-200 dark:hover:bg-slate-800'}`}
                   >
                     <div className="relative shrink-0">
-                      <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold">
-                        {conv.isGroup ? <Users size={18} /> : name?.charAt(0).toUpperCase()}
+                      <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold overflow-hidden">
+                        {conv.isGroup ? <Users size={18} /> : (
+                          (!conv.isGroup && conv.participants.find((p: any) => p.userId !== currentUserId)?.user?.avatar) ? (
+                            <img src={getDirectImageUrl(conv.participants.find((p: any) => p.userId !== currentUserId)?.user?.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : name?.charAt(0).toUpperCase()
+                        )}
                       </div>
                       {!conv.isGroup && <Circle className={`absolute bottom-0 right-0 w-3 h-3 rounded-full fill-current ${online ? 'text-emerald-500' : 'text-slate-400'} border-2 border-white dark:border-slate-950`} />}
                     </div>
@@ -378,8 +383,10 @@ export default function ClientChat({ currentUserId, initialConversations, users 
                 className="flex items-center gap-3 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors"
               >
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold">
-                    {u.name?.charAt(0).toUpperCase()}
+                  <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold overflow-hidden">
+                    {u.avatar ? (
+                      <img src={getDirectImageUrl(u.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : u.name?.charAt(0).toUpperCase()}
                   </div>
                   <Circle className={`absolute bottom-0 right-0 w-3 h-3 rounded-full fill-current ${isOnline(u.lastSeenAt) ? 'text-emerald-500' : 'text-slate-400'} border-2 border-white dark:border-slate-950`} />
                 </div>
@@ -402,8 +409,12 @@ export default function ClientChat({ currentUserId, initialConversations, users 
                <button onClick={() => setActiveConv(null)} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                </button>
-               <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold">
-                  {currentConvData?.isGroup ? <Users size={18} /> : activeName?.charAt(0).toUpperCase()}
+               <div className="w-10 h-10 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-full flex items-center justify-center font-bold overflow-hidden">
+                  {currentConvData?.isGroup ? <Users size={18} /> : (
+                    currentConvData?.participants.find((p: any) => p.userId !== currentUserId)?.user?.avatar ? (
+                      <img src={getDirectImageUrl(currentConvData.participants.find((p: any) => p.userId !== currentUserId)?.user?.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : activeName?.charAt(0).toUpperCase()
+                  )}
                </div>
                <div>
                  <div className="font-bold text-lg leading-tight">{activeName}</div>

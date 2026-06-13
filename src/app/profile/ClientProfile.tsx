@@ -1,15 +1,42 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { updateMyProfile } from "@/actions/profile"
-import { User, Mail, Building, Briefcase, KeyRound, Loader2, Save, LogOut } from "lucide-react"
-import { signOut } from "next-auth/react"
+import { User, Mail, Building, Briefcase, KeyRound, Loader2, Save, LogOut, Camera } from "lucide-react"
+import { signOut, useSession } from "next-auth/react"
+import { getDirectImageUrl } from "@/lib/utils"
 
 export default function ClientProfile({ user }: { user: any }) {
   const [name, setName] = useState(user.name || "")
+  const [avatar, setAvatar] = useState(user.avatar || "")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { update: updateSession } = useSession()
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setAvatar(data.url)
+    } catch (err: any) {
+      alert(err.message || "Lỗi tải ảnh lên")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,7 +45,8 @@ export default function ClientProfile({ user }: { user: any }) {
     }
     setLoading(true)
     try {
-      await updateMyProfile({ name, oldPassword, newPassword })
+      await updateMyProfile({ name, avatar, oldPassword, newPassword })
+      await updateSession({ avatar })
       alert("Cập nhật thông tin thành công!")
       setOldPassword("")
       setNewPassword("")
@@ -32,9 +60,22 @@ export default function ClientProfile({ user }: { user: any }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="glass rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm md:col-span-1 flex flex-col items-center">
-        <div className="w-24 h-24 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-4xl font-bold shadow-lg mb-4">
-          {user.name?.[0] || user.email?.[0]?.toUpperCase()}
+        <div 
+          className="relative w-32 h-32 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-4xl font-bold shadow-lg mb-4 cursor-pointer group overflow-hidden"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {avatar ? (
+            <img src={getDirectImageUrl(avatar)} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span>{user.name?.[0] || user.email?.[0]?.toUpperCase()}</span>
+          )}
+          
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {uploading ? <Loader2 size={24} className="animate-spin" /> : <Camera size={24} />}
+          </div>
         </div>
+        <input type="file" hidden ref={fileInputRef} accept="image/*" onChange={handleAvatarChange} />
+        
         <h2 className="text-lg font-bold text-center">{user.name}</h2>
         <span className="px-3 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 text-xs font-bold rounded-full mt-2 tracking-wider">
           {user.role}

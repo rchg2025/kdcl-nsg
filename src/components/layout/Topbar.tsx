@@ -5,6 +5,7 @@ import { Bell, Menu, Search, UserCircle } from "lucide-react"
 
 import Link from "next/link"
 import { getUnreadNotificationCount } from "@/actions/notification"
+import { getDirectImageUrl } from "@/lib/utils"
 
 export default function Topbar({ user }: { user: any }) {
   const [notifCount, setNotifCount] = useState(0)
@@ -52,7 +53,11 @@ export default function Topbar({ user }: { user: any }) {
             <p className="text-sm font-semibold leading-none group-hover:text-[var(--primary)] transition-colors">{user?.name || "Người dùng"}</p>
             <p className="text-xs text-slate-500 mt-1">{user?.email}</p>
           </div>
-          <UserCircle size={32} className="text-slate-400 group-hover:text-[var(--primary)] transition-colors" />
+          {user?.avatar ? (
+            <img src={getDirectImageUrl(user.avatar)} alt="Avatar" className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <UserCircle size={32} className="text-slate-400 group-hover:text-[var(--primary)] transition-colors" />
+          )}
         </Link>
       </div>
     </header>

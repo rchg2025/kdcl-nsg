@@ -16,7 +16,7 @@ export async function getMyProfile() {
   })
 }
 
-export async function updateMyProfile(data: { name: string; oldPassword?: string; newPassword?: string }) {
+export async function updateMyProfile(data: { name: string; avatar?: string; oldPassword?: string; newPassword?: string }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
   
@@ -24,6 +24,7 @@ export async function updateMyProfile(data: { name: string; oldPassword?: string
   if (!user) throw new Error("User not found")
 
   const updateData: any = { name: data.name }
+  if (data.avatar !== undefined) updateData.avatar = data.avatar
 
   if (data.newPassword && data.oldPassword) {
      const isMatch = await bcrypt.compare(data.oldPassword, user.password || "")
