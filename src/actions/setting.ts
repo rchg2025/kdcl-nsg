@@ -14,6 +14,22 @@ export async function getSettings() {
   return obj
 }
 
+export async function getPublicSettings() {
+  // Only return safe settings needed for public display
+  const settings = await prisma.systemSetting.findMany({
+    where: {
+      key: {
+        in: ['LOGO_URL', 'OG_IMAGE_URL', 'SEO_TITLE', 'SEO_DESCRIPTION', 'GSC_CODE']
+      }
+    }
+  })
+  const obj: Record<string, string> = {}
+  settings.forEach(s => {
+    obj[s.key] = s.value
+  })
+  return obj
+}
+
 export async function updateSettings(data: Record<string, string>) {
   await checkAdmin()
   

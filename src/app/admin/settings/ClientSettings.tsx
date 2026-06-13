@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
 import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
+import { getDirectImageUrl } from "@/lib/utils"
 
 type TabId = 'seo' | 'drive' | 'smtp'
 
@@ -224,7 +225,7 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
                       </div>
                     ) : logoUrl ? (
                       <div className="flex flex-col items-center justify-center">
-                        <img src={logoUrl} alt="Logo" className="max-h-24 mb-4 object-contain" />
+                        <img src={getDirectImageUrl(logoUrl)} alt="Logo" className="max-h-24 mb-4 object-contain" />
                         <p className="text-xs text-slate-500 hover:text-[var(--primary)]">Click để tải ảnh khác</p>
                       </div>
                     ) : (
@@ -266,7 +267,7 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
                       </div>
                     ) : ogImageUrl ? (
                       <div className="flex flex-col items-center justify-center">
-                        <img src={ogImageUrl} alt="OG Image" className="max-h-24 mb-4 object-contain" />
+                        <img src={getDirectImageUrl(ogImageUrl)} alt="OG Image" className="max-h-24 mb-4 object-contain" />
                         <p className="text-xs text-slate-500 hover:text-[var(--primary)]">Click để tải ảnh khác</p>
                       </div>
                     ) : (

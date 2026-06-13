@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation"
 import { getTotalUnreadCount } from "@/actions/chat"
 import { getNotifications, getUnreadNotificationCount, markNotificationsRead } from "@/actions/notification"
 import { getPendingEvidenceCount, getRejectedEvaluationsCount } from "@/actions/supervisor"
+import { getPublicSettings } from "@/actions/setting"
+import { getDirectImageUrl } from "@/lib/utils"
 import { 
   LayoutDashboard, 
   Users, 
@@ -93,11 +95,20 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
   const notifRef = useRef<HTMLDivElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [logoUrl, setLogoUrl] = useState("")
 
   useEffect(() => {
     const handleToggle = () => setIsOpen(prev => !prev)
     window.addEventListener('toggle-sidebar', handleToggle)
     return () => window.removeEventListener('toggle-sidebar', handleToggle)
+  }, [])
+
+  useEffect(() => {
+    getPublicSettings().then(settings => {
+      if (settings["LOGO_URL"]) {
+        setLogoUrl(getDirectImageUrl(settings["LOGO_URL"]))
+      }
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -179,9 +190,13 @@ export default function Sidebar({ menuItems, role }: { menuItems: MenuItem[], ro
       <aside className={`fixed md:static inset-y-0 left-0 z-50 ${isCollapsed ? 'w-20' : 'w-64'} bg-slate-900 border-r border-slate-800 flex flex-col h-[100dvh] text-slate-300 transform transition-all duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
       <div className={`flex items-center border-b border-slate-800 shrink-0 transition-all duration-300 ${isCollapsed ? 'flex-col py-4 gap-4 h-auto' : 'h-16 justify-between px-6'}`}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex shrink-0 items-center justify-center text-white shadow-lg">
-            <ShieldCheck size={20} />
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex shrink-0 items-center justify-center text-white shadow-lg">
+              <ShieldCheck size={20} />
+            </div>
+          )}
           {!isCollapsed && (
             <div>
               <span className="text-white font-bold text-sm block whitespace-nowrap">KDCL - NSG</span>

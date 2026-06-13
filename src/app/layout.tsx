@@ -15,10 +15,34 @@ const geistMono = Geist_Mono({
 import Providers from "@/components/Providers";
 import ActivePing from "@/components/layout/ActivePing";
 
-export const metadata: Metadata = {
-  title: "Hệ thống quản lý minh chứng kiểm định chất lượng số Nam Sài Gòn",
-  description: "Hệ thống quản lý minh chứng kiểm định chất lượng - Trường Cao đẳng Bách khoa Nam Sài Gòn",
-};
+import { getPublicSettings } from "@/actions/setting";
+import { getDirectImageUrl } from "@/lib/utils";
+
+export async function generateMetadata(): Promise<Metadata> {
+  let title = "Hệ thống quản lý minh chứng kiểm định chất lượng số Nam Sài Gòn";
+  let description = "Hệ thống quản lý minh chứng kiểm định chất lượng - Trường Cao đẳng Bách khoa Nam Sài Gòn";
+  let logoUrl = "/favicon.ico";
+  let ogImageUrl = "";
+
+  try {
+    const settings = await getPublicSettings();
+    if (settings["SEO_TITLE"]) title = settings["SEO_TITLE"];
+    if (settings["SEO_DESCRIPTION"]) description = settings["SEO_DESCRIPTION"];
+    if (settings["LOGO_URL"]) logoUrl = getDirectImageUrl(settings["LOGO_URL"]);
+    if (settings["OG_IMAGE_URL"]) ogImageUrl = getDirectImageUrl(settings["OG_IMAGE_URL"]);
+  } catch (e) {}
+
+  return {
+    title,
+    description,
+    icons: {
+      icon: logoUrl
+    },
+    openGraph: ogImageUrl ? {
+      images: [ogImageUrl]
+    } : undefined
+  };
+}
 
 export default function RootLayout({
   children,
