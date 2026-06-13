@@ -839,7 +839,9 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                              <div className="px-4 py-3 text-sm text-slate-500 italic text-center">Không tìm thấy</div>
                           ) : (
                              initialPrograms.filter(p => smartSearch(p.name, searchProgram) > 0)
-                              .sort((a, b) => smartSearch(b.name, searchProgram) - smartSearch(a.name, searchProgram))
+                              .map(_item => ({ _item, _score: smartSearch(_item.name, searchProgram) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                               .map((p: any) => (
                                <div 
                                  key={p.id}
@@ -1022,7 +1024,9 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
                             <div className="px-4 py-3 text-sm text-slate-500 italic text-center">Không tìm thấy</div>
                           ) : (
                              initialPrograms.filter((p:any) => smartSearch(p.name, searchCloneProgram) > 0)
-                              .sort((a, b) => smartSearch(b.name, searchCloneProgram) - smartSearch(a.name, searchCloneProgram))
+                              .map(_item => ({ _item, _score: smartSearch(_item.name, searchCloneProgram) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                               .map((p: any) => (
                                <div 
                                  key={p.id}

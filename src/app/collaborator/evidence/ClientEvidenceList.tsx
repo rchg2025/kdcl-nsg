@@ -242,7 +242,9 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
 
   const filteredStandards = availableStandards.filter(s => 
     smartSearch(`${s.year} - ${s.name}`, searchStandardName) > 0
-  ).sort((a, b) => smartSearch(`${b.year} - ${b.name}`, searchStandardName) - smartSearch(`${a.year} - ${a.name}`, searchStandardName))
+  ).map(_item => ({ _item, _score: smartSearch(`${_item.year} - ${_item.name}`, searchStandardName) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
 
   // Filtered criteria based on selected standard for the 2nd dropdown
   const availableCriteriaForStandard = baseFilteredCriteria.filter(c => 
@@ -251,7 +253,9 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
 
   const filteredCriteria = availableCriteriaForStandard.filter(c => 
     smartSearch(c.name, searchCriterionName) > 0
-  ).sort((a, b) => smartSearch(b.name, searchCriterionName) - smartSearch(a.name, searchCriterionName))
+  ).map(_item => ({ _item, _score: smartSearch(_item.name, searchCriterionName) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -382,7 +386,9 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
   const selectedCriterionData = criteriaList.find(c => c.id === criterionId)
   const availableItems = selectedCriterionData?.items || []
   const filteredItems = availableItems.filter(i => smartSearch(i.name, searchItem) > 0)
-    .sort((a, b) => smartSearch(b.name, searchItem) - smartSearch(a.name, searchItem))
+    .map(_item => ({ _item, _score: smartSearch(_item.name, searchItem) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
   
   const selectedEvidenceItemData = availableItems.find(i => i.id === evidenceItemId)
   const effectiveSharedFromId = editingId ? editingSharedFromId : selectedEvidenceItemData?.sharedFromId

@@ -187,7 +187,9 @@ export default function SharedEvidenceSelectorModal({
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         const matches = availablePrograms.filter(p => smartSearch(p.name, searchProgram) > 0)
-                          .sort((a, b) => smartSearch(b.name, searchProgram) - smartSearch(a.name, searchProgram));
+                          .map(_item => ({ _item, _score: smartSearch(_item.name, searchProgram) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item);
                         if (matches.length > 0) {
                           setSelectedProgramId(matches[0].id);
                           setSearchProgram(matches[0].name);
@@ -209,7 +211,9 @@ export default function SharedEvidenceSelectorModal({
                         <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                       ) : (
                         availablePrograms.filter(p => smartSearch(p.name, searchProgram) > 0)
-                          .sort((a, b) => smartSearch(b.name, searchProgram) - smartSearch(a.name, searchProgram))
+                          .map(_item => ({ _item, _score: smartSearch(_item.name, searchProgram) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                           .map(p => (
                           <div 
                             key={p.id} 
@@ -252,7 +256,9 @@ export default function SharedEvidenceSelectorModal({
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       const matches = availableStandards.filter(s => smartSearch(s.name, searchStandard) > 0)
-                        .sort((a, b) => smartSearch(b.name, searchStandard) - smartSearch(a.name, searchStandard));
+                        .map(_item => ({ _item, _score: smartSearch(_item.name, searchStandard) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item);
                       if (matches.length > 0) {
                         setSelectedStandardId(matches[0].id);
                         setSearchStandard(`${matches[0].year} - ${matches[0].name}`);
@@ -277,7 +283,9 @@ export default function SharedEvidenceSelectorModal({
                       </div>
                     ) : (
                       availableStandards.filter(s => smartSearch(s.name, searchStandard) > 0)
-                        .sort((a, b) => smartSearch(b.name, searchStandard) - smartSearch(a.name, searchStandard))
+                        .map(_item => ({ _item, _score: smartSearch(_item.name, searchStandard) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                         .map(s => (
                         <div 
                           key={s.id} 
@@ -316,7 +324,9 @@ export default function SharedEvidenceSelectorModal({
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       const matches = availableCriteria.filter(c => smartSearch(c.name, searchCriterion) > 0)
-                        .sort((a, b) => smartSearch(b.name, searchCriterion) - smartSearch(a.name, searchCriterion));
+                        .map(_item => ({ _item, _score: smartSearch(_item.name, searchCriterion) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item);
                       if (matches.length > 0) {
                         setSelectedCriterionId(matches[0].id);
                         setSearchCriterion(matches[0].name);
@@ -342,7 +352,9 @@ export default function SharedEvidenceSelectorModal({
                       </div>
                     ) : (
                       availableCriteria.filter(c => smartSearch(c.name, searchCriterion) > 0)
-                        .sort((a, b) => smartSearch(b.name, searchCriterion) - smartSearch(a.name, searchCriterion))
+                        .map(_item => ({ _item, _score: smartSearch(_item.name, searchCriterion) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                         .map(c => (
                         <div 
                           key={c.id} 
@@ -381,7 +393,9 @@ export default function SharedEvidenceSelectorModal({
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     const matches = availableItems.filter(i => smartSearch(i.name, searchItem) > 0)
-                      .sort((a, b) => smartSearch(b.name, searchItem) - smartSearch(a.name, searchItem));
+                      .map(_item => ({ _item, _score: smartSearch(_item.name, searchItem) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item);
                     if (matches.length > 0) {
                       setSelectedEvidenceItemId(matches[0].id);
                       setSearchItem(matches[0].name);
@@ -404,7 +418,9 @@ export default function SharedEvidenceSelectorModal({
                     <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy danh mục phù hợp</div>
                   ) : (
                     availableItems.filter(i => smartSearch(i.name, searchItem) > 0)
-                      .sort((a, b) => smartSearch(b.name, searchItem) - smartSearch(a.name, searchItem))
+                      .map(_item => ({ _item, _score: smartSearch(_item.name, searchItem) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                       .map(i => (
                       <div 
                         key={i.id} 

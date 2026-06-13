@@ -168,7 +168,9 @@ export default function ClientInvestigatorEvidenceList({ initialEvidences, progr
                     <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                   ) : (
                     programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0)
-                      .sort((a, b) => smartSearch(b.name, searchProgramName) - smartSearch(a.name, searchProgramName))
+                      .map(_item => ({ _item, _score: smartSearch(_item.name, searchProgramName) }))
+  .sort((a, b) => b._score - a._score)
+  .map(obj => obj._item)
                       .map((p:any) => (
                       <div 
                         key={p.id} 
