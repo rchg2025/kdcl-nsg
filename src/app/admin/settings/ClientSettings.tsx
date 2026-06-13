@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
-import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket } from "lucide-react"
+import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle } from "lucide-react"
 
 type TabId = 'seo' | 'drive' | 'smtp'
 
@@ -20,6 +20,13 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
   const ogImageInputRef = useRef<HTMLInputElement>(null)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingOgImage, setUploadingOgImage] = useState(false)
+
+  const [toast, setToast] = useState<{message: string, type: 'success'|'error', visible: boolean}>({ message: '', type: 'success', visible: false })
+
+  const showToast = (message: string, type: 'success'|'error' = 'success') => {
+    setToast({ message, type, visible: true })
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000)
+  }
 
   const handleFileUpload = async (file: File, type: 'logo' | 'ogImage') => {
     if (!file) return
@@ -40,7 +47,7 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
       if (type === 'logo') setLogoUrl(data.url)
       else setOgImageUrl(data.url)
     } catch (err: any) {
-      alert(err.message)
+      showToast(err.message, 'error')
     } finally {
       if (type === 'logo') setUploadingLogo(false)
       else setUploadingOgImage(false)
@@ -67,18 +74,18 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
   const [testingSmtp, setTestingSmtp] = useState(false)
 
   const handleTestDrive = async () => {
-    if (!driveEmail || !driveKey || !driveFolder) return alert("Vui lòng điền đủ thông tin Google Drive")
+    if (!driveEmail || !driveKey || !driveFolder) return showToast("Vui lòng điền đủ thông tin Google Drive", 'error')
     setTestingDrive(true)
     const res = await testDriveConfig(driveEmail, driveKey, driveFolder)
-    alert(res.message)
+    showToast(res.message, res.success ? 'success' : 'error')
     setTestingDrive(false)
   }
 
   const handleTestSmtp = async () => {
-    if (!gmailUser || !gmailPass) return alert("Vui lòng điền đủ thông tin Gmail SMTP")
+    if (!gmailUser || !gmailPass) return showToast("Vui lòng điền đủ thông tin Gmail SMTP", 'error')
     setTestingSmtp(true)
     const res = await testSmtpConfig(gmailUser, gmailPass)
-    alert(res.message)
+    showToast(res.message, res.success ? 'success' : 'error')
     setTestingSmtp(false)
   }
 
@@ -94,10 +101,10 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
       if (!res.ok) {
         throw new Error(data.error || "Lỗi ép Index Google")
       }
-      alert(data.message || "Gửi yêu cầu ép Index thành công!")
+      showToast(data.message || "Gửi yêu cầu ép Index thành công!")
       console.log("Index results:", data.results)
     } catch (err: any) {
-      alert("Có lỗi: " + err.message)
+      showToast("Có lỗi: " + err.message, 'error')
     } finally {
       setIndexing(false)
     }
@@ -119,10 +126,10 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
         GMAIL_USER: gmailUser,
         GMAIL_PASS: gmailPass
       })
-      alert("Đã lưu cấu hình Hệ thống thành công!")
-      window.location.reload()
+      showToast("Đã lưu cấu hình Hệ thống thành công!")
+      setTimeout(() => window.location.reload(), 1500)
     } catch {
-      alert("Có lỗi khi lưu cấu hình.")
+      showToast("Có lỗi khi lưu cấu hình.", 'error')
     } finally {
       setLoading(false)
     }
@@ -422,6 +429,17 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
 
 
       </form>
+
+      {/* TOAST NOTIFICATION */}
+      <div className={`fixed top-4 right-4 z-[9999] transition-all duration-500 transform ${toast.visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+        <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/80 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/80 dark:border-red-800/50 dark:text-red-400'}`}>
+          {toast.type === 'success' ? <CheckCircle2 size={24} className="text-emerald-500" /> : <XCircle size={24} className="text-red-500" />}
+          <div>
+            <h4 className="font-bold text-sm">{toast.type === 'success' ? 'Thành công' : 'Lỗi'}</h4>
+            <p className="text-xs opacity-90 mt-0.5">{toast.message}</p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
