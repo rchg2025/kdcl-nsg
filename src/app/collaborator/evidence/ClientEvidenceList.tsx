@@ -1,6 +1,7 @@
 "use client"
+import { smartSearch } from "@/lib/utils";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { createEvidence, updateEvidence, getApprovedEvidenceForSync, getAllCriteriaForDropdown } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter, Link2 } from "lucide-react"
