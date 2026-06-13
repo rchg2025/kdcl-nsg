@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { ShieldCheck, User, Lock, Loader2, Eye, EyeOff, Mail, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { getPublicSettings } from "@/actions/setting"
+import { getDirectImageUrl } from "@/lib/utils"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -17,8 +19,17 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [successMsg, setSuccessMsg] = useState("")
+  const [logoUrl, setLogoUrl] = useState("")
   
   const router = useRouter()
+
+  useEffect(() => {
+    getPublicSettings().then(settings => {
+      if (settings["LOGO_URL"]) {
+        setLogoUrl(getDirectImageUrl(settings["LOGO_URL"]))
+      }
+    }).catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,9 +108,13 @@ export default function LoginPage() {
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500 rounded-full blur-3xl opacity-20 transform -translate-x-1/2 translate-y-1/2"></div>
           
           <div className="relative z-10 flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-[var(--primary)] text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/30">
-              <ShieldCheck size={32} />
-            </div>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="max-h-20 mb-4 object-contain" />
+            ) : (
+              <div className="w-16 h-16 bg-[var(--primary)] text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/30">
+                <ShieldCheck size={32} />
+              </div>
+            )}
             <h1 className="text-2xl font-bold text-center text-[var(--foreground)] leading-tight">
               <span className="block text-3xl mb-1 bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary)] via-pink-500 to-blue-500 animate-gradient-text">Hệ thống Minh chứng</span>
               <span className="block text-xl opacity-90 uppercase tracking-wide">Kiểm định chất lượng SỐ</span>
