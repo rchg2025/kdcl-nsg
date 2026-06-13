@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
-import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle } from "lucide-react"
+import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
 
 type TabId = 'seo' | 'drive' | 'smtp'
 
@@ -90,10 +90,14 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
   }
 
   const [indexing, setIndexing] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
-  const handleIndexGoogle = async () => {
-    if (!confirm("Hệ thống sẽ gửi tất cả các Link từ sitemap lên Google. Bạn đã cấu hình Service Account trong Google Search Console chưa?")) return
-    
+  const handleIndexGoogle = () => {
+    setShowConfirm(true)
+  }
+
+  const executeIndexGoogle = async () => {
+    setShowConfirm(false)
     setIndexing(true)
     try {
       const res = await fetch('/api/indexing', { method: 'POST' })
@@ -440,6 +444,34 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
           </div>
         </div>
       </div>
+
+      {/* CONFIRM MODAL */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
+                  <AlertCircle size={24} />
+                </div>
+                <h3 className="text-lg font-bold">Xác nhận ép Index</h3>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                Hệ thống sẽ gửi tất cả các Link từ sitemap lên Google. Bạn đã cấu hình Service Account trong Google Search Console chưa?
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" onClick={() => setShowConfirm(false)} className="px-5 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                Huỷ
+              </button>
+              <button type="button" onClick={executeIndexGoogle} className="px-5 py-2 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 rounded-xl transition-colors shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                <Rocket size={16} />
+                Đồng ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
