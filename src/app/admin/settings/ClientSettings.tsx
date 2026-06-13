@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
-import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, LayoutBottom, Code, Bot, UploadCloud, Rocket } from "lucide-react"
+import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket } from "lucide-react"
 
 type TabId = 'seo' | 'footer' | 'drive' | 'smtp' | 'scripts' | 'chatbot'
 
 const TABS = [
   { id: 'seo' as TabId, label: 'SEO & Logo', icon: Globe },
-  { id: 'footer' as TabId, label: 'Footer', icon: LayoutBottom },
+  { id: 'footer' as TabId, label: 'Footer', icon: Layout },
   { id: 'drive' as TabId, label: 'Google Drive', icon: Cloud },
   { id: 'smtp' as TabId, label: 'SMTP Email', icon: Mail },
   { id: 'scripts' as TabId, label: 'Mã nhúng', icon: Code },
