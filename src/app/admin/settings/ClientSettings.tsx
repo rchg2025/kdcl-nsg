@@ -1,23 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
 import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket } from "lucide-react"
 
-type TabId = 'seo' | 'footer' | 'drive' | 'smtp' | 'scripts' | 'chatbot'
+type TabId = 'seo' | 'drive' | 'smtp'
 
 const TABS = [
   { id: 'seo' as TabId, label: 'SEO & Logo', icon: Globe },
-  { id: 'footer' as TabId, label: 'Footer', icon: Layout },
   { id: 'drive' as TabId, label: 'Google Drive', icon: Cloud },
   { id: 'smtp' as TabId, label: 'SMTP Email', icon: Mail },
-  { id: 'scripts' as TabId, label: 'Mã nhúng', icon: Code },
-  { id: 'chatbot' as TabId, label: 'AI Chatbot', icon: Bot },
 ]
 
 export default function ClientSettings({ initialData }: { initialData: Record<string, string> }) {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<TabId>('seo')
+  
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const ogImageInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingOgImage, setUploadingOgImage] = useState(false)
+
+  const handleFileUpload = async (file: File, type: 'logo' | 'ogImage') => {
+    if (!file) return
+    const formData = new FormData()
+    formData.append("file", file)
+    
+    if (type === 'logo') setUploadingLogo(true)
+    else setUploadingOgImage(true)
+    
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Lỗi tải ảnh lên")
+      
+      if (type === 'logo') setLogoUrl(data.url)
+      else setOgImageUrl(data.url)
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      if (type === 'logo') setUploadingLogo(false)
+      else setUploadingOgImage(false)
+    }
+  }
   
   // SEO & Logo State
   const [seoTitle, setSeoTitle] = useState(initialData["SEO_TITLE"] || "")
@@ -157,31 +185,87 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold mb-2">Link Logo chung</label>
-                  <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                    <UploadCloud className="mx-auto text-slate-400 mb-2" size={32} />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Kéo thả logo vào đây (hoặc click để chọn)</p>
+                  <div 
+                    className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    {uploadingLogo ? (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <Loader2 className="animate-spin text-[var(--primary)] mb-2" size={32} />
+                        <p className="text-sm font-medium text-slate-500">Đang tải lên...</p>
+                      </div>
+                    ) : logoUrl ? (
+                      <div className="flex flex-col items-center justify-center">
+                        <img src={logoUrl} alt="Logo" className="max-h-24 mb-4 object-contain" />
+                        <p className="text-xs text-slate-500 hover:text-[var(--primary)]">Click để tải ảnh khác</p>
+                      </div>
+                    ) : (
+                      <>
+                        <UploadCloud className="mx-auto text-slate-400 mb-2" size={32} />
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Click để tải logo lên Drive</p>
+                      </>
+                    )}
                     <input 
-                      type="text" 
-                      value={logoUrl} 
-                      onChange={e => setLogoUrl(e.target.value)} 
-                      placeholder="Hoặc nhập Link URL trực tiếp..." 
-                      className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg outline-none focus:border-[var(--primary)] text-xs mt-2" 
+                      type="file" 
+                      ref={logoInputRef} 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileUpload(file, 'logo')
+                        e.target.value = ''
+                      }}
                     />
                   </div>
+                  <input 
+                    type="text" 
+                    value={logoUrl} 
+                    onChange={e => setLogoUrl(e.target.value)} 
+                    placeholder="Hoặc nhập Link URL trực tiếp..." 
+                    className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg outline-none focus:border-[var(--primary)] text-xs mt-2" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2">Ảnh đại diện chia sẻ link (OG Image)</label>
-                  <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                    <UploadCloud className="mx-auto text-slate-400 mb-2" size={32} />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Ảnh hiển thị mặc định cho các bài viết không có ảnh</p>
+                  <div 
+                    className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
+                    onClick={() => ogImageInputRef.current?.click()}
+                  >
+                    {uploadingOgImage ? (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <Loader2 className="animate-spin text-[var(--primary)] mb-2" size={32} />
+                        <p className="text-sm font-medium text-slate-500">Đang tải lên...</p>
+                      </div>
+                    ) : ogImageUrl ? (
+                      <div className="flex flex-col items-center justify-center">
+                        <img src={ogImageUrl} alt="OG Image" className="max-h-24 mb-4 object-contain" />
+                        <p className="text-xs text-slate-500 hover:text-[var(--primary)]">Click để tải ảnh khác</p>
+                      </div>
+                    ) : (
+                      <>
+                        <UploadCloud className="mx-auto text-slate-400 mb-2" size={32} />
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Click để tải OG Image lên Drive</p>
+                      </>
+                    )}
                     <input 
-                      type="text" 
-                      value={ogImageUrl} 
-                      onChange={e => setOgImageUrl(e.target.value)} 
-                      placeholder="Hoặc nhập Link URL trực tiếp..." 
-                      className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg outline-none focus:border-[var(--primary)] text-xs mt-2" 
+                      type="file" 
+                      ref={ogImageInputRef} 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileUpload(file, 'ogImage')
+                        e.target.value = ''
+                      }}
                     />
                   </div>
+                  <input 
+                    type="text" 
+                    value={ogImageUrl} 
+                    onChange={e => setOgImageUrl(e.target.value)} 
+                    placeholder="Hoặc nhập Link URL trực tiếp..." 
+                    className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg outline-none focus:border-[var(--primary)] text-xs mt-2" 
+                  />
                 </div>
               </div>
               
@@ -319,16 +403,7 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
           </div>
         )}
 
-        {/* PLACEHOLDER TABS */}
-        {['footer', 'scripts', 'chatbot'].includes(activeTab) && (
-          <div className="glass rounded-2xl p-12 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center animate-in fade-in duration-300">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-4">
-              <Code size={32} />
-            </div>
-            <h3 className="text-xl font-bold mb-2">Đang phát triển</h3>
-            <p className="text-slate-500">Tính năng này đang được xây dựng và sẽ sớm ra mắt trong các phiên bản tiếp theo.</p>
-          </div>
-        )}
+
       </form>
     </div>
   )
