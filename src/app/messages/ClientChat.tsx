@@ -274,10 +274,10 @@ export default function ClientChat({ currentUserId, initialConversations, users 
         scoreName = Math.max(smartSearch(u.name, search), smartSearch(u.email, search))
       }
       return { user: u, score: scoreName }
-    }).filter(item => item.score > 0)
+    }).filter((item: any) => item.score > 0)
     
-    result.sort((a, b) => b.score - a.score)
-    return result.map(item => item.user)
+    result.sort((a: any, b: any) => b.score - a.score)
+    return result.map((item: any) => item.user)
   }, [users, search])
   
   // Find current active conversation name safely
