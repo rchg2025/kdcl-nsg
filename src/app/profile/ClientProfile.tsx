@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { updateMyProfile } from "@/actions/profile"
-import { User, Mail, Building, Briefcase, KeyRound, Loader2, Save, LogOut, Camera } from "lucide-react"
+import { User, Mail, Building, Briefcase, KeyRound, Loader2, Save, LogOut, Camera, CheckCircle2, XCircle } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { getDirectImageUrl } from "@/lib/utils"
 
@@ -16,11 +16,19 @@ export default function ClientProfile({ user }: { user: any }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { update: updateSession } = useSession()
 
+  const [toast, setToast] = useState<{message: string, type: 'success'|'error'|'info', visible: boolean}>({ message: '', type: 'success', visible: false })
+
+  const showToast = (message: string, type: 'success'|'error'|'info' = 'success') => {
+    setToast({ message, type, visible: true })
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000)
+  }
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     
     setUploading(true)
+    showToast("Đang tải ảnh lên, vui lòng đợi...", 'info')
     try {
       const formData = new FormData()
       formData.append("file", file)
@@ -31,8 +39,9 @@ export default function ClientProfile({ user }: { user: any }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setAvatar(data.url)
+      showToast("Tải ảnh lên thành công! Bấm 'Lưu thay đổi' để áp dụng.", 'success')
     } catch (err: any) {
-      alert(err.message || "Lỗi tải ảnh lên")
+      showToast(err.message || "Lỗi tải ảnh lên", 'error')
     } finally {
       setUploading(false)
     }
@@ -41,17 +50,17 @@ export default function ClientProfile({ user }: { user: any }) {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (newPassword && !oldPassword) {
-       return alert("Vui lòng nhập mật khẩu cũ để xác thực đổi mật khẩu.")
+       return showToast("Vui lòng nhập mật khẩu cũ để xác thực đổi mật khẩu.", 'error')
     }
     setLoading(true)
     try {
       await updateMyProfile({ name, avatar, oldPassword, newPassword })
       await updateSession({ avatar })
-      alert("Cập nhật thông tin thành công!")
+      showToast("Cập nhật thông tin thành công!", 'success')
       setOldPassword("")
       setNewPassword("")
     } catch (err: any) {
-      alert(err.message || "Đã xảy ra lỗi")
+      showToast(err.message || "Đã xảy ra lỗi", 'error')
     } finally {
       setLoading(false)
     }
@@ -128,6 +137,25 @@ export default function ClientProfile({ user }: { user: any }) {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* TOAST NOTIFICATION */}
+      <div className={`fixed top-4 right-4 z-[9999] transition-all duration-500 transform ${toast.visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+        <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${
+          toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/80 dark:border-emerald-800/50 dark:text-emerald-400' : 
+          toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/80 dark:border-red-800/50 dark:text-red-400' :
+          'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/80 dark:border-blue-800/50 dark:text-blue-400'
+        }`}>
+          {toast.type === 'success' ? <CheckCircle2 size={24} className="text-emerald-500" /> : 
+           toast.type === 'error' ? <XCircle size={24} className="text-red-500" /> :
+           <Loader2 size={24} className="text-blue-500 animate-spin" />}
+          <div>
+            <h4 className="font-bold text-sm">
+              {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Lỗi' : 'Đang xử lý'}
+            </h4>
+            <p className="text-xs opacity-90 mt-0.5">{toast.message}</p>
+          </div>
+        </div>
       </div>
     </div>
   )
