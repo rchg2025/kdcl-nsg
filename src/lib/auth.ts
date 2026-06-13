@@ -34,7 +34,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           avatar: user.avatar
-        }
+        } as any
       }
     })
   ],
@@ -42,9 +42,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = user.role
+        token.role = (user as any).role
         token.id = user.id
-        token.avatar = user.avatar
+        token.avatar = (user as any).avatar
       }
       if (trigger === "update" && session?.avatar !== undefined) {
         token.avatar = session.avatar

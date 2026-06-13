@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { getMessages, sendMessage, startDirectConversation, getConversations, createGroupConversation, markAsRead, deleteConversation } from "@/actions/chat"
-import { Search, Send, Users, Circle, Plus, X, Upload, File as FileIcon, Trash2, ShieldCheck } from "lucide-react"
+import { Search, Send, Users, Circle, Plus, X, Upload, File as FileIcon, Trash2, ShieldCheck, Home, Loader2, MessageSquare } from "lucide-react"
 import { getDirectImageUrl } from "@/lib/utils"
 import Link from "next/link"
 
