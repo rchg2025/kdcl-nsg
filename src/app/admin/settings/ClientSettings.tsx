@@ -82,8 +82,25 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
     setTestingSmtp(false)
   }
 
-  const handleIndexGoogle = () => {
-    alert("Chức năng ép Google Index đang được phát triển và sẽ gọi đến Google Indexing API.")
+  const [indexing, setIndexing] = useState(false)
+
+  const handleIndexGoogle = async () => {
+    if (!confirm("Hệ thống sẽ gửi tất cả các Link từ sitemap lên Google. Bạn đã cấu hình Service Account trong Google Search Console chưa?")) return
+    
+    setIndexing(true)
+    try {
+      const res = await fetch('/api/indexing', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Lỗi ép Index Google")
+      }
+      alert(data.message || "Gửi yêu cầu ép Index thành công!")
+      console.log("Index results:", data.results)
+    } catch (err: any) {
+      alert("Có lỗi: " + err.message)
+    } finally {
+      setIndexing(false)
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -270,8 +287,8 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
               </div>
               
               <div className="flex justify-end gap-4 mt-6">
-                <button type="button" onClick={handleIndexGoogle} className="border border-blue-200 bg-blue-50 text-blue-600 px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors">
-                  <Rocket size={18} />
+                <button type="button" onClick={handleIndexGoogle} disabled={indexing} className="border border-blue-200 bg-blue-50 text-blue-600 px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors disabled:opacity-50">
+                  {indexing ? <Loader2 size={18} className="animate-spin" /> : <Rocket size={18} />}
                   Ép Google Index
                 </button>
                 <button disabled={loading} type="submit" className="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30">
