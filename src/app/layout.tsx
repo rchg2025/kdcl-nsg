@@ -22,6 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let title = "Hệ thống quản lý minh chứng kiểm định chất lượng số Nam Sài Gòn";
   let description = "Hệ thống quản lý minh chứng kiểm định chất lượng - Trường Cao đẳng Bách khoa Nam Sài Gòn";
   let logoUrl = "/favicon.ico";
+  let faviconUrl = getDirectImageUrl("https://drive.google.com/file/d/1XwZ7delmyW1BidhtNhtR-46t36urm81D/view?usp=drivesdk");
   let ogImageUrl = "";
 
   try {
@@ -36,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     icons: {
-      icon: logoUrl
+      icon: faviconUrl
     },
     openGraph: ogImageUrl ? {
       images: [ogImageUrl]
