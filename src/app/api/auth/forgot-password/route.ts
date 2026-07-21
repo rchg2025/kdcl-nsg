@@ -31,20 +31,20 @@ export async function POST(req: Request) {
     const config: Record<string, string> = {}
     settings.forEach(s => { config[s.key] = s.value })
 
-    if (!config.SMTP_USER || !config.SMTP_PASS) {
+    if (!config.GMAIL_USER || !config.GMAIL_PASS) {
       return NextResponse.json({ error: "Hệ thống chưa cấu hình Email gửi OTP. Vui lòng liên hệ Admin." }, { status: 500 })
     }
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: config.SMTP_USER,
-        pass: config.SMTP_PASS
+        user: config.GMAIL_USER,
+        pass: config.GMAIL_PASS
       }
     })
 
     await transporter.sendMail({
-      from: `"Hệ thống Kiểm định chất lượng" <${config.SMTP_USER}>`,
+      from: `"Hệ thống Kiểm định chất lượng" <${config.GMAIL_USER}>`,
       to: email,
       subject: "Mã xác nhận Đặt lại mật khẩu",
       html: `
