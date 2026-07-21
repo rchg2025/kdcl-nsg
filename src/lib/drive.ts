@@ -38,7 +38,7 @@ async function getDriveClient() {
 }
 
 // Detect if folderId belongs to a Shared Drive
-async function getSharedDriveId(drive: any, folderId: string): Promise<string | undefined> {
+export async function getSharedDriveId(drive: any, folderId: string): Promise<string | undefined> {
   try {
     const res = await drive.files.get({
       fileId: folderId,
@@ -51,7 +51,7 @@ async function getSharedDriveId(drive: any, folderId: string): Promise<string | 
   }
 }
 
-async function getOrCreateFolder(drive: any, folderName: string, parentId: string, driveId?: string): Promise<string> {
+export async function getOrCreateFolder(drive: any, folderName: string, parentId: string, driveId?: string): Promise<string> {
   const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${parentId}' in parents and trashed=false`;
   
   const searchParams: any = {

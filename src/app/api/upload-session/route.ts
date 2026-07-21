@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { google } from "googleapis"
+import { getSharedDriveId, getOrCreateFolder } from "@/lib/drive"
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
@@ -40,19 +41,18 @@ export async function POST(request: Request) {
     const folderId = folderSetting.value
 
     // Auto-detect Shared Drive
-    let driveId: string | undefined
-    try {
-      const folderRes = await drive.files.get({
-        fileId: folderId,
-        fields: "driveId",
-        supportsAllDrives: true
-      })
-      driveId = folderRes.data.driveId || undefined
-    } catch (e) {}
+    const driveId = await getSharedDriveId(drive, folderId)
+
+    const date = new Date();
+    const yearStr = date.getFullYear().toString();
+    const monthStr = (date.getMonth() + 1).toString().padStart(2, "0");
+
+    const yearFolderId = await getOrCreateFolder(drive, yearStr, folderId, driveId);
+    const monthFolderId = await getOrCreateFolder(drive, monthStr, yearFolderId, driveId);
 
     const requestBody: any = {
       name: name,
-      parents: [folderId]
+      parents: [monthFolderId]
     }
 
     const params: any = {
