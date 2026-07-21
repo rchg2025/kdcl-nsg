@@ -1,7 +1,7 @@
 "use client"
 import { smartSearch } from "@/lib/utils";
 
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { createEvidence, updateEvidence, getApprovedEvidenceForSync, getAllCriteriaForDropdown } from "@/actions/evidence"
 import { Plus, FileText, Loader2, CheckCircle2, Clock, AlertCircle, Edit2, UserCircle, Search, Filter, Link2 } from "lucide-react"
@@ -213,11 +213,39 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
     setCurrentPage(1)
   }, [searchEv, filterEvYear, filterEvStatus, filterEvType, filterEvProgramId])
 
-  const totalPages = Math.ceil(filteredEvidencesList.length / itemsPerPage)
-  const paginatedEvidencesList = filteredEvidencesList.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  // Group evidences by Standard -> Criterion
+  const groupedEvidences = useMemo(() => {
+    const groups: Record<string, {
+      standard: { name: string, year: number },
+      criteria: Record<string, {
+        criterion: { name: string },
+        evidences: Evidence[]
+      }>
+    }> = {}
+
+    filteredEvidencesList.forEach(ev => {
+      const stdKey = `${ev.criterion.standard.name} (${ev.criterion.standard.year})`
+      const critKey = ev.criterion.name
+      
+      if (!groups[stdKey]) {
+        groups[stdKey] = {
+          standard: ev.criterion.standard,
+          criteria: {}
+        }
+      }
+      
+      if (!groups[stdKey].criteria[critKey]) {
+        groups[stdKey].criteria[critKey] = {
+          criterion: ev.criterion,
+          evidences: []
+        }
+      }
+      
+      groups[stdKey].criteria[critKey].evidences.push(ev)
+    })
+    
+    return groups
+  }, [filteredEvidencesList])
 
   const baseFilteredCriteria = criteriaList.filter(c => {
     if (selectedYear !== "" && c.standard.year !== selectedYear) return false
@@ -556,129 +584,121 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
             <p className="text-slate-500 text-sm mt-1 max-w-sm">Bạn chưa tải lên hay báo cáo minh chứng nào.</p>
           </div>
         ) : (
-          paginatedEvidencesList.map((ev) => (
-            <div key={ev.id} id={`ev-${ev.id}`} className="glass rounded-xl p-5 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-colors">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{ev.criterion.standard.name} ({ev.criterion.standard.year})</span>
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-base text-[var(--foreground)]">{ev.criterion.name}</h3>
-                  {ev.evidenceItem && (
-                    <div className="inline-block mt-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold">
-                      Minh chứng: {ev.evidenceItem.name}
-                    </div>
-                  )}
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
-                    {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
-                  </p>
-                  <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
-                  
-                  {ev.sharedFrom && (
-                    <div className="mt-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-2 px-3 inline-block">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium text-[11px]">
-                          <Link2 size={12} /> Dùng chung từ: <strong className="font-bold">{ev.sharedFrom.criterion.name}</strong> 
-                          <span className="opacity-70">({ev.sharedFrom.criterion.standard.name} - {ev.sharedFrom.criterion.standard.year})</span>
-                          <button 
-                            onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
-                            className="ml-2 flex items-center gap-1 text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 underline underline-offset-2 font-bold"
-                          >
-                            <Search size={10} /> Xem gốc
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {ev._count && ev._count.sharedTo > 0 && (
-                    <div className="mt-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-3 inline-block">
-                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
-                        <Link2 size={14} /> Đang được dùng chung cho <strong className="text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn khác
-                      </div>
-                    </div>
-                  )}
-                  {ev.status === "REJECTED" && ev.rejectReason && (
-                    <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3">
-                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-xs mb-1">
-                        <AlertCircle size={14} /> Lý do không đạt:
-                      </div>
-                      <p className="text-sm text-red-700 dark:text-red-300">{ev.rejectReason}</p>
-                    </div>
-                  )}
-                  
-                  {/* Tracking Info */}
-                  <div className="mt-4 flex flex-col sm:flex-row gap-4 sm:gap-8 items-start sm:items-center text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <div className="flex items-center gap-1.5">
-                      <UserCircle size={13} className="text-slate-400" />
-                      <span>Thực hiện bởi: <strong className="text-[var(--foreground)]">{ev.collaborator?.name}</strong></span>
-                    </div>
-                    {ev.reviewer && ev.reviewedAt && (
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 size={13} className="text-emerald-500" />
-                        <span>Duyệt bởi <strong>{ev.reviewer.name}</strong> lúc {new Date(ev.reviewedAt).toLocaleString("vi-VN")}</span>
-                      </div>
-                    )}
-                    {ev.lastUpdater && ev.updatedAt && (
-                      <div className="flex items-center gap-1.5">
-                        <Edit2 size={13} className="text-blue-500" />
-                        <span>Cập nhật bởi <strong>{ev.lastUpdater.name}</strong> lúc {new Date(ev.updatedAt).toLocaleString("vi-VN")}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-end gap-2">
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${statusColors[ev.status]}`}>
-                    <StatusIcon status={ev.status} />
-                    {statusLabels[ev.status] || ev.status}
-                  </div>
-                  {["PENDING", "REJECTED"].includes(ev.status) && (
-                    <button onClick={() => openEditModal(ev)} className="flex items-center gap-1.5 text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors mt-2">
-                      <Edit2 size={14} /> Sửa báo cáo
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
+          <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Minh chứng</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Tệp đính kèm</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Trạng thái</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Người xử lý</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(groupedEvidences).map(([stdKey, stdGroup]) => (
+                  <React.Fragment key={stdKey}>
+                    {/* Standard Row */}
+                    <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                      <td colSpan={5} className="p-3 px-4 font-bold text-indigo-900 dark:text-indigo-300 text-sm">
+                        {stdKey}
+                      </td>
+                    </tr>
+                    {Object.entries(stdGroup.criteria).map(([critKey, critGroup]) => (
+                      <React.Fragment key={critKey}>
+                        {/* Criterion Row */}
+                        <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-700/60">
+                           <td colSpan={5} className="p-2 px-6 font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                             {critKey}
+                           </td>
+                        </tr>
+                        {/* Evidence Rows */}
+                        {critGroup.evidences.map((ev) => (
+                          <tr key={ev.id} id={`ev-${ev.id}`} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
+                              {ev.evidenceItem && (
+                                <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
+                                  Minh chứng: {ev.evidenceItem.name}
+                                </div>
+                              )}
+                              <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                                {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
+                              </div>
+                              
+                              {ev.sharedFrom && (
+                                <div className="mt-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-1.5 px-2 inline-block">
+                                  <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium text-[10px]">
+                                    <Link2 size={10} /> Dùng chung từ: <strong className="font-bold">{ev.sharedFrom.criterion.name}</strong>
+                                    <button 
+                                      onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
+                                      className="ml-1 flex items-center gap-1 text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 underline underline-offset-2"
+                                    >
+                                      Xem gốc
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                              {ev._count && ev._count.sharedTo > 0 && (
+                                <div className="mt-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg py-1.5 px-2 inline-block">
+                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-[10px]">
+                                    <Link2 size={10} /> Dùng chung cho <strong className="text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn
+                                  </div>
+                                </div>
+                              )}
+                              {ev.status === "REJECTED" && ev.rejectReason && (
+                                <div className="mt-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
+                                  <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold text-[11px] mb-0.5">
+                                    <AlertCircle size={12} /> Lý do không đạt:
+                                  </div>
+                                  <p className="text-xs text-red-700 dark:text-red-300">{ev.rejectReason}</p>
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-3 align-top min-w-[200px]">
+                               <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
+                            </td>
+                            <td className="p-3 align-top">
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${statusColors[ev.status]}`}>
+                                <StatusIcon status={ev.status} />
+                                {statusLabels[ev.status] || ev.status}
+                              </div>
+                            </td>
+                            <td className="p-3 align-top text-xs text-slate-500">
+                               <div className="flex items-center gap-1 mb-1">
+                                 <UserCircle size={12} className="text-slate-400" />
+                                 <strong className="text-[var(--foreground)]">{ev.collaborator?.name}</strong>
+                               </div>
+                               {ev.reviewer && (
+                                 <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">
+                                   <CheckCircle2 size={10} />
+                                   Duyệt: {ev.reviewer.name}
+                                 </div>
+                               )}
+                               {ev.lastUpdater && (
+                                 <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 mt-1">
+                                   <Edit2 size={10} />
+                                   Cập nhật: {ev.lastUpdater.name}
+                                 </div>
+                               )}
+                            </td>
+                            <td className="p-3 align-top text-right">
+                              {["PENDING", "REJECTED"].includes(ev.status) && (
+                                <button onClick={() => openEditModal(ev)} className="inline-flex items-center justify-center p-1.5 text-indigo-500 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 rounded-md transition-colors" title="Sửa báo cáo">
+                                  <Edit2 size={14} /> <span className="ml-1 text-xs font-semibold">Sửa</span>
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
-          >
-            Trước
-          </button>
-          
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
-                  currentPage === page 
-                    ? 'bg-[var(--primary)] text-white' 
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm font-medium"
-          >
-            Sau
-          </button>
-        </div>
-      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
