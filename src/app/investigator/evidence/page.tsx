@@ -1,11 +1,9 @@
+import { Suspense } from "react"
 import { getInvestigatorEvidences } from "@/actions/investigator"
 import { getAllProgramsPublic } from "@/actions/category"
 import ClientInvestigatorEvidenceList from "./ClientInvestigatorEvidenceList"
 
-export default async function InvestigatorEvidencePage() {
-  const evidences = await getInvestigatorEvidences()
-  const programs = await getAllProgramsPublic()
-
+export default function InvestigatorEvidencePage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -15,7 +13,15 @@ export default async function InvestigatorEvidencePage() {
         </div>
       </div>
       
-      <ClientInvestigatorEvidenceList initialEvidences={evidences} programs={programs} />
+      <Suspense fallback={<div className="w-full flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>}>
+        <InvestigatorEvidenceDataWrapper />
+      </Suspense>
     </div>
   )
+}
+
+async function InvestigatorEvidenceDataWrapper() {
+  const evidences = await getInvestigatorEvidences()
+  const programs = await getAllProgramsPublic()
+  return <ClientInvestigatorEvidenceList initialEvidences={evidences} programs={programs} />
 }
