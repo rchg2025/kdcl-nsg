@@ -1,14 +1,6 @@
-import { getUsers } from "@/actions/user"
-import { getDepartments, getPositions } from "@/actions/category"
 import ClientUserList from "./ClientUserList"
 
-export default async function UsersPage() {
-  const [users, departments, positions] = await Promise.all([
-    getUsers(),
-    getDepartments(),
-    getPositions()
-  ])
-
+export default function UsersPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -18,7 +10,7 @@ export default async function UsersPage() {
         </div>
       </div>
       
-      <ClientUserList initialUsers={users as any} departments={departments} positions={positions} />
+      <ClientUserList />
     </div>
   )
 }

@@ -1,17 +1,40 @@
 "use client"
 
-import { useState } from "react"
-import { createDepartment, updateDepartment, deleteDepartment, createPosition, updatePosition, deletePosition, createProgram, updateProgram, deleteProgram } from "@/actions/category"
+import { useState, useEffect } from "react"
+import { getDepartments, getPositions, getPrograms, createDepartment, updateDepartment, deleteDepartment, createPosition, updatePosition, deletePosition, createProgram, updateProgram, deleteProgram } from "@/actions/category"
 import { Plus, Trash2, Building2, Briefcase, Loader2, Edit2, X, Check, BookOpen } from "lucide-react"
 
 type Department = { id: string; name: string }
 type Position = { id: string; name: string }
 type Program = { id: string; name: string; departmentId: string; department?: Department }
 
-export default function ClientCategoryList({ initialDepartments, initialPositions, initialPrograms }: { initialDepartments: Department[], initialPositions: Position[], initialPrograms: Program[] }) {
-  const [departments, setDepartments] = useState(initialDepartments)
-  const [positions, setPositions] = useState(initialPositions)
-  const [programs, setPrograms] = useState(initialPrograms)
+export default function ClientCategoryList() {
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
+  const [programs, setPrograms] = useState<Program[]>([])
+  
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  const fetchAllData = async () => {
+    try {
+      const [d, p, pr] = await Promise.all([
+        getDepartments(),
+        getPositions(),
+        getPrograms()
+      ])
+      setDepartments(d)
+      setPositions(p)
+      setPrograms(pr as any)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setInitialLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAllData()
+  }, [])
 
   const [loading, setLoading] = useState(false)
   const [deptName, setDeptName] = useState("")
@@ -26,6 +49,15 @@ export default function ClientCategoryList({ initialDepartments, initialPosition
   const [editingProgId, setEditingProgId] = useState<string | null>(null)
   const [editProgName, setEditProgName] = useState("")
   const [editProgDeptId, setEditProgDeptId] = useState("")
+
+  if (initialLoading) {
+    return (
+      <div className="w-full min-h-[300px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mb-4" />
+        <p className="text-sm text-slate-500">Đang tải danh mục...</p>
+      </div>
+    )
+  }
 
   const handleAddDept = async (e: React.FormEvent) => {
     e.preventDefault()

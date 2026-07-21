@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { createUser, deleteUser, updateUser, toggleUserActive } from "@/actions/user"
+import { useState, useMemo, useEffect } from "react"
+import { getUsers, createUser, deleteUser, updateUser, toggleUserActive } from "@/actions/user"
+import { getDepartments, getPositions } from "@/actions/category"
 import { getDirectImageUrl, smartSearch } from "@/lib/utils"
 import { Plus, Trash2, Edit2, Loader2, KeyRound, Search, Filter, ChevronLeft, ChevronRight, Power, PowerOff } from "lucide-react"
 import Link from "next/link"
@@ -23,10 +24,35 @@ type UserInfo = {
   createdAt: Date
 }
 
-export default function ClientUserList({ initialUsers, departments, positions }: { initialUsers: UserInfo[], departments: Department[], positions: Position[] }) {
-  const [users, setUsers] = useState<UserInfo[]>(initialUsers)
+export default function ClientUserList() {
+  const [users, setUsers] = useState<UserInfo[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
+  
+  const [initialLoading, setInitialLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  const fetchAllData = async () => {
+    try {
+      const [u, d, p] = await Promise.all([
+        getUsers(),
+        getDepartments(),
+        getPositions()
+      ])
+      setUsers(u as any)
+      setDepartments(d)
+      setPositions(p)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setInitialLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchAllData()
+  }, [])
 
   // Search and Pagination
   const [searchName, setSearchName] = useState("")
@@ -113,29 +139,31 @@ export default function ClientUserList({ initialUsers, departments, positions }:
           password: password.trim() ? password : undefined 
         })
       }
-      window.location.reload()
-    } catch (err: any) {
-      alert(err.message || "Đã xảy ra lỗi")
+      await fetchAllData()
+      setIsModalOpen(false)
+    } catch (error: any) {
+      alert(error.message)
+    } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (id: string, name: string | null) => {
-    if (!confirm(`Xóa tài khoản ${name || "này"}?`)) return
+  const handleDelete = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa thành viên này?")) return
     try {
       await deleteUser(id)
-      setUsers(users.filter(u => u.id !== id))
-    } catch(err) {}
+      await fetchAllData() // Tải lại sau khi xoá
+    } catch (error: any) {
+      alert(error.message)
+    }
   }
 
-  const handleToggleActive = async (user: UserInfo) => {
-    const actionStr = user.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'
-    if (!confirm(`Bạn có chắc chắn muốn ${actionStr} tài khoản ${user.name}?`)) return
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      await toggleUserActive(user.id, !user.isActive)
-      setUsers(users.map(u => u.id === user.id ? { ...u, isActive: !u.isActive } : u))
-    } catch(err) {
-      alert("Đã có lỗi xảy ra.")
+      await toggleUserActive(id, !currentStatus)
+      await fetchAllData() // Tải lại sau khi sửa
+    } catch (error: any) {
+      alert(error.message)
     }
   }
 
@@ -232,13 +260,13 @@ export default function ClientUserList({ initialUsers, departments, positions }:
 
                 <td className="bg-white dark:bg-slate-900/80 px-4 py-4 rounded-r-2xl border-y border-r border-slate-100 dark:border-slate-800 shadow-sm text-right">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleToggleActive(user)} title={user.isActive ? "Vô hiệu hóa đăng nhập" : "Kích hoạt đăng nhập"} className={`p-2 rounded-lg transition-colors ${user.isActive ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30' : 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'}`}>
+                    <button onClick={() => handleToggleActive(user.id, user.isActive)} title={user.isActive ? "Khóa tài khoản" : "Kích hoạt tài khoản"} className={`p-2 rounded-lg transition-colors ${user.isActive ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`}>
                       {user.isActive ? <PowerOff size={16} /> : <Power size={16} />}
                     </button>
                     <button onClick={() => openEdit(user)} title="Sửa thông tin" className="p-2 text-slate-400 hover:text-[var(--primary)] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => handleDelete(user.id, user.name)} title="Xóa tài khoản" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                    <button onClick={() => handleDelete(user.id)} title="Xóa tài khoản" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                       <Trash2 size={16} />
                     </button>
                   </div>

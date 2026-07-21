@@ -3,12 +3,7 @@ import { getCollaboratorEvidences } from "@/actions/evidence"
 import { getAllProgramsPublic } from "@/actions/category"
 import ClientEvidenceList from "./ClientEvidenceList"
 
-export default async function EvidencePage() {
-  const [evidences, programs] = await Promise.all([
-    getCollaboratorEvidences(),
-    getAllProgramsPublic()
-  ])
-
+export default function EvidencePage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -18,9 +13,17 @@ export default async function EvidencePage() {
         </div>
       </div>
       
-      <Suspense fallback={<div>Đang tải...</div>}>
-        <ClientEvidenceList initialEvidences={evidences} programs={programs} />
+      <Suspense fallback={<div className="w-full flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>}>
+        <EvidenceDataWrapper />
       </Suspense>
     </div>
   )
+}
+
+async function EvidenceDataWrapper() {
+  const [evidences, programs] = await Promise.all([
+    getCollaboratorEvidences(),
+    getAllProgramsPublic()
+  ])
+  return <ClientEvidenceList initialEvidences={evidences} programs={programs} />
 }
