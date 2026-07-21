@@ -14,8 +14,8 @@ const handler = async (req: any, res: any) => {
   if (googleClientId?.value && googleClientSecret?.value) {
     providers.push(
       GoogleProvider({
-        clientId: googleClientId.value,
-        clientSecret: googleClientSecret.value
+        clientId: googleClientId.value.trim(),
+        clientSecret: googleClientSecret.value.trim()
       })
     )
   }
