@@ -2,15 +2,16 @@
 
 import { useState, useRef } from "react"
 import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setting"
-import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
+import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle, AlertCircle, Key } from "lucide-react"
 import { getDirectImageUrl } from "@/lib/utils"
 
-type TabId = 'seo' | 'drive' | 'smtp'
+type TabId = 'seo' | 'drive' | 'smtp' | 'google-login'
 
 const TABS = [
   { id: 'seo' as TabId, label: 'SEO & Logo', icon: Globe },
   { id: 'drive' as TabId, label: 'Google Drive', icon: Cloud },
   { id: 'smtp' as TabId, label: 'SMTP Email', icon: Mail },
+  { id: 'google-login' as TabId, label: 'Google Login', icon: Key },
 ]
 
 export default function ClientSettings({ initialData }: { initialData: Record<string, string> }) {
@@ -71,6 +72,10 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
   const [gmailUser, setGmailUser] = useState(initialData["GMAIL_USER"] || "")
   const [gmailPass, setGmailPass] = useState(initialData["GMAIL_PASS"] || "")
 
+  // Google Login State
+  const [googleClientId, setGoogleClientId] = useState(initialData["GOOGLE_CLIENT_ID"] || "")
+  const [googleClientSecret, setGoogleClientSecret] = useState(initialData["GOOGLE_CLIENT_SECRET"] || "")
+
   const [testingDrive, setTestingDrive] = useState(false)
   const [testingSmtp, setTestingSmtp] = useState(false)
 
@@ -129,7 +134,9 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
         GDRIVE_PRIVATE_KEY: driveKey,
         GDRIVE_FOLDER_ID: driveFolder,
         GMAIL_USER: gmailUser,
-        GMAIL_PASS: gmailPass
+        GMAIL_PASS: gmailPass,
+        GOOGLE_CLIENT_ID: googleClientId,
+        GOOGLE_CLIENT_SECRET: googleClientSecret
       })
       showToast("Đã lưu cấu hình Hệ thống thành công!")
       setTimeout(() => window.location.reload(), 1500)
@@ -422,6 +429,51 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
                 Kiểm tra Kết nối Gmail
               </button>
               
+              <div className="flex justify-end mt-4">
+                <button disabled={loading} type="submit" className="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                  Lưu cấu hình
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* GOOGLE LOGIN TAB */}
+        {activeTab === 'google-login' && (
+          <div className="glass rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col animate-in fade-in duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 rounded-xl">
+                <Key size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Cấu hình Đăng nhập bằng Google</h3>
+                <p className="text-xs text-slate-500">Cấu hình OAuth 2.0 Client ID để cho phép đăng nhập bằng tài khoản Google</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 flex-1">
+              <div>
+                <label className="block text-sm font-semibold mb-2">Google Client ID</label>
+                <input 
+                  type="text" 
+                  value={googleClientId} 
+                  onChange={e => setGoogleClientId(e.target.value)} 
+                  placeholder="VD: 1234567890-abc123def456..." 
+                  className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-orange-500 text-sm font-mono" 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Google Client Secret</label>
+                <input 
+                  type="password" 
+                  value={googleClientSecret} 
+                  onChange={e => setGoogleClientSecret(e.target.value)} 
+                  placeholder="VD: GOCSPX-..." 
+                  className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-orange-500 text-sm font-mono tracking-widest" 
+                />
+              </div>
+
               <div className="flex justify-end mt-4">
                 <button disabled={loading} type="submit" className="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30">
                   {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}

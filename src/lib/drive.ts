@@ -51,9 +51,51 @@ async function getSharedDriveId(drive: any, folderId: string): Promise<string | 
   }
 }
 
+async function getOrCreateFolder(drive: any, folderName: string, parentId: string, driveId?: string): Promise<string> {
+  const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${parentId}' in parents and trashed=false`;
+  
+  const searchParams: any = {
+    q: query,
+    fields: "files(id)",
+    supportsAllDrives: true,
+  };
+  
+  if (driveId) {
+    searchParams.includeItemsFromAllDrives = true;
+    searchParams.corpora = "drive";
+    searchParams.driveId = driveId;
+  }
+
+  const res = await drive.files.list(searchParams);
+  
+  if (res.data.files && res.data.files.length > 0) {
+    return res.data.files[0].id!;
+  }
+
+  const createParams: any = {
+    requestBody: {
+      name: folderName,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    },
+    fields: "id",
+    supportsAllDrives: true,
+  };
+  
+  const createRes = await drive.files.create(createParams);
+  return createRes.data.id!;
+}
+
 export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mimeType: string) {
   const { drive, folderId } = await getDriveClient()
   const driveId = await getSharedDriveId(drive, folderId)
+
+  const date = new Date();
+  const yearStr = date.getFullYear().toString();
+  const monthStr = (date.getMonth() + 1).toString().padStart(2, "0");
+
+  const yearFolderId = await getOrCreateFolder(drive, yearStr, folderId, driveId);
+  const monthFolderId = await getOrCreateFolder(drive, monthStr, yearFolderId, driveId);
 
   const bufferStream = new Readable()
   bufferStream.push(fileBuffer)
@@ -61,7 +103,7 @@ export async function uploadFileToDrive(fileBuffer: Buffer, fileName: string, mi
 
   const requestBody: any = {
     name: fileName,
-    parents: [folderId],
+    parents: [monthFolderId],
   }
 
   const params: any = {

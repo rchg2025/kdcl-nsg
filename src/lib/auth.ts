@@ -40,8 +40,29 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: 'jwt' },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (user) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email as string }
+        })
+        if (!existingUser) {
+          return "/login?error=not-linked"
+        }
+        if (existingUser.isActive === false) {
+           return "/login?error=disabled"
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, trigger, session, account }) {
+      if (account?.provider === "google") {
+        const dbUser = await prisma.user.findUnique({ where: { email: token.email as string } })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.id = dbUser.id
+          token.avatar = dbUser.avatar
+        }
+      } else if (user) {
         token.role = (user as any).role
         token.id = user.id
         token.avatar = (user as any).avatar
@@ -61,11 +82,21 @@ export const authOptions: NextAuthOptions = {
     }
   },
   events: {
-    async signIn({ user }) {
-      if (user?.id) {
+    async signIn({ user, account }) {
+      let userId = user?.id;
+      let userEmail = user?.email;
+      
+      if (account?.provider === "google") {
+        const dbUser = await prisma.user.findUnique({ where: { email: user.email as string } })
+        if (dbUser) {
+          userId = dbUser.id;
+        }
+      }
+
+      if (userId) {
         // dynamic import to avoid circular dependency issues at boot time
         const { createSystemLog } = await import('@/actions/log');
-        await createSystemLog(user.id, "LOGIN", "Hệ thống (System)", `Người dùng bắt đầu phiên làm việc: ${user.email}`);
+        await createSystemLog(userId, "LOGIN", "Hệ thống (System)", `Người dùng bắt đầu phiên làm việc: ${userEmail}`);
       }
     },
     async signOut({ token }) {
