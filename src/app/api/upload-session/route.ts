@@ -55,22 +55,8 @@ export async function POST(request: Request) {
       parents: [monthFolderId]
     }
 
-    const params: any = {
-      uploadType: "resumable",
-      requestBody,
-      supportsAllDrives: true
-    }
-
-    if (driveId) {
-      params.includeItemsFromAllDrives = true
-    }
-
-    // Call Google API to instantiate resumable session
-    const initRes = await drive.files.create(params)
-    
-    // The googleapis library returns the exact Location header inside the response object for resumable uploads
-    // wait, googleapis might just do the full upload if you don't pass a stream.
-    // Instead of using googleapis SDK to create session, let's use standard POST fetch with the token, because the SDK abstracts it weirdly for resumable.
+    // Use standard POST fetch with the token for resumable uploads
+    // because the googleapis SDK abstracts it weirdly for resumable.
     
     const client = await auth.getClient()
     const token = await client.getAccessToken()
