@@ -251,7 +251,7 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
     })
     
     return groups
-  }, [filteredEvidencesList])
+  }, [paginatedEvidencesList])
 
   const baseFilteredCriteria = criteriaList.filter(c => {
     if (selectedYear !== "" && c.standard.year !== selectedYear) return false
