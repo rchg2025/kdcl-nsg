@@ -613,47 +613,22 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
                            </td>
                         </tr>
                         {/* Evidence Rows */}
-                        {critGroup.evidences.map((ev) => (
-                          <tr key={ev.id} id={`ev-${ev.id}`} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                            <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
-                              {ev.evidenceItem && (
-                                <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
-                                  Minh chứng: {ev.evidenceItem.name}
-                                </div>
-                              )}
-                              <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                                {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
-                              </div>
-                              
-                              {ev.sharedFrom && (
-                                <div className="mt-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-1.5 px-2 inline-block">
-                                  <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium text-[10px]">
-                                    <Link2 size={10} /> Dùng chung từ: <strong className="font-bold">{ev.sharedFrom.criterion.name}</strong>
-                                    <button 
-                                      onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
-                                      className="ml-1 flex items-center gap-1 text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 underline underline-offset-2"
-                                    >
-                                      Xem gốc
-                                    </button>
+                        {critGroup.evidences.map((ev, index) => {
+                          const bgClass = index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/30";
+                          const hasSuppInfo = ev.sharedFrom || (ev._count && ev._count.sharedTo > 0) || (ev.status === "REJECTED" && ev.rejectReason);
+                          return (
+                          <React.Fragment key={ev.id}>
+                            <tr id={`ev-${ev.id}`} className={`${bgClass} ${hasSuppInfo ? '' : 'border-b border-slate-200 dark:border-slate-700/50'} hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors`}>
+                              <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
+                                {ev.evidenceItem && (
+                                  <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
+                                    Minh chứng: {ev.evidenceItem.name}
                                   </div>
+                                )}
+                                <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                                  {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
                                 </div>
-                              )}
-                              {ev._count && ev._count.sharedTo > 0 && (
-                                <div className="mt-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg py-1.5 px-2 inline-block">
-                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-[10px]">
-                                    <Link2 size={10} /> Dùng chung cho <strong className="text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn
-                                  </div>
-                                </div>
-                              )}
-                              {ev.status === "REJECTED" && ev.rejectReason && (
-                                <div className="mt-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
-                                  <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold text-[11px] mb-0.5">
-                                    <AlertCircle size={12} /> Lý do không đạt:
-                                  </div>
-                                  <p className="text-xs text-red-700 dark:text-red-300">{ev.rejectReason}</p>
-                                </div>
-                              )}
-                            </td>
+                              </td>
                             <td className="p-3 align-top min-w-[200px]">
                                <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
                             </td>
@@ -688,8 +663,49 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
                                 </button>
                               )}
                             </td>
-                          </tr>
-                        ))}
+                            </tr>
+                            
+                            {/* Supplementary info row */}
+                            {hasSuppInfo && (
+                              <tr className={`${bgClass} border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors`}>
+                                <td colSpan={5} className="px-3 pb-3 pl-10 pt-1">
+                                  <div className="flex flex-col gap-2">
+                                    {ev.sharedFrom && (
+                                      <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-2 px-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-[12px]">
+                                          <Link2 size={14} /> 
+                                          <span>Dùng chung từ tiêu chí: <strong className="font-bold text-indigo-700 dark:text-indigo-300">{ev.sharedFrom.criterion.name}</strong></span>
+                                        </div>
+                                        <button 
+                                          onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
+                                          className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 px-3 py-1 rounded-md text-[11px] font-bold transition-colors"
+                                        >
+                                          Xem bản gốc
+                                        </button>
+                                      </div>
+                                    )}
+                                    {ev._count && ev._count.sharedTo > 0 && (
+                                      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg py-2 px-3">
+                                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-[12px]">
+                                          <Link2 size={14} /> 
+                                          <span>Đang được dùng chung cho <strong className="font-bold text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn khác</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {ev.status === "REJECTED" && ev.rejectReason && (
+                                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-[12px] mb-1">
+                                          <AlertCircle size={14} /> Lý do không đạt:
+                                        </div>
+                                        <p className="text-sm text-red-700 dark:text-red-300 ml-5">{ev.rejectReason}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        )})}
                       </React.Fragment>
                     ))}
                   </React.Fragment>
