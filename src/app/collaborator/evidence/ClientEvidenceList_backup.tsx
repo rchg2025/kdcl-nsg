@@ -213,12 +213,6 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
     setCurrentPage(1)
   }, [searchEv, filterEvYear, filterEvStatus, filterEvType, filterEvProgramId])
 
-  const totalPages = Math.ceil(filteredEvidencesList.length / itemsPerPage)
-  const paginatedEvidencesList = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    return filteredEvidencesList.slice(startIndex, startIndex + itemsPerPage)
-  }, [filteredEvidencesList, currentPage, itemsPerPage])
-
   // Group evidences by Standard -> Criterion
   const groupedEvidences = useMemo(() => {
     const groups: Record<string, {
@@ -229,7 +223,7 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
       }>
     }> = {}
 
-    paginatedEvidencesList.forEach(ev => {
+    filteredEvidencesList.forEach(ev => {
       const stdKey = `${ev.criterion.standard.name} (${ev.criterion.standard.year})`
       const critKey = ev.criterion.name
       
@@ -619,22 +613,47 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
                            </td>
                         </tr>
                         {/* Evidence Rows */}
-                        {critGroup.evidences.map((ev, index) => {
-                          const bgClass = index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/30";
-                          const hasSuppInfo = ev.sharedFrom || (ev._count && ev._count.sharedTo > 0) || (ev.status === "REJECTED" && ev.rejectReason);
-                          return (
-                          <React.Fragment key={ev.id}>
-                            <tr id={`ev-${ev.id}`} className={`${bgClass} ${hasSuppInfo ? '' : 'border-b border-slate-200 dark:border-slate-700/50'} hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors`}>
-                              <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
-                                {ev.evidenceItem && (
-                                  <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
-                                    Minh chứng: {ev.evidenceItem.name}
-                                  </div>
-                                )}
-                                <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                                  {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
+                        {critGroup.evidences.map((ev) => (
+                          <tr key={ev.id} id={`ev-${ev.id}`} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
+                              {ev.evidenceItem && (
+                                <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
+                                  Minh chứng: {ev.evidenceItem.name}
                                 </div>
-                              </td>
+                              )}
+                              <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                                {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
+                              </div>
+                              
+                              {ev.sharedFrom && (
+                                <div className="mt-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-1.5 px-2 inline-block">
+                                  <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium text-[10px]">
+                                    <Link2 size={10} /> Dùng chung từ: <strong className="font-bold">{ev.sharedFrom.criterion.name}</strong>
+                                    <button 
+                                      onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
+                                      className="ml-1 flex items-center gap-1 text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 underline underline-offset-2"
+                                    >
+                                      Xem gốc
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                              {ev._count && ev._count.sharedTo > 0 && (
+                                <div className="mt-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg py-1.5 px-2 inline-block">
+                                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-[10px]">
+                                    <Link2 size={10} /> Dùng chung cho <strong className="text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn
+                                  </div>
+                                </div>
+                              )}
+                              {ev.status === "REJECTED" && ev.rejectReason && (
+                                <div className="mt-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
+                                  <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold text-[11px] mb-0.5">
+                                    <AlertCircle size={12} /> Lý do không đạt:
+                                  </div>
+                                  <p className="text-xs text-red-700 dark:text-red-300">{ev.rejectReason}</p>
+                                </div>
+                              )}
+                            </td>
                             <td className="p-3 align-top min-w-[200px]">
                                <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
                             </td>
@@ -669,138 +688,14 @@ export default function ClientEvidenceList({ initialEvidences, programs=[] }: { 
                                 </button>
                               )}
                             </td>
-                            </tr>
-                            
-                            {/* Supplementary info row */}
-                            {hasSuppInfo && (
-                              <tr className={`${bgClass} border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors`}>
-                                <td colSpan={5} className="px-3 pb-3 pl-10 pt-1">
-                                  <div className="flex flex-col gap-2">
-                                    {ev.sharedFrom && (
-                                      <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-2 px-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-[12px]">
-                                          <Link2 size={14} /> 
-                                          <span>Dùng chung từ tiêu chí: <strong className="font-bold text-indigo-700 dark:text-indigo-300">{ev.sharedFrom.criterion.name}</strong></span>
-                                        </div>
-                                        <button 
-                                          onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
-                                          className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 px-3 py-1 rounded-md text-[11px] font-bold transition-colors"
-                                        >
-                                          Xem bản gốc
-                                        </button>
-                                      </div>
-                                    )}
-                                    {ev._count && ev._count.sharedTo > 0 && (
-                                      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg py-2 px-3">
-                                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-[12px]">
-                                          <Link2 size={14} /> 
-                                          <span>Đang được dùng chung cho <strong className="font-bold text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn khác</span>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {ev.status === "REJECTED" && ev.rejectReason && (
-                                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold text-[12px] mb-1">
-                                          <AlertCircle size={14} /> Lý do không đạt:
-                                        </div>
-                                        <p className="text-sm text-red-700 dark:text-red-300 ml-5">{ev.rejectReason}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        )})}
+                          </tr>
+                        ))}
                       </React.Fragment>
                     ))}
                   </React.Fragment>
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[var(--card)] px-4 py-3 sm:px-6 rounded-b-2xl">
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-slate-700 dark:text-slate-300">
-                  Hiển thị <span className="font-medium text-[var(--foreground)]">{((currentPage - 1) * itemsPerPage) + 1}</span> đến <span className="font-medium text-[var(--foreground)]">{Math.min(currentPage * itemsPerPage, filteredEvidencesList.length)}</span> trong số <span className="font-medium text-[var(--foreground)]">{filteredEvidencesList.length}</span> kết quả
-                </p>
-              </div>
-              <div>
-                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="sr-only">Trang trước</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum = currentPage;
-                    if (currentPage <= 3) pageNum = i + 1;
-                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                    else pageNum = currentPage - 2 + i;
-                    
-                    if (pageNum < 1 || pageNum > totalPages) return null;
-                    
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        aria-current={currentPage === pageNum ? "page" : undefined}
-                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0 ${
-                          currentPage === pageNum
-                            ? "z-10 bg-[var(--primary)] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
-                            : "text-slate-900 dark:text-slate-300 ring-1 ring-inset ring-slate-300 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  })}
-                  
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="sr-only">Trang sau</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </nav>
-              </div>
-            </div>
-            
-            {/* Mobile Pagination View */}
-            <div className="flex flex-1 justify-between sm:hidden mt-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
-              >
-                Trang trước
-              </button>
-              <span className="text-sm self-center text-slate-700 dark:text-slate-300">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
-              >
-                Trang sau
-              </button>
-            </div>
           </div>
         )}
       </div>

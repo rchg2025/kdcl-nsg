@@ -69,7 +69,11 @@ function LoginContent() {
     })
 
     if (res?.error) {
-      setError("Email hoặc Mật khẩu không chính xác")
+      if (res.error === "CredentialsSignin") {
+        setError("Email hoặc Mật khẩu không chính xác")
+      } else {
+        setError(res.error)
+      }
       setLoading(false)
     } else {
       router.push("/dashboard")
