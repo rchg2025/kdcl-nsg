@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getSettings } from "@/actions/setting"
 import { GoogleGenAI } from "@google/genai"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -27,7 +26,17 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Lấy cấu hình Chatbot
-    const settings = await getSettings()
+    const settingsRecords = await prisma.systemSetting.findMany({
+      where: {
+        key: {
+          in: ['CHATBOT_ENABLED', 'CHATBOT_API_KEY']
+        }
+      }
+    })
+    
+    const settings: Record<string, string> = {}
+    settingsRecords.forEach(s => settings[s.key] = s.value)
+
     if (settings["CHATBOT_ENABLED"] !== "true") {
       return NextResponse.json({ error: "Chatbot AI hiện đang bị vô hiệu hoá." }, { status: 403 })
     }
