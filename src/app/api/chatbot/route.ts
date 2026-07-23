@@ -133,6 +133,16 @@ Nếu người dùng hỏi thông tin không có trong DỮ LIỆU HỆ THỐNG,
 
 QUAN TRỌNG: Khi bạn cung cấp thông tin về bất kỳ Tiêu chuẩn nào, hãy LUÔN LUÔN chèn link (dạng Markdown) dẫn đến Tiêu chuẩn đó dựa vào (Link: ...) được cung cấp trong dữ liệu. Ví dụ: [Tiêu chuẩn 1](/admin/criteria/clabc123). Nếu người dùng hỏi về Tiêu chí, bạn cũng nên đính kèm link của Tiêu chuẩn chứa Tiêu chí đó để họ bấm vào xem chi tiết.
 
+CỰC KỲ QUAN TRỌNG: Ở cuối MỖI câu trả lời, bạn PHẢI phân tích câu hỏi và câu trả lời hiện tại, để suy luận và đưa ra 2 đến 3 câu hỏi gợi ý thông minh tiếp theo (liên quan trực tiếp đến vấn đề đang nói) giúp người dùng hỏi tiếp.
+Để làm được điều này, hãy luôn nối chuỗi "---SUGGESTIONS---" vào cuối câu trả lời của bạn, và sau đó liệt kê mỗi câu hỏi gợi ý trên một dòng riêng biệt. (Lưu ý: Không dùng markdown list '-', '*', số thứ tự 1. 2. ở danh sách gợi ý này).
+
+Ví dụ cấu trúc trả lời:
+(Nội dung câu trả lời của bạn...)
+---SUGGESTIONS---
+Bạn có muốn xem chi tiết minh chứng của tiêu chuẩn này không?
+Tiến độ duyệt minh chứng của tiêu chuẩn này thế nào?
+
+DỮ LIỆU HỆ THỐNG:
 ${contextStr}
 `
 

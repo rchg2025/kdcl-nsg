@@ -14,11 +14,10 @@ interface ChatbotWidgetProps {
   settings: Record<string, string>
 }
 
-const SUGGESTIONS = [
-  "Hệ thống có bao nhiêu tiêu chuẩn?",
-  "Tiêu chuẩn 1 yêu cầu gì?",
-  "Cho tôi biết về Tiêu chí 1.1",
-  "Minh chứng là gì?"
+const INITIAL_SUGGESTIONS = [
+  "Tiến độ duyệt minh chứng hiện tại ra sao?",
+  "Tiêu chuẩn nào có nhiều minh chứng nhất?",
+  "Hệ thống có tổng cộng bao nhiêu tiêu chuẩn và tiêu chí?"
 ]
 
 export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
@@ -37,6 +36,7 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
   ])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>(INITIAL_SUGGESTIONS)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto scroll to bottom
@@ -44,7 +44,7 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages, isOpen])
+  }, [messages, isOpen, dynamicSuggestions])
 
   if (!enabled) return null
 
@@ -54,6 +54,7 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
     const userMsg: ChatMessage = { role: "user", content: text }
     setMessages(prev => [...prev, userMsg])
     setInput("")
+    setDynamicSuggestions([])
     setLoading(true)
 
     try {
@@ -68,7 +69,24 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
         throw new Error(data.error || "Có lỗi xảy ra")
       }
 
-      setMessages(prev => [...prev, { role: "model", content: data.content }])
+      let rawContent = data.content;
+      let newSuggestions: string[] = [];
+
+      // Phân tách phần gợi ý câu hỏi từ AI
+      if (rawContent.includes("---SUGGESTIONS---")) {
+        const parts = rawContent.split("---SUGGESTIONS---");
+        rawContent = parts[0].trim();
+        const suggestionsPart = parts[1].trim();
+        // Lấy từng dòng, loại bỏ các ký tự dấu -, *, số thứ tự ở đầu
+        newSuggestions = suggestionsPart.split("\n")
+          .map((line: string) => line.replace(/^[\d\.\-\*\s]+/, '').trim())
+          .filter((line: string) => line.length > 0);
+      }
+
+      setMessages(prev => [...prev, { role: "model", content: rawContent }])
+      if (newSuggestions.length > 0) {
+        setDynamicSuggestions(newSuggestions)
+      }
     } catch (err: any) {
       setMessages(prev => [...prev, { role: "model", content: `❌ Lỗi API: ${err.message}` }])
     } finally {
@@ -135,16 +153,16 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
             ))}
             
             {/* Suggestions */}
-            {messages.length === 1 && !loading && (
+            {dynamicSuggestions.length > 0 && !loading && (
               <div className="flex flex-wrap gap-2 pt-2">
-                {SUGGESTIONS.map((suggestion, idx) => (
+                {dynamicSuggestions.map((suggestion, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSend(suggestion)}
                     className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-sm"
                   >
-                    <MessageCircleQuestion size={14} className="opacity-70" />
-                    {suggestion}
+                    <MessageCircleQuestion size={14} className="opacity-70 flex-shrink-0" />
+                    <span className="text-left">{suggestion}</span>
                   </button>
                 ))}
               </div>
