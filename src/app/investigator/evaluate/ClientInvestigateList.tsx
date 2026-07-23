@@ -30,12 +30,12 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
       await evaluateEvidence({ 
         evidenceId: id, 
         isApproved, 
-        comments: commentInput[id] || "KhÃ´ng cÃ³ pháº£n há»“i thÃªm" 
+        comments: commentInput[id] || "Không có phản hồi thêm" 
       })
-      alert("ÄÃ£ gá»­i pháº£n há»“i Ä‘Ã¡nh giÃ¡ thÃ nh cÃ´ng!")
+      alert("Đã gửi phản hồi đánh giá thành công!")
       window.location.reload()
     } catch (err) {
-      alert("ÄÃ£ xáº£y ra lá»—i khi gá»­i Ä‘Ã¡nh giÃ¡")
+      alert("Đã xảy ra lỗi khi gửi đánh giá")
       setLoadingId(null)
     }
   }
@@ -48,7 +48,7 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
     REVIEWING: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
   }
 
-  // Tiá»‡n Ã­ch danh sÃ¡ch lá»c
+  // Tiện ích danh sách lọc
   const availableYears = Array.from(new Set(initialEvidences.map(ev => ev.criterion.standard.year)))
 
   // --- FILTERING ---
@@ -125,64 +125,64 @@ return (
       {pendingEvaluationCount > 0 && (
         <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl flex items-center gap-3 shadow-sm dark:bg-amber-900/20 dark:border-amber-800/50 dark:text-amber-300">
           <AlertCircle className="w-5 h-5 flex-shrink-0 animate-pulse" />
-          <p className="text-sm font-medium">Báº¡n cÃ³ <strong>{pendingEvaluationCount}</strong> minh chá»©ng Ä‘ang chá» Ä‘Æ°á»£c Ä‘Ã¡nh giÃ¡ pháº£n há»“i (chÆ°a cÃ³ káº¿t quáº£ hoáº·c láº§n trÆ°á»›c KhÃ´ng Äáº¡t).</p>
+          <p className="text-sm font-medium">Bạn có <strong>{pendingEvaluationCount}</strong> minh chứng đang chờ được đánh giá phản hồi (chưa có kết quả hoặc lần trước Không Đạt).</p>
         </div>
       )}
 
       {/* Search & Filters */}
       <div className="glass p-5 rounded-2xl border border-slate-200 dark:border-slate-800 relative z-30">
         <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-[var(--foreground)]">
-          <Filter size={18} /> Bá»™ lá»c tÃ¬m kiáº¿m nÃ¢ng cao
+          <Filter size={18} /> Bộ lọc tìm kiếm nâng cao
         </h3>
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Ná»™i dung TiÃªu chÃ­</label>
+            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Nội dung Tiêu chí</label>
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text" 
                 value={searchKeyword} 
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }} 
-                placeholder="Tá»« khÃ³a..." 
+                placeholder="Từ khóa..." 
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm" 
               />
             </div>
           </div>
           <div className="w-[200px]">
-             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">NhÃ¢n sá»± thá»±c hiá»‡n</label>
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Nhân sự thực hiện</label>
              <input 
                 type="text" 
                 value={searchUser} 
                 onChange={e => { setSearchUser(e.target.value); setCurrentPage(1); }} 
-                placeholder="TÃªn nhÃ¢n sá»±..." 
+                placeholder="Tên nhân sự..." 
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm" 
               />
           </div>
           <div className="w-[150px]">
-             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">NÄƒm</label>
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Năm</label>
              <select value={filterYear} onChange={e => { setFilterYear(e.target.value); setCurrentPage(1); }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
-               <option value="ALL">Táº¥t cáº£ nÄƒm</option>
+               <option value="ALL">Tất cả năm</option>
                {availableYears.map(year => (
                  <option key={year} value={year.toString()}>{year}</option>
                ))}
              </select>
           </div>
           <div className="w-[180px]">
-             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Loáº¡i Ä‘Ã¡nh giÃ¡</label>
+             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Loại đánh giá</label>
              <select value={filterType} onChange={e => { 
                 setFilterType(e.target.value); 
                 setFilterProgramId(""); 
                 setSearchProgramName("");
                 setCurrentPage(1); 
               }} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm">
-               <option value="ALL">Táº¥t cáº£ cÃ¡c loáº¡i</option>
-               <option value="INSTITUTIONAL">Kiá»ƒm Ä‘á»‹nh TrÆ°á»ng</option>
-               <option value="PROGRAM">Kiá»ƒm Ä‘á»‹nh NgÃ nh Ä‘Ã o</option>
+               <option value="ALL">Tất cả các loại</option>
+               <option value="INSTITUTIONAL">Kiểm định Trường</option>
+               <option value="PROGRAM">Kiểm định Ngành đào</option>
              </select>
           </div>
           {filterType === "PROGRAM" && (
             <div className="w-[220px] relative">
-              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Chá»n NgÃ nh Ä‘Ã o táº¡o</label>
+              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Chọn Ngành đào tạo</label>
               <input 
                 type="text"
                 value={searchProgramName}
@@ -195,12 +195,12 @@ return (
                 onFocus={() => setShowProgramDropdown(true)}
                 onBlur={() => setTimeout(() => setShowProgramDropdown(false), 200)}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl outline-none focus:border-indigo-500 text-sm"
-                placeholder="Tra cá»©u ngÃ nh há»c..."
+                placeholder="Tra cứu ngành học..."
               />
               {showProgramDropdown && (
                 <div className="absolute z-10 w-[300px] right-0 mt-1 max-h-60 overflow-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
                   {programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0).length === 0 ? (
-                    <div className="p-3 text-sm text-slate-500 text-center">KhÃ´ng tÃ¬m tháº¥y ngÃ nh</div>
+                    <div className="p-3 text-sm text-slate-500 text-center">Không tìm thấy ngành</div>
                   ) : (
                     programs.filter((p:any) => smartSearch(p.name, searchProgramName) > 0)
                       .map(_item => ({ _item, _score: smartSearch(_item.name, searchProgramName) }))
@@ -235,17 +235,17 @@ return (
             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
               <FileText size={28} className="text-slate-400" />
             </div>
-            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">KhÃ´ng tÃ¬m tháº¥y minh chá»©ng nÃ o</h3>
+            <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">Không tìm thấy minh chứng nào</h3>
           </div>
         ) : (
           <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Minh chá»©ng</th>
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Tá»‡p Ä‘Ã­nh kÃ¨m</th>
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">ThÃ´ng tin</th>
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap">ÄÃ¡nh giÃ¡</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Minh chứng</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Tệp đính kèm</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Thông tin</th>
+                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap">Đánh giá</th>
                 </tr>
               </thead>
               <tbody>
@@ -275,11 +275,11 @@ return (
                               <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
                                 {ev.evidenceItem && (
                                   <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
-                                    Minh chá»©ng: {ev.evidenceItem.name}
+                                    Minh chứng: {ev.evidenceItem.name}
                                   </div>
                                 )}
                                 <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                                  {ev.content || ev.sharedFrom?.content || "KhÃ´ng cÃ³ ná»™i dung mÃ´ táº£"}
+                                  {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
                                 </div>
                               </td>
                             <td className="p-3 align-top min-w-[200px]">
@@ -287,12 +287,12 @@ return (
                             </td>
                             <td className="p-3 align-top min-w-[150px]">
                               <div className={`mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold ${statusColors[ev.status]}`}>
-                                <CheckCircle2 size={12} /> ÄÃ£ duyá»‡t
+                                <CheckCircle2 size={12} /> Đã duyệt
                               </div>
                               <div className="flex flex-col gap-1.5 text-[10px] font-medium text-slate-500">
                                 <div className="flex items-center gap-1.5">
                                   <UserCircle size={12} className="text-slate-400" />
-                                  <span>Ná»™p bá»Ÿi: <strong className="text-slate-700 dark:text-slate-300">{ev.collaborator.name}</strong> {ev.collaborator?.department?.name && `(${ev.collaborator.department.name})`}</span>
+                                  <span>Nộp bởi: <strong className="text-slate-700 dark:text-slate-300">{ev.collaborator.name}</strong> {ev.collaborator?.department?.name && `(${ev.collaborator.department.name})`}</span>
                                 </div>
                               </div>
                             </td>
@@ -303,8 +303,8 @@ return (
                                       {ev.evaluations.map((evalData: any, idx: number) => (
                                         <div key={evalData.id} className={`p-2 rounded-lg border-2 ${evalData.isApproved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'} text-xs`}>
                                           <div className="font-bold flex items-center justify-between mb-1">
-                                            <span className="flex items-center gap-1">{evalData.isApproved ? <CheckCircle2 size={12} /> : <XCircle size={12} />} {evalData.isApproved ? 'Äáº T' : 'KHÃ”NG Äáº T'}</span>
-                                            <span className="opacity-70 text-[9px]">Láº§n {idx + 1}</span>
+                                            <span className="flex items-center gap-1">{evalData.isApproved ? <CheckCircle2 size={12} /> : <XCircle size={12} />} {evalData.isApproved ? 'ĐẠT' : 'KHÔNG ĐẠT'}</span>
+                                            <span className="opacity-70 text-[9px]">Lần {idx + 1}</span>
                                           </div>
                                           {evalData.comments && <p className="opacity-90 italic text-[10px] break-words whitespace-pre-wrap">{evalData.comments}</p>}
                                         </div>
@@ -316,7 +316,7 @@ return (
                                     <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-left">
                                       <textarea
                                         disabled={loadingId === ev.id}
-                                        placeholder="Nháº­n xÃ©t (báº¯t buá»™c náº¿u KhÃ´ng Äáº¡t)..."
+                                        placeholder="Nhận xét (bắt buộc nếu Không Đạt)..."
                                         className="w-full text-xs p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 outline-none mb-2 min-h-[50px] focus:border-indigo-500 shadow-sm"
                                         value={commentInput[ev.id] || ""}
                                         onChange={e => setCommentInput(prev => ({...prev, [ev.id]: e.target.value}))}
@@ -327,12 +327,12 @@ return (
                                           disabled={loadingId === ev.id}
                                           className="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-500 hover:text-white transition-colors text-xs font-bold py-1.5 rounded-md flex items-center justify-center gap-1 shadow-sm disabled:opacity-50"
                                         >
-                                          {loadingId === ev.id ? <Loader2 size={12} className="animate-spin"/> : <CheckSquare size={12}/>} Äáº T
+                                          {loadingId === ev.id ? <Loader2 size={12} className="animate-spin"/> : <CheckSquare size={12}/>} ĐẠT
                                         </button>
                                         <button 
                                           onClick={() => {
                                             if (!commentInput[ev.id]?.trim()) {
-                                              alert("Vui lÃ²ng nháº­p lÃ½ do vÃ¬ sao khÃ´ng Ä‘áº¡t!");
+                                              alert("Vui lòng nhập lý do vì sao không đạt!");
                                               return;
                                             }
                                             handleEvaluate(ev.id, false)
@@ -340,7 +340,7 @@ return (
                                           disabled={loadingId === ev.id}
                                           className="flex-1 bg-red-50 text-red-600 border border-red-200 hover:bg-red-500 hover:text-white transition-colors text-xs font-bold py-1.5 rounded-md flex items-center justify-center gap-1 shadow-sm disabled:opacity-50"
                                         >
-                                          {loadingId === ev.id ? <Loader2 size={12} className="animate-spin"/> : <XSquare size={12}/>} KHÃ”NG
+                                          {loadingId === ev.id ? <Loader2 size={12} className="animate-spin"/> : <XSquare size={12}/>} KHÔNG
                                         </button>
                                       </div>
                                     </div>
@@ -358,13 +358,13 @@ return (
                                       <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-lg py-2 px-3 flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium text-[12px]">
                                           <Link2 size={14} /> 
-                                          <span>DÃ¹ng chung tá»« tiÃªu chÃ­: <strong className="font-bold text-indigo-700 dark:text-indigo-300">{ev.sharedFrom.criterion.name}</strong></span>
+                                          <span>Dùng chung từ tiêu chí: <strong className="font-bold text-indigo-700 dark:text-indigo-300">{ev.sharedFrom.criterion.name}</strong></span>
                                         </div>
                                         <button 
                                           onClick={() => setViewingSharedEvidence(ev.sharedFrom)}
                                           className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 px-3 py-1 rounded-md text-[11px] font-bold transition-colors"
                                         >
-                                          <Search size={10} /> Xem gá»‘c
+                                          <Search size={10} /> Xem gốc
                                         </button>
                                       </div>
                                     )}
@@ -372,7 +372,7 @@ return (
                                       <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg py-2 px-3">
                                         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium text-[12px]">
                                           <Link2 size={14} /> 
-                                          <span>Äang Ä‘Æ°á»£c dÃ¹ng chung cho <strong className="font-bold text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiÃªu chuáº©n khÃ¡c</span>
+                                          <span>Đang được dùng chung cho <strong className="font-bold text-emerald-700 dark:text-emerald-300">{ev._count.sharedTo}</strong> tiêu chuẩn khác</span>
                                         </div>
                                       </div>
                                     )}
@@ -398,7 +398,7 @@ return (
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-slate-700 dark:text-slate-300">
-                Hiá»ƒn thá»‹ <span className="font-medium text-[var(--foreground)]">{((currentPage - 1) * itemsPerPage) + 1}</span> Ä‘áº¿n <span className="font-medium text-[var(--foreground)]">{Math.min(currentPage * itemsPerPage, filteredEvidences.length)}</span> trong sá»‘ <span className="font-medium text-[var(--foreground)]">{filteredEvidences.length}</span> káº¿t quáº£
+                Hiển thị <span className="font-medium text-[var(--foreground)]">{((currentPage - 1) * itemsPerPage) + 1}</span> đến <span className="font-medium text-[var(--foreground)]">{Math.min(currentPage * itemsPerPage, filteredEvidences.length)}</span> trong số <span className="font-medium text-[var(--foreground)]">{filteredEvidences.length}</span> kết quả
               </p>
             </div>
             <div>
@@ -408,7 +408,7 @@ return (
                   disabled={currentPage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:ring-slate-700 dark:hover:bg-slate-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="sr-only">Trang trÆ°á»›c</span>
+                  <span className="sr-only">Trang trước</span>
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
                   </svg>
@@ -459,7 +459,7 @@ return (
               disabled={currentPage === 1}
               className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
             >
-              Trang trÆ°á»›c
+              Trang trước
             </button>
             <span className="text-sm self-center text-slate-700 dark:text-slate-300">
               {currentPage} / {totalPages}
@@ -481,26 +481,26 @@ return (
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Link2 size={20} className="text-indigo-500" />
-                ThÃ´ng tin Minh chá»©ng DÃ¹ng chung
+                Thông tin Minh chứng Dùng chung
               </h3>
             </div>
             
             <div className="p-6 max-h-[70vh] overflow-y-auto">
               <div className="mb-4 text-sm text-slate-500">
-                Tá»« tiÃªu chÃ­: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.standard?.name} ({viewingSharedEvidence.criterion?.standard?.year})</strong>
+                Từ tiêu chí: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.standard?.name} ({viewingSharedEvidence.criterion?.standard?.year})</strong>
                 <br />
-                TiÃªu chuáº©n: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.name}</strong>
+                Tiêu chuẩn: <strong className="text-indigo-600 dark:text-indigo-400">{viewingSharedEvidence.criterion?.name}</strong>
               </div>
               
               <div className="mb-4">
-                <label className="block text-sm font-semibold mb-2">Ná»™i dung bÃ¡o cÃ¡o:</label>
+                <label className="block text-sm font-semibold mb-2">Nội dung báo cáo:</label>
                 <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl text-sm whitespace-pre-wrap text-slate-700 dark:text-slate-300">
-                  {viewingSharedEvidence.content || "ChÆ°a cÃ³ ná»™i dung mÃ´ táº£"}
+                  {viewingSharedEvidence.content || "Chưa có nội dung mô tả"}
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-semibold mb-2">TÃ i liá»‡u Ä‘Ã­nh kÃ¨m:</label>
+                <label className="block text-sm font-semibold mb-2">Tài liệu đính kèm:</label>
                 <FileAttachments fileStr={viewingSharedEvidence.fileUrl || null} />
               </div>
             </div>
@@ -510,7 +510,7 @@ return (
                 onClick={() => setViewingSharedEvidence(null)} 
                 className="px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                ÄÃ³ng
+                Đóng
               </button>
             </div>
           </div>
