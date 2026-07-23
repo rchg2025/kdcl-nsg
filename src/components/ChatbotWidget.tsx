@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Bot, X, Send, Loader2 } from "lucide-react"
+import { Bot, X, Send, Loader2, MessageCircleQuestion } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
@@ -14,6 +14,13 @@ interface ChatbotWidgetProps {
   settings: Record<string, string>
 }
 
+const SUGGESTIONS = [
+  "Hệ thống có bao nhiêu tiêu chuẩn?",
+  "Tiêu chuẩn 1 yêu cầu gì?",
+  "Cho tôi biết về Tiêu chí 1.1",
+  "Minh chứng là gì?"
+]
+
 export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
   const enabled = settings["CHATBOT_ENABLED"] === "true"
   const primaryColor = settings["CHATBOT_PRIMARY_COLOR"] || "#FDC700"
@@ -25,7 +32,7 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "model",
-      content: "Xin chào! Tôi là Trợ lý ảo QA của hệ thống. Bạn cần hỏi gì về Tiêu chuẩn và Tiêu chí không?"
+      content: "Xin chào! Tôi là Trợ lý ảo KDCL - NSG ChatbotAI. Bạn cần hỗ trợ thông tin gì về các Tiêu chuẩn và Tiêu chí đánh giá chất lượng?"
     }
   ])
   const [input, setInput] = useState("")
@@ -41,11 +48,10 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
 
   if (!enabled) return null
 
-  const handleSend = async (e?: React.FormEvent) => {
-    e?.preventDefault()
-    if (!input.trim() || loading) return
+  const handleSend = async (text: string) => {
+    if (!text.trim() || loading) return
 
-    const userMsg: ChatMessage = { role: "user", content: input }
+    const userMsg: ChatMessage = { role: "user", content: text }
     setMessages(prev => [...prev, userMsg])
     setInput("")
     setLoading(true)
@@ -64,7 +70,7 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
 
       setMessages(prev => [...prev, { role: "model", content: data.content }])
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: "model", content: `❌ Lỗi: ${err.message}` }])
+      setMessages(prev => [...prev, { role: "model", content: `❌ Lỗi API: ${err.message}` }])
     } finally {
       setLoading(false)
     }
@@ -91,12 +97,12 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
         >
           {/* Header */}
           <div 
-            className="px-4 py-3 text-white flex items-center justify-between"
+            className="px-4 py-3 text-white flex items-center justify-between shadow-sm z-10"
             style={{ backgroundColor: primaryColor }}
           >
             <div className="flex items-center gap-2 font-bold">
               <Bot size={20} />
-              AI Chatbot QA
+              KDCL - NSG ChatbotAI
             </div>
             <button onClick={() => setIsOpen(false)} className="hover:bg-black/20 p-1.5 rounded-xl transition-colors">
               <X size={18} />
@@ -127,6 +133,23 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
                 </div>
               </div>
             ))}
+            
+            {/* Suggestions */}
+            {messages.length === 1 && !loading && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {SUGGESTIONS.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(suggestion)}
+                    className="text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                  >
+                    <MessageCircleQuestion size={14} className="opacity-70" />
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-2 shadow-sm text-slate-500">
@@ -139,7 +162,10 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSend} className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-2">
+          <form 
+            onSubmit={(e) => { e.preventDefault(); handleSend(input); }} 
+            className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-2"
+          >
             <input
               type="text"
               value={input}
