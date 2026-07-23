@@ -27,7 +27,18 @@ export async function POST(req: NextRequest) {
       include: {
         criteria: {
           include: {
-            items: true
+            items: {
+              include: {
+                evidences: {
+                  where: { status: 'APPROVED' },
+                  include: { collaborator: true }
+                }
+              }
+            },
+            evidences: {
+              where: { status: 'APPROVED', evidenceItemId: null },
+              include: { collaborator: true }
+            }
           }
         }
       }
@@ -39,10 +50,25 @@ export async function POST(req: NextRequest) {
       contextStr += `Tiêu chuẩn: ${std.name} - ${std.description || ""} (Link: /admin/criteria/${std.id})\n`
       for (const cri of std.criteria) {
         contextStr += `  + Tiêu chí: ${cri.name} - ${cri.description || ""}\n`
+        
+        // Minh chứng nộp chung cho Tiêu chí
+        if (cri.evidences && cri.evidences.length > 0) {
+          contextStr += `    Tài liệu minh chứng đã nộp cho Tiêu chí này:\n`
+          for (const ev of cri.evidences) {
+            contextStr += `      - ${ev.content || "Tệp đính kèm"} (Người nộp: ${ev.collaborator?.name || "Ẩn danh"})\n`
+          }
+        }
+
         if (cri.items.length > 0) {
-          contextStr += `    Các yêu cầu minh chứng (Items):\n`
+          contextStr += `    Danh sách các yêu cầu minh chứng:\n`
           for (const item of cri.items) {
             contextStr += `      - ${item.name}: ${item.description || ""}\n`
+            if (item.evidences && item.evidences.length > 0) {
+              contextStr += `        Tài liệu đã nộp cho yêu cầu này:\n`
+              for (const ev of item.evidences) {
+                contextStr += `          * ${ev.content || "Tệp đính kèm"} (Người nộp: ${ev.collaborator?.name || "Ẩn danh"})\n`
+              }
+            }
           }
         }
       }
