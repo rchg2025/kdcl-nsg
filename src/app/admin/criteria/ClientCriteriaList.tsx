@@ -1059,7 +1059,7 @@ export default function ClientCriteriaList({ initialStandards, initialPrograms=[
       {/* Nút Tra Cứu Floating */}
       <button
         onClick={() => setIsGlobalSearchOpen(true)}
-        className="fixed bottom-8 right-8 z-[45] bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-110 active:scale-95 transition-all flex items-center justify-center group border border-indigo-500"
+        className="fixed bottom-24 right-8 z-[45] bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-110 active:scale-95 transition-all flex items-center justify-center group border border-indigo-500"
         title="Tra cứu nhanh"
       >
         <Search size={24} />
