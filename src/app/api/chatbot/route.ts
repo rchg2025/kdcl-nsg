@@ -30,50 +30,102 @@ export async function POST(req: NextRequest) {
             items: {
               include: {
                 evidences: {
-                  where: { status: 'APPROVED' },
-                  include: { collaborator: true }
+                  include: { 
+                    collaborator: true,
+                    reviewer: true,
+                    evaluations: {
+                      include: { evaluator: true }
+                    }
+                  }
                 }
               }
             },
             evidences: {
-              where: { status: 'APPROVED', evidenceItemId: null },
-              include: { collaborator: true }
+              where: { evidenceItemId: null },
+              include: { 
+                collaborator: true,
+                reviewer: true,
+                evaluations: {
+                  include: { evaluator: true }
+                }
+              }
             }
           }
         }
       }
     })
 
+    // Tính toán thống kê cơ bản
+    let totalStandards = standards.length
+    let totalCriteria = 0
+    let totalItems = 0
+    let evPending = 0
+    let evApproved = 0
+    let evRejected = 0
+
     // Xây dựng chuỗi Context
     let contextStr = "DỮ LIỆU HỆ THỐNG ĐẢM BẢO CHẤT LƯỢNG:\n\n"
+    
+    let detailsStr = ""
     for (const std of standards) {
-      contextStr += `Tiêu chuẩn: ${std.name} - ${std.description || ""} (Link: /admin/criteria/${std.id})\n`
+      detailsStr += `Tiêu chuẩn: ${std.name} - ${std.description || ""} (Link: /admin/criteria/${std.id})\n`
+      totalCriteria += std.criteria.length
+      
       for (const cri of std.criteria) {
-        contextStr += `  + Tiêu chí: ${cri.name} - ${cri.description || ""}\n`
+        detailsStr += `  + Tiêu chí: ${cri.name} - ${cri.description || ""}\n`
+        totalItems += cri.items.length
         
-        // Minh chứng nộp chung cho Tiêu chí
+        // Minh chứng chung của Tiêu chí
         if (cri.evidences && cri.evidences.length > 0) {
-          contextStr += `    Tài liệu minh chứng đã nộp cho Tiêu chí này:\n`
+          detailsStr += `    Tài liệu minh chứng chung cho Tiêu chí này:\n`
           for (const ev of cri.evidences) {
-            contextStr += `      - ${ev.content || "Tệp đính kèm"} (Người nộp: ${ev.collaborator?.name || "Ẩn danh"})\n`
+            if (ev.status === 'PENDING') evPending++
+            if (ev.status === 'APPROVED') evApproved++
+            if (ev.status === 'REJECTED') evRejected++
+            
+            detailsStr += `      - File/Nội dung: ${ev.content || "Tệp đính kèm"} | Trạng thái: ${ev.status} | Người nộp: ${ev.collaborator?.name || "Ẩn danh"}\n`
+            if (ev.status === 'REJECTED' && ev.rejectReason) {
+              detailsStr += `        Lý do từ chối: ${ev.rejectReason} (Người duyệt: ${ev.reviewer?.name || "Ẩn danh"})\n`
+            }
+            if (ev.evaluations && ev.evaluations.length > 0) {
+              for (const evalRecord of ev.evaluations) {
+                detailsStr += `        Đánh giá: ${evalRecord.isApproved ? 'Đạt' : 'Không đạt'} - Nhận xét: ${evalRecord.comments || ""} (Người đánh giá: ${evalRecord.evaluator?.name || "Ẩn danh"})\n`
+              }
+            }
           }
         }
 
         if (cri.items.length > 0) {
-          contextStr += `    Danh sách các yêu cầu minh chứng:\n`
+          detailsStr += `    Danh sách các yêu cầu minh chứng:\n`
           for (const item of cri.items) {
-            contextStr += `      - ${item.name}: ${item.description || ""}\n`
+            detailsStr += `      - ${item.name}: ${item.description || ""}\n`
             if (item.evidences && item.evidences.length > 0) {
-              contextStr += `        Tài liệu đã nộp cho yêu cầu này:\n`
+              detailsStr += `        Tài liệu đã nộp cho yêu cầu này:\n`
               for (const ev of item.evidences) {
-                contextStr += `          * ${ev.content || "Tệp đính kèm"} (Người nộp: ${ev.collaborator?.name || "Ẩn danh"})\n`
+                if (ev.status === 'PENDING') evPending++
+                if (ev.status === 'APPROVED') evApproved++
+                if (ev.status === 'REJECTED') evRejected++
+                
+                detailsStr += `          * File/Nội dung: ${ev.content || "Tệp đính kèm"} | Trạng thái: ${ev.status} | Người nộp: ${ev.collaborator?.name || "Ẩn danh"}\n`
+                if (ev.status === 'REJECTED' && ev.rejectReason) {
+                  detailsStr += `            Lý do từ chối: ${ev.rejectReason} (Người duyệt: ${ev.reviewer?.name || "Ẩn danh"})\n`
+                }
+                if (ev.evaluations && ev.evaluations.length > 0) {
+                  for (const evalRecord of ev.evaluations) {
+                    detailsStr += `            Đánh giá: ${evalRecord.isApproved ? 'Đạt' : 'Không đạt'} - Nhận xét: ${evalRecord.comments || ""} (Người đánh giá: ${evalRecord.evaluator?.name || "Ẩn danh"})\n`
+                  }
+                }
               }
             }
           }
         }
       }
-      contextStr += "\n"
+      detailsStr += "\n"
     }
+
+    // Ghép thống kê vào Context
+    contextStr += `THỐNG KÊ TỔNG QUAN:\n- Tổng số Tiêu chuẩn: ${totalStandards}\n- Tổng số Tiêu chí: ${totalCriteria}\n- Tổng số Yêu cầu minh chứng: ${totalItems}\n- Minh chứng Đang chờ duyệt (PENDING): ${evPending}\n- Minh chứng Đã duyệt (APPROVED): ${evApproved}\n- Minh chứng Bị từ chối (REJECTED): ${evRejected}\n\n`
+    contextStr += detailsStr
 
     const systemInstruction = `Bạn là trợ lý AI chuyên môn về Đảm bảo chất lượng (QA) của trường học/tổ chức.
 Nhiệm vụ của bạn là trả lời các câu hỏi của người dùng một cách NGẮN GỌN, CHÍNH XÁC và DỄ HIỂU dựa trên DỮ LIỆU HỆ THỐNG được cung cấp bên dưới.
