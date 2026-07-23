@@ -47,6 +47,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 import ChatbotWidget from "@/components/ChatbotWidget";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -56,6 +59,8 @@ export default async function RootLayout({
   try {
     settings = await getPublicSettings();
   } catch (e) {}
+
+  const session = await getServerSession(authOptions);
 
   return (
     <html
@@ -100,7 +105,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <Providers>
           {children}
           <ActivePing />
-          <ChatbotWidget settings={settings} />
+          {session?.user && <ChatbotWidget settings={settings} />}
         </Providers>
       </body>
     </html>

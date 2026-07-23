@@ -2,9 +2,25 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSettings } from "@/actions/setting"
 import { GoogleGenAI } from "@google/genai"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized. Vui lòng đăng nhập để sử dụng Chatbot." }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { department: true, permissions: true }
+    })
+    
+    if (!user) {
+      return NextResponse.json({ error: "Không tìm thấy người dùng." }, { status: 403 })
+    }
+
     const { messages } = await req.json()
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "Missing messages" }, { status: 400 })
@@ -63,6 +79,16 @@ export async function POST(req: NextRequest) {
     let evApproved = 0
     let evRejected = 0
 
+    // Helper to check evidence visibility based on user role
+    const isAllowedEvidence = (ev: any) => {
+      if (user.role === 'ADMIN' || user.role === 'SUPERVISOR') return true;
+      if (user.role === 'INVESTIGATOR') return true; // Investigators can see all evidences for reference
+      if (user.role === 'COLLABORATOR') {
+        return ev.collaboratorId === user.id || ev.collaborator?.departmentId === user.departmentId;
+      }
+      return false;
+    }
+
     // Xây dựng chuỗi Context
     let contextStr = "DỮ LIỆU HỆ THỐNG ĐẢM BẢO CHẤT LƯỢNG:\n\n"
     
@@ -79,6 +105,8 @@ export async function POST(req: NextRequest) {
         if (cri.evidences && cri.evidences.length > 0) {
           detailsStr += `    Tài liệu minh chứng chung cho Tiêu chí này:\n`
           for (const ev of cri.evidences) {
+            if (!isAllowedEvidence(ev)) continue;
+
             if (ev.status === 'PENDING') evPending++
             if (ev.status === 'APPROVED') evApproved++
             if (ev.status === 'REJECTED') evRejected++
@@ -116,6 +144,8 @@ export async function POST(req: NextRequest) {
             if (item.evidences && item.evidences.length > 0) {
               detailsStr += `        Tài liệu đã nộp cho yêu cầu này:\n`
               for (const ev of item.evidences) {
+                if (!isAllowedEvidence(ev)) continue;
+
                 if (ev.status === 'PENDING') evPending++
                 if (ev.status === 'APPROVED') evApproved++
                 if (ev.status === 'REJECTED') evRejected++
@@ -156,7 +186,8 @@ export async function POST(req: NextRequest) {
     contextStr += detailsStr
 
     const systemInstruction = `Bạn là trợ lý AI chuyên môn về Đảm bảo chất lượng (QA) của trường học/tổ chức.
-Nhiệm vụ của bạn là trả lời các câu hỏi của người dùng một cách NGẮN GỌN, CHÍNH XÁC và DỄ HIỂU dựa trên DỮ LIỆU HỆ THỐNG được cung cấp bên dưới.
+Người dùng hiện tại đang giao tiếp với bạn có vai trò là: ${user.role} (Tên: ${user.name || 'Ẩn danh'}).
+Nhiệm vụ của bạn là trả lời các câu hỏi của người dùng một cách NGẮN GỌN, CHÍNH XÁC và DỄ HIỂU dựa trên DỮ LIỆU HỆ THỐNG được cung cấp bên dưới, và đưa ra câu trả lời phù hợp với nhóm quyền của họ.
 Nếu người dùng hỏi thông tin không có trong DỮ LIỆU HỆ THỐNG, hãy lịch sự từ chối hoặc nói rằng bạn không có thông tin về vấn đề đó trong hệ thống tiêu chí hiện tại. Hãy dùng định dạng Markdown để câu trả lời được đẹp mắt.
 
 QUAN TRỌNG: Khi bạn cung cấp thông tin về bất kỳ Tiêu chuẩn nào, hãy LUÔN LUÔN chèn link (dạng Markdown) dẫn đến Tiêu chuẩn đó dựa vào (Link: ...) được cung cấp trong dữ liệu. Ví dụ: [Tiêu chuẩn 1](/admin/criteria/clabc123). Nếu người dùng hỏi về Tiêu chí, bạn cũng nên đính kèm link của Tiêu chuẩn chứa Tiêu chí đó để họ bấm vào xem chi tiết.
