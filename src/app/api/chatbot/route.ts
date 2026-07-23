@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     // Xây dựng chuỗi Context
     let contextStr = "DỮ LIỆU HỆ THỐNG ĐẢM BẢO CHẤT LƯỢNG:\n\n"
     for (const std of standards) {
-      contextStr += `Tiêu chuẩn: ${std.name} - ${std.description || ""}\n`
+      contextStr += `Tiêu chuẩn: ${std.name} - ${std.description || ""} (Link: /admin/criteria/${std.id})\n`
       for (const cri of std.criteria) {
         contextStr += `  + Tiêu chí: ${cri.name} - ${cri.description || ""}\n`
         if (cri.items.length > 0) {
@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
     const systemInstruction = `Bạn là trợ lý AI chuyên môn về Đảm bảo chất lượng (QA) của trường học/tổ chức.
 Nhiệm vụ của bạn là trả lời các câu hỏi của người dùng một cách NGẮN GỌN, CHÍNH XÁC và DỄ HIỂU dựa trên DỮ LIỆU HỆ THỐNG được cung cấp bên dưới.
 Nếu người dùng hỏi thông tin không có trong DỮ LIỆU HỆ THỐNG, hãy lịch sự từ chối hoặc nói rằng bạn không có thông tin về vấn đề đó trong hệ thống tiêu chí hiện tại. Hãy dùng định dạng Markdown để câu trả lời được đẹp mắt.
+
+QUAN TRỌNG: Khi bạn cung cấp thông tin về bất kỳ Tiêu chuẩn nào, hãy LUÔN LUÔN chèn link (dạng Markdown) dẫn đến Tiêu chuẩn đó dựa vào (Link: ...) được cung cấp trong dữ liệu. Ví dụ: [Tiêu chuẩn 1](/admin/criteria/clabc123). Nếu người dùng hỏi về Tiêu chí, bạn cũng nên đính kèm link của Tiêu chuẩn chứa Tiêu chí đó để họ bấm vào xem chi tiết.
 
 ${contextStr}
 `
