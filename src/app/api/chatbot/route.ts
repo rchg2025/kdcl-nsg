@@ -234,12 +234,27 @@ ${contextStr}
       }
     })
 
-    return NextResponse.json({
-      role: "model",
-      content: response.text
-    })
-  } catch (error: any) {
-    console.error("Chatbot Error:", error)
-    return NextResponse.json({ error: error.message || "Đã xảy ra lỗi hệ thống." }, { status: 500 })
+      return NextResponse.json({
+        role: "model",
+        content: response.text
+      })
+    } catch (error: any) {
+      console.error("Chatbot Error:", error)
+      let errorMessage = "Đã xảy ra lỗi hệ thống khi gọi AI."
+      if (typeof error?.message === 'string') {
+        if (error.message.includes('503') || error.message.includes('high demand') || error.message.includes('UNAVAILABLE')) {
+          errorMessage = "Hệ thống AI hiện đang quá tải do lượng truy cập cao. Vui lòng thử lại sau vài phút."
+        } else {
+          try {
+            const parsed = JSON.parse(error.message)
+            if (parsed.error?.message) {
+              errorMessage = parsed.error.message
+            }
+          } catch (e) {
+            errorMessage = error.message
+          }
+        }
+      }
+      return NextResponse.json({ error: errorMessage }, { status: 500 })
+    }
   }
-}
