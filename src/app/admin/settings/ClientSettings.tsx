@@ -5,13 +5,14 @@ import { updateSettings, testDriveConfig, testSmtpConfig } from "@/actions/setti
 import { Save, Loader2, Mail, Cloud, PlayCircle, Globe, Layout, Code, Bot, UploadCloud, Rocket, CheckCircle2, XCircle, AlertCircle, Key } from "lucide-react"
 import { getDirectImageUrl } from "@/lib/utils"
 
-type TabId = 'seo' | 'drive' | 'smtp' | 'google-login'
+type TabId = 'seo' | 'drive' | 'smtp' | 'google-login' | 'chatbot'
 
 const TABS = [
   { id: 'seo' as TabId, label: 'SEO & Logo', icon: Globe },
   { id: 'drive' as TabId, label: 'Google Drive', icon: Cloud },
   { id: 'smtp' as TabId, label: 'SMTP Email', icon: Mail },
   { id: 'google-login' as TabId, label: 'Google Login', icon: Key },
+  { id: 'chatbot' as TabId, label: 'AI Chatbot', icon: Bot },
 ]
 
 export default function ClientSettings({ initialData }: { initialData: Record<string, string> }) {
@@ -76,6 +77,14 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
   const [googleClientId, setGoogleClientId] = useState(initialData["GOOGLE_CLIENT_ID"] || "")
   const [googleClientSecret, setGoogleClientSecret] = useState(initialData["GOOGLE_CLIENT_SECRET"] || "")
 
+  // Chatbot State
+  const [chatbotEnabled, setChatbotEnabled] = useState(initialData["CHATBOT_ENABLED"] === "true")
+  const [chatbotApiKey, setChatbotApiKey] = useState(initialData["CHATBOT_API_KEY"] || "")
+  const [chatbotPrimaryColor, setChatbotPrimaryColor] = useState(initialData["CHATBOT_PRIMARY_COLOR"] || "#FDC700")
+  const [chatbotPosition, setChatbotPosition] = useState(initialData["CHATBOT_POSITION"] || "left")
+  const [chatbotWidth, setChatbotWidth] = useState(initialData["CHATBOT_WIDTH"] || "350px")
+  const [chatbotHeight, setChatbotHeight] = useState(initialData["CHATBOT_HEIGHT"] || "480px")
+
   const [testingDrive, setTestingDrive] = useState(false)
   const [testingSmtp, setTestingSmtp] = useState(false)
 
@@ -133,10 +142,15 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
         GDRIVE_CLIENT_EMAIL: driveEmail,
         GDRIVE_PRIVATE_KEY: driveKey,
         GDRIVE_FOLDER_ID: driveFolder,
-        GMAIL_USER: gmailUser,
         GMAIL_PASS: gmailPass,
         GOOGLE_CLIENT_ID: googleClientId,
-        GOOGLE_CLIENT_SECRET: googleClientSecret
+        GOOGLE_CLIENT_SECRET: googleClientSecret,
+        CHATBOT_ENABLED: chatbotEnabled.toString(),
+        CHATBOT_API_KEY: chatbotApiKey,
+        CHATBOT_PRIMARY_COLOR: chatbotPrimaryColor,
+        CHATBOT_POSITION: chatbotPosition,
+        CHATBOT_WIDTH: chatbotWidth,
+        CHATBOT_HEIGHT: chatbotHeight,
       })
       showToast("Đã lưu cấu hình Hệ thống thành công!")
       setTimeout(() => window.location.reload(), 1500)
@@ -483,6 +497,106 @@ export default function ClientSettings({ initialData }: { initialData: Record<st
             </div>
           </div>
         )}
+
+        {/* CHATBOT TAB */}
+        {activeTab === 'chatbot' && (
+          <div className="glass rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col animate-in fade-in duration-300">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-xl">
+                <Bot size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Cấu hình AI Chatbot</h3>
+                <p className="text-xs text-slate-500">Cấu hình trợ lý ảo AI để trả lời câu hỏi của người dùng dựa trên Tiêu chuẩn và Tiêu chí.</p>
+              </div>
+            </div>
+
+            <div className="space-y-6 flex-1">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="chatbotEnabled"
+                  checked={chatbotEnabled} 
+                  onChange={e => setChatbotEnabled(e.target.checked)} 
+                  className="w-4 h-4 text-[var(--primary)] rounded border-slate-300 focus:ring-[var(--primary)]" 
+                />
+                <label htmlFor="chatbotEnabled" className="text-sm font-semibold cursor-pointer">Kích hoạt Chatbot AI</label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Gemini API Key</label>
+                <input 
+                  type="password" 
+                  value={chatbotApiKey} 
+                  onChange={e => setChatbotApiKey(e.target.value)} 
+                  placeholder="AIzaSy..." 
+                  className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-indigo-500 text-sm font-mono tracking-widest" 
+                />
+                <p className="text-xs text-slate-400 mt-2">Lấy tại Google AI Studio. Có thể để trống nếu đã cấu hình trong .env.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Màu sắc chủ đạo</label>
+                  <div className="flex gap-2 items-center">
+                    <input 
+                      type="color" 
+                      value={chatbotPrimaryColor} 
+                      onChange={e => setChatbotPrimaryColor(e.target.value)} 
+                      className="w-10 h-10 p-1 rounded border dark:border-slate-700 bg-white dark:bg-slate-900 cursor-pointer" 
+                    />
+                    <input 
+                      type="text" 
+                      value={chatbotPrimaryColor} 
+                      onChange={e => setChatbotPrimaryColor(e.target.value)} 
+                      className="flex-1 px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-indigo-500 text-sm font-mono" 
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Vị trí hiển thị</label>
+                  <select 
+                    value={chatbotPosition} 
+                    onChange={e => setChatbotPosition(e.target.value)} 
+                    className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-indigo-500 text-sm"
+                  >
+                    <option value="left">Góc dưới bên trái</option>
+                    <option value="right">Góc dưới bên phải</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Chiều rộng khung chat</label>
+                  <input 
+                    type="text" 
+                    value={chatbotWidth} 
+                    onChange={e => setChatbotWidth(e.target.value)} 
+                    placeholder="350px" 
+                    className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-indigo-500 text-sm font-mono" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Chiều cao khung chat</label>
+                  <input 
+                    type="text" 
+                    value={chatbotHeight} 
+                    onChange={e => setChatbotHeight(e.target.value)} 
+                    placeholder="480px" 
+                    className="w-full px-4 py-2 border dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl outline-none focus:border-indigo-500 text-sm font-mono" 
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-4">
+                <button disabled={loading} type="submit" className="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30">
+                  {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                  Lưu cấu hình
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
 
 
       </form>

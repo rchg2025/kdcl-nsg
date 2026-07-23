@@ -19,7 +19,10 @@ export async function getPublicSettings() {
   const settings = await prisma.systemSetting.findMany({
     where: {
       key: {
-        in: ['LOGO_URL', 'OG_IMAGE_URL', 'SEO_TITLE', 'SEO_DESCRIPTION', 'GSC_CODE']
+        in: [
+          'LOGO_URL', 'OG_IMAGE_URL', 'SEO_TITLE', 'SEO_DESCRIPTION', 'GSC_CODE',
+          'CHATBOT_ENABLED', 'CHATBOT_PRIMARY_COLOR', 'CHATBOT_POSITION', 'CHATBOT_WIDTH', 'CHATBOT_HEIGHT'
+        ]
       }
     }
   })

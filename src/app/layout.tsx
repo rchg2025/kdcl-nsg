@@ -45,11 +45,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+import ChatbotWidget from "@/components/ChatbotWidget";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let settings: Record<string, string> = {};
+  try {
+    settings = await getPublicSettings();
+  } catch (e) {}
+
   return (
     <html
       lang="en"
@@ -93,6 +100,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <Providers>
           {children}
           <ActivePing />
+          <ChatbotWidget settings={settings} />
         </Providers>
       </body>
     </html>
