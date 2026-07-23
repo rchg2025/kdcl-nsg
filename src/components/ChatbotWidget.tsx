@@ -142,12 +142,12 @@ export default function ChatbotWidget({ settings }: ChatbotWidgetProps) {
                   {msg.role === "user" ? (
                     msg.content
                   ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:font-semibold prose-a:underline hover:prose-a:text-blue-800">
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50">
                       <ReactMarkdown 
                         remarkPlugins={[remarkGfm]}
                         components={{
                           a: ({ node, ...props }) => (
-                            <a {...props} target="_blank" rel="noopener noreferrer" />
+                            <a {...props} className="text-blue-600 dark:text-blue-400 font-semibold underline hover:text-blue-800" target="_blank" rel="noopener noreferrer" />
                           )
                         }}
                       >
