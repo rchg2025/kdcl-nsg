@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import { evaluateEvidence } from "@/actions/investigator"
 import { Loader2, Search, CheckSquare, XSquare, FileText, Filter, XCircle, AlertCircle } from "lucide-react"
 import FileAttachments from "@/components/FileAttachments"
@@ -203,135 +203,107 @@ export default function ClientInvestigateList({ initialEvidences, programs = [] 
             <p className="text-slate-500 mt-2">Chưa có minh chứng nào được duyệt bởi cấp giám sát.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Minh chứng</th>
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Tệp đính kèm</th>
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Thông tin</th>
-                  <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 text-right whitespace-nowrap min-w-[250px]">Đánh giá Tiêu chí</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from(
-                  groupedCriteria.reduce((map, group) => {
-                    const stdKey = `${group.criterion.standard.name} (${group.criterion.standard.year})`;
-                    if (!map.has(stdKey)) map.set(stdKey, []);
-                    map.get(stdKey)!.push(group);
-                    return map;
-                  }, new Map<string, typeof groupedCriteria>())
-                ).map(([stdKey, criteriaGroups]) => (
-                  <React.Fragment key={stdKey}>
-                    {/* Standard Row */}
-                    <tr className="bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
-                      <td colSpan={4} className="p-3 px-4 font-bold text-indigo-900 dark:text-indigo-300 text-sm">
-                        {stdKey}
-                      </td>
-                    </tr>
-                    
-                    {/* Criteria Rows */}
-                    {criteriaGroups.map(({ criterion, evidences }) => {
-                      const repEv = evidences[0];
-                      const cid = criterion.id;
-                      
-                      return (
-                        <React.Fragment key={cid}>
-                          <tr className="bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200/60 dark:border-slate-700/60">
-                            <td colSpan={4} className="p-2 px-6 font-semibold text-slate-700 dark:text-slate-300 text-sm">
-                              {criterion.name}
-                            </td>
-                          </tr>
-                          
-                          {evidences.map((ev: any, index: number) => {
-                            const bgClass = index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 dark:bg-slate-800/30";
-                            
-                            return (
-                              <tr key={ev.id} className={`${bgClass} border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors`}>
-                                <td className="p-3 pl-10 align-top min-w-[300px] max-w-[400px]">
-                                  {ev.evidenceItem && (
-                                    <div className="mb-2 inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded text-[11px] font-semibold break-words whitespace-normal">
-                                      Minh chứng: {ev.evidenceItem.name}
-                                    </div>
-                                  )}
-                                  <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                                    {ev.content || ev.sharedFrom?.content || "Không có nội dung mô tả"}
-                                  </div>
-                                </td>
-                                <td className="p-3 align-top min-w-[200px]">
-                                  <FileAttachments fileStr={ev.fileUrl || ev.sharedFrom?.fileUrl || null} />
-                                </td>
-                                <td className="p-3 align-top min-w-[150px]">
-                                  <div className="flex flex-col gap-1.5 text-[10px] font-medium text-slate-500">
-                                    <span>Nộp bởi: <strong className="text-slate-700 dark:text-slate-300">{ev.collaborator.name}</strong></span>
-                                  </div>
-                                </td>
-                                
-                                {/* Đánh giá Tiêu chí - Chỉ render ở dòng đầu tiên của Tiêu chí và gộp cột (rowSpan) */}
-                                {index === 0 && (
-                                  <td className="p-3 align-top text-right min-w-[250px] border-l border-slate-100 dark:border-slate-800" rowSpan={evidences.length}>
-                                    <div className="w-full flex flex-col gap-2">
-                                      {repEv.evaluations && repEv.evaluations.length > 0 && (
-                                        <div className="flex flex-col gap-2 text-left mb-2">
-                                          {repEv.evaluations.map((evalData: any, idx: number) => (
-                                            <div key={evalData.id} className={`p-2 rounded-lg border-2 ${evalData.isApproved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'} text-xs`}>
-                                              <div className="font-bold flex items-center justify-between mb-1">
-                                                <span className="flex items-center gap-1">{evalData.isApproved ? <CheckSquare size={12} /> : <XCircle size={12} />} {evalData.isApproved ? 'ĐẠT' : 'KHÔNG ĐẠT'}</span>
-                                                <span className="opacity-70 text-[9px]">Lần {idx + 1}</span>
-                                              </div>
-                                              {evalData.comments && <p className="opacity-90 italic text-[10px] break-words whitespace-pre-wrap">{evalData.comments}</p>}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
+          groupedCriteria.map(({ criterion, evidences }) => {
+            const repEv = evidences[0] // Đại diện để lấy status evaluation
+            const cid = criterion.id
 
-                                      {(!repEv.evaluations || repEv.evaluations.length === 0 || !repEv.evaluations[repEv.evaluations.length - 1].isApproved) && (
-                                        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-left">
-                                          <textarea
-                                            disabled={loadingId === cid}
-                                            placeholder="Nhận xét (bắt buộc nếu Không Đạt)..."
-                                            className="w-full text-xs p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 outline-none mb-2 min-h-[50px] focus:border-indigo-500 shadow-sm"
-                                            value={commentInput[cid] || ""}
-                                            onChange={e => setCommentInput(prev => ({...prev, [cid]: e.target.value}))}
-                                          />
-                                          <div className="flex gap-2">
-                                            <button 
-                                              onClick={() => handleEvaluateCriterion(cid, true)}
-                                              disabled={loadingId === cid}
-                                              className="flex-1 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-500 hover:text-white transition-colors text-xs font-bold py-1.5 rounded-md flex items-center justify-center gap-1 shadow-sm disabled:opacity-50"
-                                            >
-                                              {loadingId === cid ? <Loader2 size={12} className="animate-spin"/> : <CheckSquare size={12}/>} ĐẠT
-                                            </button>
-                                            <button 
-                                              onClick={() => {
-                                                if (!commentInput[cid]?.trim()) {
-                                                  alert("Vui lòng nhập lý do vì sao không đạt!");
-                                                  return;
-                                                }
-                                                handleEvaluateCriterion(cid, false)
-                                              }}
-                                              disabled={loadingId === cid}
-                                              className="flex-1 bg-red-50 text-red-600 border border-red-200 hover:bg-red-500 hover:text-white transition-colors text-xs font-bold py-1.5 rounded-md flex items-center justify-center gap-1 shadow-sm disabled:opacity-50"
-                                            >
-                                              {loadingId === cid ? <Loader2 size={12} className="animate-spin"/> : <XSquare size={12}/>} KHÔNG
-                                            </button>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </td>
-                                )}
-                              </tr>
-                            );
-                          })}
-                        </React.Fragment>
-                      );
-                    })}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            return (
+              <div key={cid} className="glass rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
+                <div className="flex flex-col lg:flex-row gap-8">
+                  
+                  {/* Cột thông tin minh chứng */}
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <span className="text-[10px] font-bold px-2 py-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-md uppercase mb-1 inline-block">
+                        {criterion.standard.year} - {criterion.standard.name}
+                      </span>
+                      <h3 className="font-bold text-sm sm:text-base text-[var(--foreground)] mt-1">{criterion.name}</h3>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                      <h4 className="text-[11px] font-bold text-slate-500 flex flex-col sm:flex-row justify-between uppercase gap-2 mb-2">
+                        <span>Báo cáo chung từ Cơ sở:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-600 bg-slate-200/50 dark:bg-slate-700 px-2 py-0.5 rounded">Tổng: {evidences.length}</span>
+                          <span className="text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded">Đạt: {evidences.filter((ev: any) => ev.evaluations && ev.evaluations.length > 0 && ev.evaluations[ev.evaluations.length - 1].isApproved).length}</span>
+                          <span className="text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">K.Đạt: {evidences.filter((ev: any) => ev.evaluations && ev.evaluations.length > 0 && !ev.evaluations[ev.evaluations.length - 1].isApproved).length}</span>
+                        </div>
+                      </h4>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-semibold italic">
+                        {criterion.standard.description || repEv.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cột đánh giá */}
+                  <div className="w-full lg:w-96 bg-white dark:bg-[#0f172a] rounded-xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h4 className="font-bold text-[var(--foreground)] flex items-center gap-2 mb-4">
+                      <CheckSquare size={18} className="text-[var(--primary)]" /> Khung Đánh Giá Tổng Thể
+                    </h4>
+                    
+                    {repEv.evaluations && repEv.evaluations.length > 0 && (
+                      <div className="space-y-3 mb-4">
+                        {repEv.evaluations.map((evalData: any, idx: number) => (
+                          <div key={evalData.id} className={`p-4 rounded-xl border-2 ${evalData.isApproved ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800/50 dark:text-red-300'}`}>
+                            <div className="flex flex-col gap-1.5 mb-2 border-b border-current/10 pb-2">
+                              <p className="font-bold flex items-center justify-between">
+                                <span className="flex items-center gap-2">
+                                  {evalData.isApproved ? <CheckSquare size={16} /> : <XSquare size={16} />}
+                                  {evalData.isApproved ? 'KẾT LUẬN: ĐẠT' : 'KẾT LUẬN: KHÔNG ĐẠT'}
+                                </span>
+                                <span className="text-xs font-normal opacity-70">Lần {idx + 1}</span>
+                              </p>
+                              <p className="text-[11px] opacity-80 italic">Bởi: <strong>{evalData.evaluator?.name || "Điều tra viên"}</strong> - {new Date(evalData.createdAt).toLocaleDateString('vi-VN')} {new Date(evalData.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                            </div>
+                            {evalData.comments && (
+                              <p className="text-sm rounded-lg opacity-90">{evalData.comments}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(!repEv.evaluations || repEv.evaluations.length === 0 || !repEv.evaluations[repEv.evaluations.length - 1].isApproved) && (
+                      <div className="space-y-4">
+                        <textarea
+                          placeholder="Nhập nhận xét / phản hồi của đoàn kiểm tra..."
+                          value={commentInput[cid] || ""}
+                          onChange={(e) => setCommentInput({ ...commentInput, [cid]: e.target.value })}
+                          className="w-full text-sm p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-1 focus:ring-[var(--primary)] min-h-[100px]"
+                        />
+                        
+                        <div className="flex gap-2">
+                          <button 
+                            disabled={loadingId === cid}
+                            onClick={() => {
+                              if (!commentInput[cid]?.trim()) {
+                                alert("Vui lòng nhập lý do vì sao không đạt!");
+                                return;
+                              }
+                              handleEvaluateCriterion(cid, false)
+                            }}
+                            className="flex-1 py-2.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 text-red-700 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                          >
+                            {loadingId === cid ? <Loader2 size={16} className="animate-spin" /> : <XSquare size={16} />} 
+                            Không đạt
+                          </button>
+                          <button 
+                            disabled={loadingId === cid}
+                            onClick={() => handleEvaluateCriterion(cid, true)}
+                            className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                          >
+                            {loadingId === cid ? <Loader2 size={16} className="animate-spin" /> : <CheckSquare size={16} />} 
+                            Đạt ({evidences.length} MC)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
